@@ -21,6 +21,8 @@
 
 import 'package:flutter/material.dart';
 import './widgets/custom_button.dart';
+import './widgets/custom_text_field.dart';
+import './signup_screen.dart'; // Import the new screen
 
 void main() {
   runApp(const MyApp());
@@ -34,7 +36,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'CustomButton Test',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const ButtonTestScreen(),
+      home: const SignUpScreen(), // Set SignUpScreen as home
     );
   }
 }
@@ -51,6 +53,10 @@ class ButtonTestScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const CustomTextField(hintText: 'Username'),
+            const SizedBox(height: 10),
+            const CustomTextField(hintText: 'Password', obscureText: true),
+            const SizedBox(height: 20),
             CustomButton(
               text: 'Primary Button',
               onPressed: () {
