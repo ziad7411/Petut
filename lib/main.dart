@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/card_data.dart';
 void main() {
@@ -11,6 +12,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
     return  MaterialApp(
       home: Scaffold(body:
       Padding(
@@ -20,4 +22,5 @@ class MainApp extends StatelessWidget {
         
         ]),
       )),
+
 
