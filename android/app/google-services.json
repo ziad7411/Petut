@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "724593819082",
+    "project_id": "petut-55f40",
+    "storage_bucket": "petut-55f40.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724593819082:android:7a616cb3ed7934dfc8a333",
+        "android_client_info": {
+          "package_name": "com.example.petut"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOOnnLV7boUQ91MS-RtpLdI61Zs_64l2M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

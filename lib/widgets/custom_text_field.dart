@@ -6,6 +6,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextEditingController? controller;
   final IconData? prefixIcon;
+  final Widget? suffixIcon;
   final String? Function(String?)? validator;
 
   const CustomTextField({
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.controller,
     this.prefixIcon,
+    this.suffixIcon,
     this.validator,
   }) : super(key: key);
 
@@ -28,6 +30,7 @@ class CustomTextField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText,
           prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+          suffixIcon: suffixIcon,
           filled: true,
           fillColor: AppColors.fieldColor, // Light grey background
           contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
