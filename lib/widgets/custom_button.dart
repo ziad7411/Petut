@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../app_colors.dart';
 
@@ -10,7 +9,7 @@ class CustomButton extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final double? width;
   final double? height;
-  final IconData? icon;
+  final Widget? icon;
   final double fontSize;
   final FontWeight fontWeight;
   final Color? customColor;
@@ -71,22 +70,27 @@ class CustomButton extends StatelessWidget {
           ),
           disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          alignment: Alignment.center,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: fontSize + 2),
-              SizedBox(width: 8),
-            ],
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: fontWeight,
-                letterSpacing: 0.5,
+            // النص في المنتصف دايمًا
+            Center(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
+                  letterSpacing: 0.7,
+                ),
               ),
             ),
+
+            // الأيقونة على الشمال
+            if (icon != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: icon,
+              ),
           ],
         ),
       ),
