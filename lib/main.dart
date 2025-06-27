@@ -1,10 +1,18 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:petut/firebase_options.dart';
+import 'package:petut/screens/Signup&Login/login_screen.dart';
+import 'package:petut/screens/Signup&Login/signup_screen.dart';
+import 'package:petut/screens/Signup&Login/start_screen.dart';
+import 'package:petut/screens/home_screen.dart';
+import 'package:petut/screens/splash_screen.dart';
 
-
-import 'package:petut/Common/cards.dart';
-import 'package:petut/Data/card_data.dart';
-void main() {
-  runApp(const MainApp());
+void main()async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  ); 
+  runApp( MainApp());
 }
 
 class MainApp extends StatelessWidget {
@@ -12,15 +20,16 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    return  MaterialApp(
-      home: Scaffold(body:
-      Padding(
-        padding: const EdgeInsets.all(10),
-        child: GridView(gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2 , crossAxisSpacing: 5), children:  [
-         Cards(data: CardData(rate: 4, image: 'assets/petut.png', title: 'Petut', description: 'description', weight: 5, price: 200), favFunction: (){}),
-        
-        ]),
-      )),
-
-
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/start': (context) => const StartScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
+    );
+  }
+}
