@@ -35,7 +35,8 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Timer(const Duration(seconds: 6), () {
-      Navigator.pushReplacementNamed(context, '/start');
+     Navigator.pushReplacementNamed(context, '/start');
+
     });
   }
 
@@ -72,7 +73,6 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                 ),
 
-                // ✅ النص والجملة
                 Expanded(
                   flex: 3,
                   child: Column(
