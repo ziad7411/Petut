@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/doctor.dart';
 import '../app_colors.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_text_field.dart';
 
 class DoctorBookingScreen extends StatefulWidget {
   final Doctor doctor;
@@ -24,7 +26,7 @@ class _DoctorBookingScreenState extends State<DoctorBookingScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.dark,
         title: const Text("Booking Details"),
@@ -59,7 +61,7 @@ class _DoctorBookingScreenState extends State<DoctorBookingScreen> {
                         Text(widget.doctor.specialty),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 18),
+                            const Icon(Icons.star, color:AppColors.gold, size: 18),
                             const SizedBox(width: 4),
                             Text(widget.doctor.rating.toString()),
                           ],
@@ -143,16 +145,11 @@ class _DoctorBookingScreenState extends State<DoctorBookingScreen> {
         ),
       ),
 
-      // Confirm Button fixed at bottom
+     
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.dark,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+        child: CustomButton(
+          text: "Confirm Booking",
           onPressed: () {
             if (_selectedDayIndex == null || _selectedTimeIndex == null) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -166,7 +163,6 @@ class _DoctorBookingScreenState extends State<DoctorBookingScreen> {
               ));
             }
           },
-          child: const Text("Confirm Booking", style: TextStyle(fontSize: 16)),
         ),
       ),
     );

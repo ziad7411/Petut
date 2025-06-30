@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/doctor.dart';
 import '../services/api_service.dart';
 import '../app_colors.dart';
+import '../widgets/custom_text_field.dart';
 import 'doctor_booking_screen.dart';
 
 class DoctorsListScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
   String _selectedSpecialty = 'All';
 
   final List<String> _specialties = ['All', 'Dentist', 'Surgeon', 'Therapist'];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,13 +32,28 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
         _filteredDoctors = doctors;
       });
     });
+    // Add listener to the search controller to filter doctors
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+        _filterDoctors();
+      });
+    });
+  }
+
+  // Dispose the controller when the widget is disposed
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _filterDoctors() {
     setState(() {
       _filteredDoctors = _allDoctors.where((doctor) {
         final matchesName = doctor.name.toLowerCase().contains(_searchQuery.toLowerCase());
-        final matchesSpecialty = _selectedSpecialty == 'All' || doctor.specialty == _selectedSpecialty;
+        final matchesSpecialty =
+            _selectedSpecialty == 'All' || doctor.specialty == _selectedSpecialty;
         return matchesName && matchesSpecialty;
       }).toList();
     });
@@ -47,7 +64,7 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         elevation: 0,
         foregroundColor: AppColors.dark,
         title: const Text('Vet Doctors', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -56,68 +73,37 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
         future: _doctorsFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.gold));
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            );
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.dark)));
+            return Center(
+              child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.dark)),
+            );
           }
 
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Search & Filter Row
-                Row(
-                  children: [
-                    // Search Field
-                    Expanded(
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search by name',
-                          hintStyle: const TextStyle(color: AppColors.gray),
-                          filled: true,
-                          fillColor: AppColors.fieldColor,
-                          prefixIcon: const Icon(Icons.search, color: AppColors.gray),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        style: const TextStyle(color: AppColors.dark),
-                        onChanged: (value) {
-                          _searchQuery = value;
-                          _filterDoctors();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Filter Dropdown
-                    DropdownButton<String>(
-                      value: _selectedSpecialty,
-                      dropdownColor: AppColors.fieldColor,
-                      style: const TextStyle(color: AppColors.dark),
-                      items: _specialties.map((specialty) {
-                        return DropdownMenuItem<String>(
-                          value: specialty,
-                          child: Text(specialty),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          _selectedSpecialty = value;
-                          _filterDoctors();
-                        }
-                      },
-                    ),
-                  ],
+                // Search Field
+                CustomTextField(
+                  hintText: 'Search by name',
+                  controller: _searchController,
+                  prefixIcon: Icons.search,
+                  validator: null,
+                  customFillColor: Colors.white,
                 ),
+
                 const SizedBox(height: 20),
 
                 // Doctors List
                 Expanded(
                   child: _filteredDoctors.isEmpty
                       ? const Center(
-                          child: Text('No doctors found.', style: TextStyle(color: AppColors.gray)))
+                          child: Text('No doctors found.', style: TextStyle(color: AppColors.gray)),
+                        )
                       : ListView.separated(
                           itemCount: _filteredDoctors.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -170,8 +156,7 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
-                                              const Icon(Icons.star, color: AppColors.gold, size: 16),
-                                              const SizedBox(width: 4),
+                                                 const Icon(Icons.star, color: AppColors.gold, size: 18),
                                               Text(
                                                 doctor.rating.toString(),
                                                 style: const TextStyle(color: AppColors.gray),
