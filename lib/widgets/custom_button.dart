@@ -37,14 +37,14 @@ class CustomButton extends StatelessWidget {
 
     if (customColor != null) {
       backgroundColor = customColor!;
-      textColor = Colors.white;
+      textColor = AppColors.background;
       borderColor = null;
     } else if (isPrimary) {
       backgroundColor = AppColors.gold;
-      textColor = Colors.white;
+      textColor = AppColors.background;
       borderColor = null;
     } else {
-      backgroundColor = Colors.white;
+      backgroundColor = AppColors.background;
       textColor = AppColors.gold;
       borderColor = AppColors.gold;
     }

@@ -6,6 +6,8 @@ import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
 import 'package:petut/screens/home_screen.dart';
 import 'package:petut/screens/splash_screen.dart';
+// import 'package:petut/screens/profile_screen.dart';
+
 
 void main()async {
   WidgetsFlutterBinding.ensureInitialized();
