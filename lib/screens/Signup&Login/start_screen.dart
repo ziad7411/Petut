@@ -65,7 +65,7 @@ class StartScreen extends StatelessWidget {
               alignment: Alignment.bottomCenter,
               child: TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/main');
                 },
                 child: const Text(
                   'Skip',
