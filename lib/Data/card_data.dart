@@ -1,4 +1,5 @@
 class CardData {
+  final String id;
   final double rate;
   final String image;
   final String title;
@@ -8,6 +9,7 @@ class CardData {
   bool isFavorite;
 
   CardData({
+    required this.id,
     required this.rate,
     required this.image,
     required this.title,
@@ -17,3 +19,5 @@ class CardData {
     this.isFavorite = false,
   });
 }
+
+
