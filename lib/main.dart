@@ -4,15 +4,13 @@ import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
-import 'package:petut/screens/home_screen.dart';
+import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/splash_screen.dart';
 
-void main()async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  ); 
-  runApp( MainApp());
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(MainApp());
 }
 
 class MainApp extends StatelessWidget {
@@ -28,7 +26,7 @@ class MainApp extends StatelessWidget {
         '/start': (context) => const StartScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/main': (context) => const MainScreen(),
       },
     );
   }
