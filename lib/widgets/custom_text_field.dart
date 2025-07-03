@@ -8,16 +8,19 @@ class CustomTextField extends StatelessWidget {
   final IconData? prefixIcon;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
+  final Color? customFillColor;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.hintText,
     this.obscureText = false,
     this.controller,
     this.prefixIcon,
     this.suffixIcon,
     this.validator,
+    this.customFillColor,
   }) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +35,11 @@ class CustomTextField extends StatelessWidget {
           prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
           suffixIcon: suffixIcon,
           filled: true,
-          fillColor: AppColors.fieldColor, // Light grey background
+          fillColor: customFillColor ?? AppColors.fieldColor, // Use the new parameter
           contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25.0), // Rounded corners
-            borderSide: BorderSide.none, // No border
+            borderRadius: BorderRadius.circular(25.0),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(25.0),
