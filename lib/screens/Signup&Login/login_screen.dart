@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/main');
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
       if (e.code == 'user-not-found') {
@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Google sign-in error')),
@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _skipLogin() => Navigator.pushReplacementNamed(context, '/home');
+  void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
 
   @override
   Widget build(BuildContext context) {
