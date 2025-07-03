@@ -11,7 +11,7 @@ class CustomTextField extends StatelessWidget {
   final Color? customFillColor;
 
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.hintText,
     this.obscureText = false,
     this.controller,
@@ -19,7 +19,8 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.customFillColor,
-  }) : super(key: key);
+  }) ;
+
 
   @override
   Widget build(BuildContext context) {
