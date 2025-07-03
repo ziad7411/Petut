@@ -30,7 +30,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/main');
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
       if (e.code == 'email-already-in-use') {
@@ -61,7 +61,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -71,7 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  void _skipLogin() => Navigator.pushReplacementNamed(context, '/home');
+  void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
 
   @override
   Widget build(BuildContext context) {
