@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petut/app_colors.dart';
 import 'home_screen.dart';
-import 'catalog_screen.dart';
 import 'services_screen.dart';
 import 'health_screen.dart';
 import 'favorites_screen.dart';
