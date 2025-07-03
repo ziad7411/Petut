@@ -61,7 +61,9 @@ class _CardsState extends State<Cards> {
                             content: Text("You must login to add to favorites"),
                             backgroundColor: Colors.red,
                           ),
+                          
                         );
+                        Navigator.pushNamed(context, '/login');
                         return;
                       }
 

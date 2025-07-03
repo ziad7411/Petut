@@ -19,7 +19,7 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.customFillColor,
-  }) : super(key: key);
+  }) ;
 
 
   @override
