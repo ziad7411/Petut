@@ -13,6 +13,7 @@ class CustomButton extends StatelessWidget {
   final double fontSize;
   final FontWeight fontWeight;
   final Color? customColor;
+  final double iconSpacing;
 
   const CustomButton({
     super.key,
@@ -27,6 +28,7 @@ class CustomButton extends StatelessWidget {
     this.fontSize = 16.0,
     this.fontWeight = FontWeight.w600,
     this.customColor,
+    this.iconSpacing = 8.0,
   });
 
   @override
@@ -70,29 +72,38 @@ class CustomButton extends StatelessWidget {
           ),
           disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // النص في المنتصف دايمًا
-            Center(
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: fontSize,
-                  fontWeight: fontWeight,
-                  letterSpacing: 0.7,
+        child:
+            icon != null
+                ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    icon!,
+                    if (iconSpacing > 0) SizedBox(width: iconSpacing),
+                    Flexible(
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: fontWeight,
+                          letterSpacing: 0.7,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+                : Center(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: fontWeight,
+                      letterSpacing: 0.7,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-            ),
-
-            // الأيقونة على الشمال
-            if (icon != null)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: icon,
-              ),
-          ],
-        ),
       ),
     );
   }
