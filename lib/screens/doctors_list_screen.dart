@@ -17,7 +17,7 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
   List<Doctor> _allDoctors = [];
   List<Doctor> _filteredDoctors = [];
   String _searchQuery = '';
-  String _selectedSpecialty = 'All';
+  final String _selectedSpecialty = 'All';
 
   final List<String> _specialties = ['All', 'Dentist', 'Surgeon', 'Therapist'];
   final TextEditingController _searchController = TextEditingController();
