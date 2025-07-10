@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 24),
                         CustomButton(
                           text: 'Google',
-                          icon: SvgPicture.asset('google.svg'),
+                          icon: SvgPicture.asset('assets/images/google.svg'),
                           isPrimary: false,
                           width: double.infinity,
                           onPressed: _signInWithGoogle,
