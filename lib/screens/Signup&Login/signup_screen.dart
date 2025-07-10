@@ -30,7 +30,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
-      Navigator.pushReplacementNamed(context, '/main');
+      Navigator.pushReplacementNamed(context, '/role_selection');
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
       if (e.code == 'email-already-in-use') {
@@ -95,7 +95,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
             children: [
               const Text(
                 'Sign Up',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.gray),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.gray,
+                ),
               ),
               const SizedBox(height: 24),
               Expanded(
@@ -180,20 +184,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                           ],
                         ),
-                        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.1,
+                        ),
                         TextButton(
-                onPressed: _skipLogin,
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(color: AppColors.gray, fontSize: 16),
-                ),
-              ),
+                          onPressed: _skipLogin,
+                          child: const Text(
+                            'Skip',
+                            style: TextStyle(
+                              color: AppColors.gray,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ),
               ),
-              
             ],
           ),
         ),
