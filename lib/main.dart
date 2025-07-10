@@ -6,7 +6,10 @@ import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
 
 import 'package:petut/screens/splash_screen.dart';
-import 'package:petut/screens/main_screen.dart'; 
+import 'package:petut/screens/main_screen.dart';
+import 'package:petut/screens/role_selection_screen.dart';
+import 'package:petut/screens/doctor_form_screen.dart';
+import 'package:petut/screens/profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +31,9 @@ class MainApp extends StatelessWidget {
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainScreen(),
+        '/role_selection': (context) => const RoleSelectionScreen(),
+        '/doctor_form': (context) => const DoctorFormScreen(),
+        '/profile': (context) => const ProfileScreen(),
       },
     );
   }
