@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:petut/app_colors.dart';
-import 'package:petut/widgets/custom_button.dart';
-import 'package:petut/widgets/custom_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:petut/widgets/custom_button.dart';
+import 'package:petut/widgets/custom_text_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -36,9 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (e.code == 'email-already-in-use') {
         message = 'This email is already in use';
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } finally {
       setState(() => isLoading = false);
     }
@@ -53,8 +50,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -63,9 +59,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await FirebaseAuth.instance.signInWithCredential(credential);
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Google sign-in error')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google sign-in error')),
+      );
     } finally {
       setState(() => isLoading = false);
     }
@@ -75,16 +71,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textColor = theme.textTheme.bodyLarge?.color;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.gold,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          color: theme.iconTheme.color,
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -93,12 +90,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Column(
             children: [
-              const Text(
+              Text(
                 'Sign Up',
-                style: TextStyle(
-                  fontSize: 28,
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.gray,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 24),
@@ -111,26 +107,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         CustomTextField(
                           hintText: 'Email',
                           controller: emailController,
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Enter your Email'
-                                      : null,
+                          validator: (value) =>
+                              value == null || value.isEmpty ? 'Enter your Email' : null,
                         ),
                         CustomTextField(
                           hintText: 'Password',
                           obscureText: _obscurePassword,
                           controller: passwordController,
-                          validator:
-                              (value) =>
-                                  value != null && value.length >= 6
-                                      ? null
-                                      : 'Enter at least 6 characters',
+                          validator: (value) =>
+                              value != null && value.length >= 6
+                                  ? null
+                                  : 'Enter at least 6 characters',
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
                               color: Colors.grey,
                             ),
                             onPressed: () {
@@ -144,20 +134,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         isLoading
                             ? const CircularProgressIndicator()
                             : CustomButton(
-                              text: 'Sign Up',
-                              onPressed: _signUp,
-                              width: double.infinity,
-                              fontSize: 20,
-                            ),
+                                text: 'Sign Up',
+                                onPressed: _signUp,
+                                width: double.infinity,
+                                fontSize: 20,
+                              ),
                         const SizedBox(height: 24),
                         Row(
-                          children: const [
-                            Expanded(child: Divider()),
+                          children: [
+                            const Expanded(child: Divider()),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 8),
-                              child: Text('or'),
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Text('or', style: TextStyle(color: textColor)),
                             ),
-                            Expanded(child: Divider()),
+                            const Expanded(child: Divider()),
                           ],
                         ),
                         const SizedBox(height: 24),
@@ -172,29 +162,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text('Already have an account?'),
+                            Text('Already have an account?', style: TextStyle(color: textColor)),
                             TextButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/login');
-                              },
-                              child: const Text(
+                              onPressed: () => Navigator.pushNamed(context, '/login'),
+                              child: Text(
                                 'Log In',
-                                style: TextStyle(color: AppColors.gold),
+                                style: TextStyle(color: theme.colorScheme.primary),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.1,
-                        ),
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.1),
                         TextButton(
                           onPressed: _skipLogin,
-                          child: const Text(
+                          child: Text(
                             'Skip',
-                            style: TextStyle(
-                              color: AppColors.gray,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 16, color: textColor),
                           ),
                         ),
                       ],

@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
-import '../app_colors.dart';
+import '../app_colors.dart'; // Keep this if you have custom colors not in the theme
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -78,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     } catch (e) {
-      _showSnackBar('Failed to load profile: $e', AppColors.error);
+      _showSnackBar('Failed to load profile: $e', Theme.of(context).colorScheme.error);
     }
   }
 
@@ -102,7 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      _showSnackBar('Failed to load pets: $e', AppColors.error);
+      _showSnackBar('Failed to load pets: $e', Theme.of(context).colorScheme.error);
     }
   }
 
@@ -124,7 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      _showSnackBar('Failed to pick image: $e', AppColors.error);
+      _showSnackBar('Failed to pick image: $e', Theme.of(context).colorScheme.error);
     }
   }
 
@@ -138,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       return base64Encode(bytes);
     } catch (e) {
-      _showSnackBar('Failed to process image: $e', AppColors.error);
+      _showSnackBar('Failed to process image: $e', Theme.of(context).colorScheme.error);
       return null;
     }
   }
@@ -160,7 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (e) {
-      return Icon(Icons.error, size: size * 0.4, color: AppColors.gray);
+      return Icon(Icons.error, size: size * 0.4, color: Theme.of(context).colorScheme.secondary);
     }
   }
 
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Check if any data has changed
     if (!_hasDataChanged()) {
-      _showSnackBar('No changes detected to update', AppColors.gray);
+      _showSnackBar('No changes detected to update', Theme.of(context).colorScheme.secondary);
       return;
     }
 
@@ -229,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       _showSnackBar('Profile updated successfully!', Colors.green);
     } catch (e) {
-      _showSnackBar('Failed to update profile: $e', AppColors.error);
+      _showSnackBar('Failed to update profile: $e', Theme.of(context).colorScheme.error);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -243,7 +243,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_petNameController.text.trim().isEmpty ||
         _petTypeController.text.trim().isEmpty) {
-      _showSnackBar('Please fill in pet name and type', AppColors.error);
+      _showSnackBar('Please fill in pet name and type', Theme.of(context).colorScheme.error);
       return;
     }
 
@@ -281,7 +281,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.of(context).pop();
       _showSnackBar('Pet added successfully!', Colors.green);
     } catch (e) {
-      _showSnackBar('Failed to add pet: $e', AppColors.error);
+      _showSnackBar('Failed to add pet: $e', Theme.of(context).colorScheme.error);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -295,29 +295,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text(
+            title: Text(
               'Delete Pet',
               style: TextStyle(
-                color: AppColors.dark,
+                color: Theme.of(context).textTheme.bodyLarge!.color,
                 fontWeight: FontWeight.bold,
               ),
             ),
             content: Text(
               'Are you sure you want to delete $petName? This action cannot be undone.',
-              style: const TextStyle(color: AppColors.gray),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text(
+                child: Text(
                   'Cancel',
-                  style: TextStyle(color: AppColors.gray),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
                 ),
               ),
               CustomButton(
                 text: 'Delete',
                 onPressed: () => Navigator.of(context).pop(true),
-                customColor: AppColors.error,
+                customColor: Theme.of(context).colorScheme.error,
                 width: 80,
                 height: 40,
                 fontSize: 14,
@@ -336,7 +336,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await _loadUserPets();
         _showSnackBar('Pet deleted successfully', Colors.green);
       } catch (e) {
-        _showSnackBar('Failed to delete pet: $e', AppColors.error);
+        _showSnackBar('Failed to delete pet: $e', Theme.of(context).colorScheme.error);
       }
     }
   }
@@ -364,17 +364,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Add New Pet',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.dark,
+                            color: Theme.of(context).textTheme.bodyLarge!.color,
                           ),
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close),
+                          icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
                         ),
                       ],
                     ),
@@ -387,24 +387,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 100,
                         height: 100,
                         decoration: BoxDecoration(
-                          color: AppColors.fieldColor,
+                          color: Theme.of(context).colorScheme.surfaceVariant, // Using surfaceVariant for field-like background
                           borderRadius: BorderRadius.circular(50),
-                          border: Border.all(color: AppColors.gold, width: 2),
+                          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
                         ),
                         child:
                             _selectedPetImage != null
                                 ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(50),
-                                  child: Image.file(
-                                    _selectedPetImage!,
-                                    fit: BoxFit.cover,
+                                    borderRadius: BorderRadius.circular(50),
+                                    child: Image.file(
+                                      _selectedPetImage!,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.pets,
+                                    size: 40,
+                                    color: Theme.of(context).colorScheme.secondary,
                                   ),
-                                )
-                                : const Icon(
-                                  Icons.pets,
-                                  size: 40,
-                                  color: AppColors.gray,
-                                ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -443,7 +443,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             text: 'Cancel',
                             onPressed: () => Navigator.of(context).pop(),
                             isPrimary: false,
-                            customColor: AppColors.fieldColor,
+                            customColor: Theme.of(context).colorScheme.surfaceVariant, // Consistent with field background
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -472,23 +472,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: const Text(
+            title: Text(
               'Sign In Required',
               style: TextStyle(
-                color: AppColors.dark,
+                color: Theme.of(context).textTheme.bodyLarge!.color,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: const Text(
+            content: Text(
               'You need to Log in to access this feature. Would you like to sign in now?',
-              style: TextStyle(color: AppColors.gray),
+              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text(
+                child: Text(
                   'Cancel',
-                  style: TextStyle(color: AppColors.gray),
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color),
                 ),
               ),
               CustomButton(
@@ -520,12 +520,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: AppColors.background,
+        title: Text('Profile', style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: AppColors.dark,
+        foregroundColor: Theme.of(context).textTheme.bodyLarge!.color,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -537,27 +537,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 24),
                 decoration: BoxDecoration(
-                  color: AppColors.fieldColor,
+                  color: Theme.of(context).colorScheme.surfaceVariant, // Using surfaceVariant for general container background
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+                  border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.login, size: 48, color: AppColors.gold),
+                    Icon(Icons.login, size: 48, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Sign In to Access Your Profile',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.dark,
+                        color: Theme.of(context).textTheme.bodyLarge!.color,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Create an account or sign in to manage your profile and pets',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.gray, fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color, fontSize: 14),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -585,7 +585,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-            
             if (_isUserAuthenticated) ...[
               // Profile Image
               Center(
@@ -595,37 +594,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.fieldColor,
+                      color: Theme.of(context).colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(60),
-                      border: Border.all(color: AppColors.gold, width: 3),
+                      border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
                     ),
                     child:
                         _selectedProfileImage != null
                             ? ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: Image.file(
-                                _selectedProfileImage!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
+                                borderRadius: BorderRadius.circular(60),
+                                child: Image.file(
+                                  _selectedProfileImage!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
                             : _profileImageBase64 != null
                             ? _buildImageFromBase64(
-                              _profileImageBase64!,
-                              size: 120,
-                              borderRadius: 60,
-                            )
-                            : const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: AppColors.gray,
-                            ),
+                                _profileImageBase64!,
+                                size: 120,
+                                borderRadius: 60,
+                              )
+                            : Icon(
+                                Icons.person,
+                                size: 50,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Tap to change photo',
-                style: TextStyle(color: AppColors.gray, fontSize: 12),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium!.color, fontSize: 12),
               ),
               const SizedBox(height: 32),
 
@@ -662,19 +661,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'My Pets',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.dark,
+                      color: Theme.of(context).textTheme.bodyLarge!.color,
                     ),
                   ),
                   CustomButton(
                     text: 'Add Pet',
                     onPressed: _showAddPetDialog,
                     isPrimary: true,
-                    icon: const Icon(Icons.add, size: 18),
+                    icon: Icon(Icons.add, size: 18, color: Theme.of(context).colorScheme.onPrimary),
                     width: 120,
                     height: 40,
                     fontSize: 14,
@@ -691,106 +690,106 @@ class _ProfileScreenState extends State<ProfileScreen> {
               // Pets List
               _pets.isEmpty
                   ? Container(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.pets,
-                          size: 64,
-                          color: AppColors.gray.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No pets added yet',
-                          style: TextStyle(
-                            color: AppColors.gray.withOpacity(0.7),
-                            fontSize: 16,
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.pets,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
+                          const SizedBox(height: 16),
+                          Text(
+                            'No pets added yet',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.7),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _pets.length,
-                    itemBuilder: (context, index) {
-                      final pet = _pets[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.fieldColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            // Pet Image
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: AppColors.background,
-                                borderRadius: BorderRadius.circular(30),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _pets.length,
+                      itemBuilder: (context, index) {
+                        final pet = _pets[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceVariant,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              // Pet Image
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).scaffoldBackgroundColor,
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child:
+                                    pet['picture'] != null
+                                        ? _buildImageFromBase64(
+                                            pet['picture'],
+                                            size: 60,
+                                            borderRadius: 30,
+                                          )
+                                        : Icon(
+                                            Icons.pets,
+                                            color: Theme.of(context).colorScheme.secondary,
+                                          ),
                               ),
-                              child:
-                                  pet['picture'] != null
-                                      ? _buildImageFromBase64(
-                                        pet['picture'],
-                                        size: 60,
-                                        borderRadius: 30,
-                                      )
-                                      : const Icon(
-                                        Icons.pets,
-                                        color: AppColors.gray,
+                              const SizedBox(width: 16),
+
+                              // Pet Info
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      pet['name'] ?? 'Unknown',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).textTheme.bodyLarge!.color,
                                       ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            // Pet Info
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    pet['name'] ?? 'Unknown',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.dark,
                                     ),
-                                  ),
-                                  Text(
-                                    '${pet['type'] ?? ''} • ${pet['gender'] ?? ''} • ${pet['age'] ?? ''} • ${pet['weight'] ?? ''}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.gray,
+                                    Text(
+                                      '${pet['type'] ?? ''} • ${pet['gender'] ?? ''} • ${pet['age'] ?? ''} • ${pet['weight'] ?? ''}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context).textTheme.bodyMedium!.color,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
 
-                            // Delete Button
-                            IconButton(
-                              onPressed:
-                                  () => _deletePet(
-                                    pet['id'],
-                                    pet['name'] ?? 'this pet',
-                                  ),
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: AppColors.error,
-                                size: 22,
+                              // Delete Button
+                              IconButton(
+                                onPressed:
+                                    () => _deletePet(
+                                        pet['id'],
+                                        pet['name'] ?? 'this pet',
+                                      ),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Theme.of(context).colorScheme.error,
+                                  size: 22,
+                                ),
+                                tooltip: 'Delete Pet',
+                                splashRadius: 20,
                               ),
-                              tooltip: 'Delete Pet',
-                              splashRadius: 20,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ],
           ],
         ),
