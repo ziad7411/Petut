@@ -1,19 +1,56 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/doctor.dart';
+// import '../models/clinic.dart';
 
-Future<List<Doctor>> fetchDoctors() async {
-  const String apiUrl = 'https://jsonplaceholder.typicode.com/users';
+// Future<List<Clinic>> fetchClinics() async {
+//   await Future.delayed(const Duration(seconds: 2)); // simulate loading
 
-  try {
-    final response = await http.get(Uri.parse(apiUrl));
-    if (response.statusCode == 200) {
-      List<dynamic> body = jsonDecode(response.body);
-      return body.map((item) => Doctor.fromJson(item)).toList();
-    } else {
-      throw Exception('Failed to load doctors (${response.statusCode})');
-    }
-  } catch (e) {
-    throw Exception('Failed to load doctors: $e');
-  }
-}
+//   return [
+//     Clinic(
+//       id: '1',
+//       name: 'Happy Paws Clinic',
+//       location: 'Downtown',
+//       distance: 1.2,
+//       rating: 4.8,
+//       price: 200,
+//       isOpen: true,
+//       phoneNumber: '01234567890',
+//       image: 'https://i.pravatar.cc/150?img=1',
+//       doctorName: 'Dr. Ahmed Youssef',
+//     ),
+//     Clinic(
+//       id: '2',
+//       name: 'Animal Care Center',
+//       location: 'Nasr City',
+//       distance: 3.5,
+//       rating: 4.2,
+//       price: 150,
+//       isOpen: false,
+//       phoneNumber: '01123456789',
+//       image: 'https://i.pravatar.cc/150?img=2',
+//       doctorName: 'Dr. Mona Khaled',
+//     ),
+//     Clinic(
+//       id: '3',
+//       name: 'Vet House',
+//       location: 'Maadi',
+//       distance: 2.8,
+//       rating: 4.5,
+//       price: 180,
+//       isOpen: true,
+//       phoneNumber: '01098765432',
+//       image: 'https://i.pravatar.cc/150?img=3',
+//       doctorName: 'Dr. Sherif Hassan',
+//     ),
+//     Clinic(
+//       id: '4',
+//       name: 'PetLife Veterinary',
+//       location: 'Zamalek',
+//       distance: 5.0,
+//       rating: 4.9,
+//       price: 250,
+//       isOpen: true,
+//       phoneNumber: '01555555555',
+//       image: 'https://i.pravatar.cc/150?img=4',
+//       doctorName: 'Dr. Rania El Saeed',
+//     ),
+//   ];
+// }
