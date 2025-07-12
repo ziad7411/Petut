@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/Product.dart';
 import 'package:petut/Data/fetchProducts.dart';
-import 'package:petut/app_colors.dart';
 import 'package:petut/Data/card_data.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:petut/screens/product_details_screen.dart';
 import 'package:petut/screens/search_screen.dart';
+import 'package:petut/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -73,9 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
@@ -83,23 +85,34 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.dark,
+            color: Theme.of(context).textTheme.bodyMedium!.color,
           ),
         ),
         actions: [
           iconContainer(
-  Icons.search,
-  AppColors.gray,
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SearchScreen()),
-    );
-  },
-),
-          SizedBox(width: 8),
-          iconContainer(Icons.shopping_cart_outlined, AppColors.gold),
-          SizedBox(width: 12),
+            Icons.search,
+            Theme.of(context).iconTheme.color ?? Colors.grey,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+          iconContainer(
+            Icons.shopping_cart_outlined,
+            Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          iconContainer(
+            Icons.brightness_6,
+            Theme.of(context).iconTheme.color ?? Colors.grey,
+            onTap: () {
+              Provider.of<ThemeController>(context, listen: false).toggleTheme();
+            },
+          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: Column(
@@ -114,8 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          isSelected ? AppColors.gold : AppColors.fieldColor,
+                      backgroundColor: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.surface,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -132,7 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       category,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.dark,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).textTheme.bodyLarge!.color,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -146,8 +162,10 @@ class _HomeScreenState extends State<HomeScreen> {
               future: futureProducts,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.gold),
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   );
                 } else if (snapshot.hasError) {
                   return Center(child: Text("Error: ${snapshot.error}"));
@@ -163,9 +181,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
                     const itemWidth = 180;
-                    final crossAxisCount = (screenWidth / itemWidth)
-                        .floor()
-                        .clamp(1, 2);
+                    final crossAxisCount =
+                        (screenWidth / itemWidth).floor().clamp(1, 2);
 
                     return GridView.builder(
                       padding: const EdgeInsets.all(12),
@@ -186,6 +203,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             await loadFavorites();
                             setState(() {});
                           },
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProductDetailsScreen(data: cardData),
+                              ),
+                            );
+                          },
                         );
                       },
                     );
@@ -199,14 +225,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget iconContainer(IconData icon, Color color,{VoidCallback? onTap}) {
+  Widget iconContainer(IconData icon, Color color, {VoidCallback? onTap}) {
     return Container(
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.fieldColor),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: IconButton(
         padding: EdgeInsets.zero,

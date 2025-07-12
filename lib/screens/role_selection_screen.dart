@@ -23,15 +23,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.gold,
+            color: AppColors.gold, // نحتفظ بالذهبي من AppColors
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -42,10 +44,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Select Your Role',
-                style: TextStyle(
-                  fontSize: 28,
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.gray,
                 ),
@@ -80,11 +81,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
-                    text: 'Next',
-                    onPressed: _selectedRole == null ? null : _onNext,
-                    width: double.infinity,
-                    fontSize: 20,
-                  ),
+                      text: 'Next',
+                      onPressed: _selectedRole == null ? null : _onNext,
+                      width: double.infinity,
+                      fontSize: 20,
+                    ),
             ],
           ),
         ),

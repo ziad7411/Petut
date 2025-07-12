@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:petut/Data/Product.dart';
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/fetchProducts.dart';
-import 'package:petut/app_colors.dart';
 import 'package:petut/Data/card_data.dart';
+import 'package:petut/screens/product_details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -33,9 +33,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _filterProducts(String query) {
-    final filtered = _allProducts.where((product) {
-      return product.name.toLowerCase().contains(query.toLowerCase());
-    }).toList();
+    final filtered = _allProducts
+        .where((product) =>
+            product.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
 
     setState(() {
       _searchQuery = query;
@@ -59,14 +60,20 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         title: TextField(
-          decoration: const InputDecoration(
+          style: theme.textTheme.bodyLarge,
+          decoration: InputDecoration(
             hintText: 'Search products...',
+            hintStyle: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.hintColor,
+            ),
             border: InputBorder.none,
           ),
           onChanged: _filterProducts,
@@ -74,25 +81,27 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.gold))
+          ? Center(
+              child: CircularProgressIndicator(
+                color: theme.colorScheme.secondary,
+              ),
+            )
           : _searchQuery.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     "Let's find something",
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.gray,
+                      color: theme.hintColor,
                     ),
                   ),
                 )
               : _filteredProducts.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         'No products found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.gray,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.hintColor,
                         ),
                       ),
                     )
@@ -101,12 +110,22 @@ class _SearchScreenState extends State<SearchScreen> {
                       itemBuilder: (context, index) {
                         final product = _filteredProducts[index];
                         final cardData = convertProductToCard(product);
+
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Cards(
                             data: cardData,
                             favFunction: () {
                               setState(() {});
+                            },
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailsScreen(data: cardData),
+                                ),
+                              );
                             },
                           ),
                         );

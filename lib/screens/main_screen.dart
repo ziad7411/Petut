@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:petut/app_colors.dart';
 import 'home_screen.dart';
 import 'services_screen.dart';
 import 'health_screen.dart';
@@ -19,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const ServicesScreen(),
-  const HealthScreen(), 
+    const HealthScreen(),
     const FavoritesScreen(),
     const ProfileScreen(),
   ];
@@ -40,43 +39,57 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       body: _pages[_currentIndex],
       bottomNavigationBar: Container(
-  color: AppColors.background,
-  height: kBottomNavigationBarHeight,
-  child: Row(
-    children: List.generate(_navBarItems.length, (index) {
-      return Expanded(
-        child: GestureDetector(
-          onTap: () => _onItemTapped(index),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: _currentIndex == index ? AppColors.gold : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if ((_navBarItems[index].icon as Icon).icon != null)
-                  Icon((_navBarItems[index].icon as Icon).icon,
-                      size: 20, color: AppColors.gray),
-                const SizedBox(height: 2),
-                Text(
-                  _navBarItems[index].label!,
-                  style: const TextStyle(color: AppColors.gray, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }),
-  ),
-),
+        color: theme.scaffoldBackgroundColor,
+        height: kBottomNavigationBarHeight,
+        child: Row(
+          children: List.generate(_navBarItems.length, (index) {
+            final isSelected = _currentIndex == index;
 
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => _onItemTapped(index),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? theme.colorScheme.primary.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        (_navBarItems[index].icon as Icon).icon,
+                        size: 20,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.iconTheme.color,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _navBarItems[index].label!,
+                        style: TextStyle(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.textTheme.bodySmall!.color,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
     );
   }
 }
