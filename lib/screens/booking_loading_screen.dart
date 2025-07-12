@@ -36,7 +36,7 @@ class _BookingLoadingScreenState extends State<BookingLoadingScreen> {
     });
 
     // After 3 seconds, go to success screen
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const BookingSuccessScreen()),
@@ -57,7 +57,7 @@ class _BookingLoadingScreenState extends State<BookingLoadingScreen> {
               height: 180,
               width: 180,
               child: Lottie.asset(
-                'assets/animations/loading.json', // تأكد من وجوده
+                'assets/animations/Catloader.json',
                 repeat: true,
               ),
             ),
