@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:petut/app_colors.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,8 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Timer(const Duration(seconds: 6), () {
-     Navigator.pushReplacementNamed(context, '/start');
-
+      Navigator.pushReplacementNamed(context, '/start');
     });
   }
 
@@ -48,8 +46,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: ScaleTransition(
@@ -68,11 +68,11 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Image.asset(
                       'assets/images/petut.png',
                       fit: BoxFit.contain,
-                      
                     ),
                   ),
                 ),
 
+                // ✅ النص والمؤشر في الأسفل
                 Expanded(
                   flex: 3,
                   child: Column(
@@ -81,16 +81,14 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'With us, pets live like royalty',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 24,
+                        style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.dark,
                           letterSpacing: 1.1,
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const CircularProgressIndicator(
-                        color: AppColors.gold,
+                      CircularProgressIndicator(
+                        color: theme.colorScheme.secondary,
                         strokeWidth: 2.5,
                       ),
                     ],

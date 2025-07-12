@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:petut/app_colors.dart';
 import 'package:petut/widgets/custom_button.dart';
 
 class StartScreen extends StatelessWidget {
@@ -7,8 +6,10 @@ class StartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
         child: Column(
@@ -22,17 +23,22 @@ class StartScreen extends StatelessWidget {
                     'assets/images/petut.png',
                     height: MediaQuery.of(context).size.height * 0.45,
                   ),
-                 
-                  const Text(
+
+                  Text(
                     'Welcome to Pet Care',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+
+                  Text(
                     'Your best friend deserves the best care.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: AppColors.gray),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.hintColor,
+                    ),
                   ),
                   const SizedBox(height: 40),
 
@@ -60,19 +66,18 @@ class StartScreen extends StatelessWidget {
               ),
             ),
 
-            // ✅ زر Skip في الأسفل
             Align(
               alignment: Alignment.bottomCenter,
               child: TextButton(
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/main');
                 },
-                child: const Text(
+                child: Text(
                   'Skip',
-                  style: TextStyle(
-                    color: AppColors.gray,
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: theme.hintColor,
                   ),
                 ),
               ),

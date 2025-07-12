@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/card_data.dart';
-import 'package:petut/app_colors.dart';
+import 'package:petut/screens/product_details_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
@@ -35,18 +35,39 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text("Favorites")),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        title: Text(
+          "Favorites",
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+        ),
+        iconTheme: IconThemeData(color: theme.iconTheme.color),
+      ),
       body: FutureBuilder<List<CardData>>(
         future: getFavorites(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Text(
+                "No favorites yet.",
+                style: theme.textTheme.bodyLarge?.copyWith(color: theme.hintColor),
+              ),
+            );
+          }
+
           final favs = snapshot.data!;
-          if (favs.isEmpty) return const Center(child: Text("No favorites yet."));
 
           return ListView.builder(
             padding: const EdgeInsets.all(12),
@@ -54,7 +75,15 @@ class FavoritesScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               return Cards(
                 data: favs[index],
-                favFunction: () {},
+                favFunction: () {}, // إذا حبيت تحدث الصفحة بعد الإزالة
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProductDetailsScreen(data: favs[index]),
+                    ),
+                  );
+                },
               );
             },
           );
