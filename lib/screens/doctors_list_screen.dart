@@ -1,61 +1,36 @@
 import 'package:flutter/material.dart';
-import '../models/doctor.dart';
-import '../services/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 import '../app_colors.dart';
-import '../widgets/custom_text_field.dart';
-import 'doctor_booking_screen.dart';
 
-class DoctorsListScreen extends StatefulWidget {
-  const DoctorsListScreen({super.key});
+class ClinicsScreen extends StatefulWidget {
+  const ClinicsScreen({super.key});
 
   @override
-  State<DoctorsListScreen> createState() => _DoctorsListScreenState();
+  State<ClinicsScreen> createState() => _ClinicsScreenState();
 }
 
-class _DoctorsListScreenState extends State<DoctorsListScreen> {
-  late Future<List<Doctor>> _doctorsFuture;
-  List<Doctor> _allDoctors = [];
-  List<Doctor> _filteredDoctors = [];
-  String _searchQuery = '';
-  final String _selectedSpecialty = 'All';
-
-  final List<String> _specialties = ['All', 'Dentist', 'Surgeon', 'Therapist'];
-  final TextEditingController _searchController = TextEditingController();
+class _ClinicsScreenState extends State<ClinicsScreen> {
+  LatLng? userLocation;
 
   @override
   void initState() {
     super.initState();
-    _doctorsFuture = fetchDoctors();
-    _doctorsFuture.then((doctors) {
-      setState(() {
-        _allDoctors = doctors;
-        _filteredDoctors = doctors;
-      });
-    });
-    // Add listener to the search controller to filter doctors
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text;
-        _filterDoctors();
-      });
-    });
+    _getUserLocation();
   }
 
-  // Dispose the controller when the widget is disposed
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  Future<void> _getUserLocation() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) return;
 
-  void _filterDoctors() {
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
     setState(() {
-      _filteredDoctors = _allDoctors.where((doctor) {
-        final matchesName = doctor.name.toLowerCase().contains(_searchQuery.toLowerCase());
-        final matchesSpecialty =
-            _selectedSpecialty == 'All' || doctor.specialty == _selectedSpecialty;
-        return matchesName && matchesSpecialty;
-      }).toList();
+      userLocation = LatLng(position.latitude, position.longitude);
     });
   }
 
@@ -64,135 +39,219 @@ class _DoctorsListScreenState extends State<DoctorsListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
         elevation: 0,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.dark,
-        title: const Text('Vet Doctors', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Find a Vet',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 12),
+            child: CircleAvatar(
+              backgroundImage: AssetImage('assets/doctor.jpg'),
+              radius: 18,
+            ),
+          ),
+        ],
       ),
-      body: FutureBuilder<List<Doctor>>(
-        future: _doctorsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}', style: TextStyle(color: AppColors.dark)),
-            );
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+      body: Column(
+        children: [
+          // Map and action buttons
+          Container(
+            margin: const EdgeInsets.all(16),
+            height: 200,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.grey.shade200,
+            ),
+            clipBehavior: Clip.hardEdge,
+            child: Stack(
               children: [
-                // Search Field
-                CustomTextField(
-                  hintText: 'Search by name',
-                  controller: _searchController,
-                  prefixIcon: Icons.search,
-                  validator: null,
-                  customFillColor: Colors.white,
+                FlutterMap(
+                  options: MapOptions(
+                    center: userLocation ?? LatLng(30.0444, 31.2357),
+                    zoom: 13,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.petut',
+                    ),
+                    if (userLocation != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: userLocation!,
+                            child: const Icon(
+                              Icons.person_pin_circle,
+                              size: 40,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-
-                const SizedBox(height: 20),
-
-                // Doctors List
-                Expanded(
-                  child: _filteredDoctors.isEmpty
-                      ? const Center(
-                          child: Text('No doctors found.', style: TextStyle(color: AppColors.gray)),
-                        )
-                      : ListView.separated(
-                          itemCount: _filteredDoctors.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final doctor = _filteredDoctors[index];
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (_) => DoctorBookingScreen(doctor: doctor),
-                                ));
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 4),
-                                    )
-                                  ],
-                                ),
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 30,
-                                      backgroundColor: AppColors.gray.withOpacity(0.2),
-                                      child: const Icon(Icons.person, color: Colors.white, size: 30),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            doctor.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: AppColors.dark,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            "${doctor.specialty} • ${doctor.yearsOfExperience} yrs experience",
-                                            style: const TextStyle(color: AppColors.gray, fontSize: 13),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                                 const Icon(Icons.star, color: AppColors.gold, size: 18),
-                                              Text(
-                                                doctor.rating.toString(),
-                                                style: const TextStyle(color: AppColors.gray),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          "${doctor.price} EGP",
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.gold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const Icon(Icons.arrow_forward_ios, color: AppColors.gray, size: 16),
-                                      ],
-                                    )
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                Positioned(
+                  left: 16,
+                  bottom: 16,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.access_time),
+                    label: const Text('After hours care'),
+                    onPressed: () {},
+                  ),
+                ),
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.orange,
+                      side: const BorderSide(color: Colors.orange),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.local_hospital),
+                    label: const Text('Emergency Services'),
+                    onPressed: () {},
+                  ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+
+          // List of clinics or image placeholder
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .where('role', isEqualTo: 'Doctor')
+                  .where('isVerified', isEqualTo: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(child: Text('An error occurred while loading'));
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final docs = snapshot.data!.docs;
+
+                // Sort by distance if location is available
+                if (userLocation != null) {
+                  docs.sort((a, b) {
+                    final aData = a.data() as Map<String, dynamic>;
+                    final bData = b.data() as Map<String, dynamic>;
+
+                    final aLat = aData['lat'] ?? 0.0;
+                    final aLng = aData['lng'] ?? 0.0;
+                    final bLat = bData['lat'] ?? 0.0;
+                    final bLng = bData['lng'] ?? 0.0;
+
+                    final aDist = Geolocator.distanceBetween(
+                        userLocation!.latitude, userLocation!.longitude, aLat, aLng);
+                    final bDist = Geolocator.distanceBetween(
+                        userLocation!.latitude, userLocation!.longitude, bLat, bLng);
+
+                    return aDist.compareTo(bDist);
+                  });
+                }
+
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/4939569d-6a3c-4878-8960-803e5521f119.jpg',
+                          width: 200,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'There is no data yet',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.separated(
+                  itemCount: docs.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) {
+                    final data = docs[i].data() as Map<String, dynamic>;
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.asset(
+                            'assets/images/clinic.png',
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        title: Text(
+                          data['clinicName'] ?? 'Unknown Name',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(data['clinicAddress'] ?? 'Unknown Address'),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.verified,
+                                  size: 16,
+                                  color: Colors.orange,
+                                ),
+                                const SizedBox(width: 4),
+                                Text('Dr. ${data['doctorName'] ?? '---'}'),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () {},
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
