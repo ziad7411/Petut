@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/clinic.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/Clinic.dart';
 import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 
@@ -67,6 +68,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     );
   }
 
+  Future<void> _confirmAndPay() async {
+    try {
+      await FirebaseFirestore.instance.collection('appointments').add({
+        'clinicName': widget.clinic.name,
+        'clinicPhone': widget.clinic.phoneNumber,
+        'clinicLocation': widget.clinic.location,
+        'day': widget.selectedDay,
+        'time': widget.selectedTime,
+        'price': widget.clinic.price,
+        'paymentMethod': selectedPaymentMethod,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Appointment confirmed!")),
+      );
+
+      Navigator.pop(context); // أو تقدر تروح لصفحة success
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,9 +117,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             Expanded(
               child: CustomButton(
                 text: "Confirm and pay",
-                onPressed: () {
-                  // Handle confirm and payment logic
-                },
+                onPressed: _confirmAndPay,
               ),
             )
           ],
@@ -105,7 +129,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Clinic info
               Row(
                 children: [
                   const CircleAvatar(
@@ -143,7 +166,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
               const SizedBox(height: 24),
 
-              // Appointment time info
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -175,7 +197,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
               const SizedBox(height: 20),
 
-              // Coupon section
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -197,7 +218,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
               const SizedBox(height: 20),
 
-              // Billing Details
               const Text("Billing details", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               _infoRow("Consultation fee", "${widget.clinic.price} EGP"),
@@ -220,7 +240,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
               const SizedBox(height: 20),
 
-              // Payment Method
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
