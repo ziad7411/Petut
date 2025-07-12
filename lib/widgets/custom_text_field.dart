@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
   final String hintText;
@@ -19,23 +18,30 @@ class CustomTextField extends StatelessWidget {
     this.suffixIcon,
     this.validator,
     this.customFillColor,
-  }) ;
-
+  });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fillColor = customFillColor ??
+        (theme.brightness == Brightness.dark
+            ? Colors.grey.shade800
+            : Colors.grey.shade200);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
         validator: validator,
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: hintText,
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+          hintStyle: TextStyle(color: theme.hintColor),
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: theme.iconTheme.color) : null,
           suffixIcon: suffixIcon,
           filled: true,
-          fillColor: customFillColor ?? AppColors.fieldColor, // Use the new parameter
+          fillColor: fillColor,
           contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(25.0),
@@ -47,7 +53,7 @@ class CustomTextField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(25.0),
-            borderSide: BorderSide(color: AppColors.gold, width: 1.5),
+            borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
           ),
         ),
       ),

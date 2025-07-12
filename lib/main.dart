@@ -4,17 +4,26 @@ import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
-
 import 'package:petut/screens/splash_screen.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/role_selection_screen.dart';
 import 'package:petut/screens/doctor_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
+import 'package:petut/theme/theme_controller.dart';
+import 'package:petut/theme/theme_light.dart';
+import 'package:petut/theme/theme_dark.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(MainApp());
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeController(),
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends StatelessWidget {
@@ -22,8 +31,13 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Provider.of<ThemeController>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeController.themeMode,
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
