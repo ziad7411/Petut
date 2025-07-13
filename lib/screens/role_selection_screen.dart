@@ -15,7 +15,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   void _onNext() {
     if (_selectedRole == 'Customer') {
-      Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/customer_form');
     } else if (_selectedRole == 'Doctor') {
       Navigator.pushReplacementNamed(context, '/doctor_form');
     }
@@ -33,7 +33,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.gold, // نحتفظ بالذهبي من AppColors
+            color: AppColors.gold,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -81,11 +81,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
-                      text: 'Next',
-                      onPressed: _selectedRole == null ? null : _onNext,
-                      width: double.infinity,
-                      fontSize: 20,
-                    ),
+                    text: 'Next',
+                    onPressed: _selectedRole == null ? null : _onNext,
+                    width: double.infinity,
+                    fontSize: 20,
+                  ),
             ],
           ),
         ),
