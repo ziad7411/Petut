@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../app_colors.dart';
+import './home_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   const BookingSuccessScreen({super.key});
@@ -37,9 +38,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
       });
     });
 
-    // Navigate back to home after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      Navigator.popUntil(context, (route) => route.isFirst);
+    // Navigate back to home after 2 seconds
+     Timer(const Duration(seconds: 2), () {
+    
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) =>HomeScreen()), 
+        (route) => false, 
+      );
     });
   }
 

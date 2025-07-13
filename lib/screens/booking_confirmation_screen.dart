@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/Clinic.dart';
 import '../app_colors.dart';
 import '../widgets/custom_button.dart';
+import './booking_loading_screen.dart'; // تم استيراد شاشة التحميل
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Clinic clinic;
@@ -17,7 +18,8 @@ class BookingConfirmationScreen extends StatefulWidget {
   });
 
   @override
-  State<BookingConfirmationScreen> createState() => _BookingConfirmationScreenState();
+  State<BookingConfirmationScreen> createState() =>
+      _BookingConfirmationScreenState();
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
@@ -35,7 +37,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("Select payment method", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const Text(
+                "Select payment method",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.credit_card),
@@ -49,7 +54,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 leading: const Icon(Icons.credit_card),
                 title: const Text("MasterCard •••• 5678"),
                 onTap: () {
-                  setState(() => selectedPaymentMethod = "MasterCard •••• 5678");
+                  setState(
+                    () => selectedPaymentMethod = "MasterCard •••• 5678",
+                  );
                   Navigator.pop(context);
                 },
               ),
@@ -69,6 +76,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _confirmAndPay() async {
+    // 1. انتقل إلى شاشة التحميل فورًا
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BookingLoadingScreen()),
+    );
+
     try {
       await FirebaseFirestore.instance.collection('appointments').add({
         'clinicName': widget.clinic.name,
@@ -81,15 +94,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Appointment confirmed!")),
-      );
-
-      Navigator.pop(context); // أو تقدر تروح لصفحة success
+      // لا داعي لإظهار SnackBar هنا أو pop للصفحة،
+      // شاشة التحميل (BookingLoadingScreen) ستنتقل تلقائيًا إلى شاشة النجاح (BookingSuccessScreen) بعد 3 ثوانٍ.
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      // في حالة حدوث خطأ، يجب أن نعود من شاشة التحميل ونعرض رسالة الخطأ.
+      // هذا يتطلب الرجوع من شاشة التحميل التي تم دفعها للتو.
+      Navigator.pop(context); // يرجع من شاشة التحميل
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     }
   }
 
@@ -100,7 +113,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         elevation: 0,
-        title: const Text('Confirm appointment', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Confirm appointment',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         centerTitle: true,
         foregroundColor: AppColors.dark,
       ),
@@ -111,15 +127,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             Expanded(
               child: Text(
                 "${widget.clinic.price} EGP",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
               ),
             ),
             Expanded(
               child: CustomButton(
                 text: "Confirm and pay",
-                onPressed: _confirmAndPay,
+                onPressed:
+                    _confirmAndPay, // تم ربط زر "Confirm and pay" بدالة _confirmAndPay المعدلة
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -129,12 +149,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Clinic info
               Row(
                 children: [
                   const CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.orange,
-                    child: Icon(Icons.local_hospital, color: Colors.white, size: 32),
+                    child: Icon(
+                      Icons.local_hospital,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -143,29 +168,41 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       children: [
                         Text(
                           widget.clinic.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(widget.clinic.location),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: AppColors.gold, size: 18),
+                            const Icon(
+                              Icons.star,
+                              color: AppColors.gold,
+                              size: 18,
+                            ),
                             const SizedBox(width: 4),
                             Text("${widget.clinic.rating}/5"),
                             const SizedBox(width: 12),
-                            const Icon(Icons.call, size: 18, color: Colors.green),
+                            const Icon(
+                              Icons.call,
+                              size: 18,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 4),
                             Text(widget.clinic.phoneNumber),
                           ],
-                        )
+                        ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
 
               const SizedBox(height: 24),
 
+              // Appointment time info
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -184,19 +221,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           Text(
                             "${widget.selectedDay}, ${widget.selectedTime}",
                             style: const TextStyle(fontWeight: FontWeight.bold),
-                          )
+                          ),
                         ],
                       ),
                     ),
                     const Icon(Icons.timer, size: 20, color: AppColors.gray),
                     const SizedBox(width: 4),
-                    const Text("Starts soon")
+                    const Text("Starts soon"),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
 
+              // Coupon section
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -207,22 +245,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   children: [
                     const Icon(Icons.local_offer, color: AppColors.gold),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text("Apply coupon code\nUnlock offers with coupon code")),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text("APPLY"),
-                    )
+                    const Expanded(
+                      child: Text(
+                        "Apply coupon code\nUnlock offers with coupon code",
+                      ),
+                    ),
+                    TextButton(onPressed: () {}, child: const Text("APPLY")),
                   ],
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              const Text("Billing details", style: TextStyle(fontWeight: FontWeight.bold)),
+              // Billing Details
+              const Text(
+                "Billing details",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               _infoRow("Consultation fee", "${widget.clinic.price} EGP"),
               _infoRow("Service fee & tax", "FREE"),
-              _infoRow("Total payable", "${widget.clinic.price} EGP", isBold: true),
+              _infoRow(
+                "Total payable",
+                "${widget.clinic.price} EGP",
+                isBold: true,
+              ),
 
               const SizedBox(height: 16),
 
@@ -240,11 +287,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
               const SizedBox(height: 20),
 
+              // Payment Method
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Payment method", style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextButton(onPressed: _changePaymentMethod, child: const Text("CHANGE")),
+                  const Text(
+                    "Payment method",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: _changePaymentMethod,
+                    child: const Text("CHANGE"),
+                  ),
                 ],
               ),
               Text(selectedPaymentMethod),
@@ -262,7 +316,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal))
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );

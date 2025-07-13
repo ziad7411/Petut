@@ -8,6 +8,7 @@ import 'package:petut/screens/splash_screen.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/role_selection_screen.dart';
 import 'package:petut/screens/doctor_form_screen.dart';
+import 'package:petut/screens/customer_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
@@ -47,6 +48,7 @@ class MainApp extends StatelessWidget {
         '/main': (context) => const MainScreen(),
         '/role_selection': (context) => const RoleSelectionScreen(),
         '/doctor_form': (context) => const DoctorFormScreen(),
+        '/customer_form': (context) => const CustomerFormScreen(),
         '/profile': (context) => const ProfileScreen(),
       },
     );
