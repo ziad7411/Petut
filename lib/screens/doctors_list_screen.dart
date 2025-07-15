@@ -109,8 +109,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                     urlTemplate: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+
                       userAgentPackageName: 'com.example.petut',
                     ),
                     if (userLocation != null)
