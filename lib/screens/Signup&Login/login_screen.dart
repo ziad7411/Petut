@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,54 +21,81 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
   bool _obscurePassword = true;
 
+Future<void> _navigateBasedOnRole(String uid) async {
+  try {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (!doc.exists || doc.data()?['role'] == null) {
+      throw Exception('User role not found');
+    }
+
+    final role = doc.data()!['role'];
+
+    if (role == 'Doctor') {
+      Navigator.pushReplacementNamed(context, '/goToWebPage');
+    } else if (role == 'Client') {
+      Navigator.pushReplacementNamed(context, '/main');
+    } else {
+      throw Exception('Unknown role: $role');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
+  }
+}
+
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => isLoading = true);
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      Navigator.pushReplacementNamed(context, '/main');
-    } on FirebaseAuthException catch (e) {
-      String message = 'An error occurred';
-      if (e.code == 'user-not-found') {
-        message = 'No user found with this email';
-      } else if (e.code == 'wrong-password') {
-        message = 'Incorrect password';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    } finally {
-      setState(() => isLoading = false);
+  setState(() => isLoading = true);
+  try {
+    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    await _navigateBasedOnRole(credential.user!.uid);
+  } on FirebaseAuthException catch (e) {
+    String message = 'An error occurred';
+    if (e.code == 'user-not-found') {
+      message = 'No user found with this email';
+    } else if (e.code == 'wrong-password') {
+      message = 'Incorrect password';
     }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  } finally {
+    setState(() => isLoading = false);
   }
+}
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => isLoading = false);
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, '/main');
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google sign-in error')),
-      );
-    } finally {
+Future<void> _signInWithGoogle() async {
+  setState(() => isLoading = true);
+  try {
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
       setState(() => isLoading = false);
+      return;
     }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+    await _navigateBasedOnRole(userCredential.user!.uid);
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Google sign-in error')),
+    );
+  } finally {
+    setState(() => isLoading = false);
   }
+}
+
 
   void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
 
