@@ -7,6 +7,7 @@ class CardData {
   final double weight;
   final int price;
   bool isFavorite;
+  int quantity;
 
   CardData({
     required this.id,
@@ -17,6 +18,7 @@ class CardData {
      this.weight=0,
     required this.price,
     this.isFavorite = false,
+    this.quantity = 1,
   });
 }
 

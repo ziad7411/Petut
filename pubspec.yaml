@@ -24,6 +24,8 @@ dependencies:
   http: ^1.4.0
   provider: ^6.0.5
   shared_preferences: ^2.2.2
+  url_launcher: ^6.3.2
+  geocoding: ^2.1.0
 
 dependency_overrides:
   firebase_auth_web: ^5.15.2
