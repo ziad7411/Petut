@@ -4,7 +4,6 @@ import '../models/Clinic.dart';
 import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 import './booking_loading_screen.dart'; // تم استيراد شاشة التحميل
-import 'package:firebase_auth/firebase_auth.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Clinic clinic;
@@ -82,7 +81,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       context,
       MaterialPageRoute(builder: (_) => const BookingLoadingScreen()),
     );
-// 2. انتظر حتى يتم تأكيد الحجز
+
     try {
       await FirebaseFirestore.instance.collection('appointments').add({
         'clinicName': widget.clinic.name,
@@ -93,11 +92,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         'price': widget.clinic.price,
         'paymentMethod': selectedPaymentMethod,
         'timestamp': FieldValue.serverTimestamp(),
-
-      
-        'uid': FirebaseAuth.instance.currentUser!.uid,
       });
+
+      // لا داعي لإظهار SnackBar هنا أو pop للصفحة،
+      // شاشة التحميل (BookingLoadingScreen) ستنتقل تلقائيًا إلى شاشة النجاح (BookingSuccessScreen) بعد 3 ثوانٍ.
     } catch (e) {
+      // في حالة حدوث خطأ، يجب أن نعود من شاشة التحميل ونعرض رسالة الخطأ.
+      // هذا يتطلب الرجوع من شاشة التحميل التي تم دفعها للتو.
       Navigator.pop(context); // يرجع من شاشة التحميل
       ScaffoldMessenger.of(
         context,

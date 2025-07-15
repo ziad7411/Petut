@@ -32,8 +32,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   Future<void> _getUserLocation() async {
     LocationPermission permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever)
+
+        permission == LocationPermission.deniedForever) {
       return;
+    }
+
 
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
