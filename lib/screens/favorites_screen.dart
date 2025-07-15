@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/card_data.dart';
+import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/product_details_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -12,11 +13,12 @@ class FavoritesScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('favorites')
-        .get();
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('favorites')
+            .get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -62,7 +64,9 @@ class FavoritesScreen extends StatelessWidget {
             return Center(
               child: Text(
                 "No favorites yet.",
-                style: theme.textTheme.bodyLarge?.copyWith(color: theme.hintColor),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.hintColor,
+                ),
               ),
             );
           }
@@ -75,13 +79,43 @@ class FavoritesScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               return Cards(
                 data: favs[index],
-                favFunction: () {}, // إذا حبيت تحدث الصفحة بعد الإزالة
+                favFunction: () {},
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ProductDetailsScreen(data: favs[index]),
+                      builder:
+                          (context) => ProductDetailsScreen(data: favs[index]),
                     ),
+                  );
+                },
+                onCartTap: () {
+                  final selectedProduct = favs[index];
+
+                  final indexInCart = globalCartItems.indexWhere(
+                    (item) => item.id == selectedProduct.id,
+                  );
+
+                  if (indexInCart >= 0) {
+                    globalCartItems[indexInCart].quantity++;
+                  } else {
+                    globalCartItems.add(
+                      CardData(
+                        id: selectedProduct.id,
+                        title: selectedProduct.title,
+                        description: selectedProduct.description,
+                        image: selectedProduct.image,
+                        price: selectedProduct.price,
+                        weight: selectedProduct.weight,
+                        rate: selectedProduct.rate,
+                        isFavorite: selectedProduct.isFavorite,
+                        quantity: 1, // 👈 مهم
+                      ),
+                    );
+                  }
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Added to cart")),
                   );
                 },
               );

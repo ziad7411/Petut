@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:petut/screens/select_location_screen.dart';
 import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
@@ -221,7 +222,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'totalReviews': 0,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      Navigator.pushReplacementNamed(context, '/profile');
+      Navigator.pushReplacementNamed(context, '/goToWebPage');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -379,6 +380,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   hintText: 'Personal Phone Number',
                   controller: _phoneController,
                   prefixIcon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 11,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter your phone number';
@@ -433,6 +436,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   hintText: 'Clinic Phone Number',
                   controller: _clinicPhoneController,
                   prefixIcon: Icons.phone,
+                  keyboardType: TextInputType.phone,
+                  maxLength: 11,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter clinic phone number';
@@ -456,6 +461,19 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   hintText: 'Clinic Address',
                   controller: _clinicAddressController,
                   prefixIcon: Icons.location_on,
+                  readOnly: true,
+                  onTap: () async {
+                    final selectedAddress = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SelectLocationScreen(),
+                      ),
+                    );
+
+                    if (selectedAddress != null && selectedAddress is String) {
+                      _clinicAddressController.text = selectedAddress;
+                    }
+                  },
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter clinic address';
@@ -474,6 +492,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   hintText: 'Years of Experience',
                   controller: _experienceController,
                   prefixIcon: Icons.work,
+                  keyboardType: TextInputType.number,
+                  maxLength: 2,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter years of experience';
