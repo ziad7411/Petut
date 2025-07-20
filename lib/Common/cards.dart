@@ -7,12 +7,14 @@ class Cards extends StatefulWidget {
   final CardData data;
   final VoidCallback favFunction;
   final VoidCallback onTap;
+  final VoidCallback onCartTap;
 
   const Cards({
     super.key,
     required this.data,
     required this.favFunction,
     required this.onTap,
+    required this.onCartTap,
   });
 
   @override
@@ -41,10 +43,7 @@ class _CardsState extends State<Cards> {
           color: theme.cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: theme.dividerColor,
-              width: 1.2,
-            ),
+            side: BorderSide(color: theme.dividerColor, width: 1.2),
           ),
           margin: const EdgeInsets.all(6),
           child: Padding(
@@ -55,16 +54,23 @@ class _CardsState extends State<Cards> {
                 /// Top Row (rating and favorite)
                 Row(
                   children: [
-                    Icon(Icons.star, color: theme.colorScheme.primary, size: 16),
+                    Icon(
+                      Icons.star,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
                     const SizedBox(width: 4),
                     Text("${_card.rate}", style: const TextStyle(fontSize: 12)),
                     const Spacer(),
                     IconButton(
                       icon: Icon(
-                        _card.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: _card.isFavorite
-                            ? Colors.red
-                            : theme.iconTheme.color,
+                        _card.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
+                        color:
+                            _card.isFavorite
+                                ? Colors.red
+                                : theme.iconTheme.color,
                       ),
                       onPressed: () async {
                         final user = FirebaseAuth.instance.currentUser;
@@ -72,7 +78,9 @@ class _CardsState extends State<Cards> {
                         if (user == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text("You must login to add to favorites"),
+                              content: Text(
+                                "You must login to add to favorites",
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -173,7 +181,10 @@ class _CardsState extends State<Cards> {
                   children: [
                     if (_card.weight != 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
@@ -201,17 +212,26 @@ class _CardsState extends State<Cards> {
                 const SizedBox(height: 8),
 
                 /// Cart button
-                Container(
-                  width: double.infinity,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.shopping_cart_outlined,
-                    color: theme.colorScheme.primary,
+                    onTap: () {
+                      widget.onCartTap();
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.shopping_cart_outlined,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
                   ),
                 ),
               ],
