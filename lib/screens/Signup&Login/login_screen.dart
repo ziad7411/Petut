@@ -33,7 +33,7 @@ Future<void> _navigateBasedOnRole(String uid) async {
 
     if (role == 'Doctor') {
       Navigator.pushReplacementNamed(context, '/goToWebPage');
-    } else if (role == 'Client') {
+    } else if (role == 'Customer') {
       Navigator.pushReplacementNamed(context, '/main');
     } else {
       throw Exception('Unknown role: $role');
@@ -187,6 +187,7 @@ Future<void> _signInWithGoogle() async {
                           isPrimary: false,
                           width: double.infinity,
                           onPressed: _signInWithGoogle,
+                          fontSize: 20,
                         ),
                         const SizedBox(height: 24),
                         Row(

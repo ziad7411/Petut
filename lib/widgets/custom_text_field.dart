@@ -12,6 +12,7 @@ class CustomTextField extends StatelessWidget {
   final int? maxLength;
   final bool? readOnly;
   final VoidCallback? onTap;
+  final ValueChanged<String>? onChanged;
   
 
   const CustomTextField({
@@ -26,7 +27,8 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType,
     this.maxLength,
     this.readOnly,
-    this.onTap
+    this.onTap,
+    this.onChanged
   });
 
   @override
@@ -44,6 +46,7 @@ class CustomTextField extends StatelessWidget {
         obscureText: obscureText,
         validator: validator,
         keyboardType: keyboardType,
+        onChanged: onChanged,
         maxLength:  maxLength,
         readOnly:  readOnly ?? false,
         onTap:onTap ,

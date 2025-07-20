@@ -1,69 +1,277 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:petut/screens/payment_method_screen.dart';
+import 'package:petut/screens/select_location_screen.dart';
+import 'package:petut/widgets/custom_button.dart';
+import 'package:petut/widgets/custom_text_field.dart';
 
-class DeliveryScreen extends StatelessWidget {
-  const DeliveryScreen({super.key});
+enum DeliveryMethod { standard, express, postal }
+
+class DeliveryScreen extends StatefulWidget {
+  final double subtotal;
+
+  const DeliveryScreen({super.key, required this.subtotal});
+
+  @override
+  State<DeliveryScreen> createState() => _DeliveryScreenState();
+}
+
+class _DeliveryScreenState extends State<DeliveryScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _postalCodeController = TextEditingController();
+  final _addressController = TextEditingController();
+
+  String? governorate;
+  String? city;
+  String? street;
+
+  DeliveryMethod? selectedMethod;
+  DateTime? selectedDateTime;
+
+  double deliveryTax = 0.0;
+
+  double get total => widget.subtotal + deliveryTax;
+
+  void _calculateDeliveryFee() {
+    setState(() {
+      switch (selectedMethod) {
+        case DeliveryMethod.standard:
+          deliveryTax = 0;
+          break;
+        case DeliveryMethod.express:
+          deliveryTax = 50;
+          break;
+        case DeliveryMethod.postal:
+          deliveryTax = 20;
+          break;
+        default:
+          deliveryTax = 0;
+      }
+    });
+  }
+
+  Future<void> _pickDateTime() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+    );
+
+    if (pickedDate == null) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 12, minute: 0),
+    );
+
+    if (pickedTime == null) return;
+
+    setState(() {
+      selectedDateTime = DateTime(
+        pickedDate.year,
+        pickedDate.month,
+        pickedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+    });
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please complete all required fields')),
+      );
+      return;
+    }
+
+    if (selectedMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a delivery method')),
+      );
+      return;
+    }
+
+    if (selectedDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select delivery date and time')),
+      );
+      return;
+    }
+
+    final fullAddress =
+        "$governorate, $city, $street - ${_addressController.text.trim()}";
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentMethodScreen(
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          address: fullAddress,
+          subtotal: widget.subtotal,
+          deliveryFee: deliveryTax,
+          total: total,
+          deliveryTime: selectedDateTime!
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _postalCodeController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Delivery Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: AppBar(title: const Text('Delivery Details')),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Delivery Information",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                )),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Full Name',
-                border: const OutlineInputBorder(),
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              Text("Delivery Information",
+                  style: theme.textTheme.titleMedium),
+              const SizedBox(height: 16),
+
+              CustomTextField(
+                hintText: 'Full Name',
+                controller: _nameController,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Enter your name' : null,
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                border: const OutlineInputBorder(),
+              CustomTextField(
+                hintText: 'Phone Number',
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                validator: (v) =>
+                    v == null || v.length < 8 ? 'Enter valid phone number' : null,
               ),
-              keyboardType: TextInputType.phone,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              decoration: InputDecoration(
-                labelText: 'Address',
-                border: const OutlineInputBorder(),
+              CustomTextField(
+                hintText: 'Postal Code',
+                controller: _postalCodeController,
+                keyboardType: TextInputType.number,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Enter postal code' : null,
               ),
-              maxLines: 2,
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Handle order confirmation and saving to Firestore
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Order placed successfully!')),
+              const SizedBox(height: 10),
+
+              // Location Picker
+              InkWell(
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SelectLocationScreen(),
+                    ),
                   );
-                  Navigator.pop(context);
+
+                  if (result != null && result is Map<String, String>) {
+                    setState(() {
+                      governorate = result['governorate'];
+                      city = result['city'];
+                      street = result['street'];
+                    });
+                  }
                 },
-                child: const Text("Confirm Order"),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    governorate != null
+                        ? "$governorate - $city - $street"
+                        : "Select Address from Map",
+                  ),
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 10),
+              CustomTextField(
+                hintText: 'Street Details / House No.',
+                controller: _addressController,
+                validator: (v) => v == null || v.isEmpty
+                    ? 'Enter additional street info'
+                    : null,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text("Delivery Method", style: theme.textTheme.titleMedium),
+              ...DeliveryMethod.values.map((method) {
+                final label = method == DeliveryMethod.standard
+                    ? "Standard (5–7 days) - Free"
+                    : method == DeliveryMethod.express
+                        ? "Express (1–2 days) - 50 EGP"
+                        : "Postal Office - 20 EGP";
+
+                return RadioListTile<DeliveryMethod>(
+                  title: Text(label),
+                  value: method,
+                  groupValue: selectedMethod,
+                  onChanged: (val) {
+                    setState(() {
+                      selectedMethod = val;
+                      _calculateDeliveryFee();
+                    });
+                  },
+                );
+              }),
+
+              const SizedBox(height: 20),
+
+              Text("Preferred Delivery Time", style: theme.textTheme.titleMedium),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: _pickDateTime,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        selectedDateTime != null
+                            ? DateFormat('yyyy-MM-dd hh:mm a')
+                                .format(selectedDateTime!)
+                            : "Select delivery date & time",
+                      ),
+                      const Icon(Icons.calendar_today),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              Text("Subtotal: ${widget.subtotal.toStringAsFixed(2)} EGP"),
+              Text("Delivery: ${deliveryTax.toStringAsFixed(2)} EGP"),
+              Text("Total: ${total.toStringAsFixed(2)} EGP",
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+
+              const SizedBox(height: 20),
+              CustomButton(text: "Confirm Order", onPressed: _submit),
+            ],
+          ),
         ),
       ),
     );
