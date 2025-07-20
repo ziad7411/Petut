@@ -1,10 +1,15 @@
+import 'dart:io';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
+import 'package:petut/screens/favorites_screen.dart';
 import 'package:petut/screens/goToDoctorDashboard.dart';
+import 'package:petut/screens/my_order_screen.dart';
+import 'package:petut/screens/setting_screen.dart';
 import 'package:petut/screens/splash_screen.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/role_selection_screen.dart';
@@ -16,9 +21,12 @@ import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
 import 'package:provider/provider.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+ 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
 
   runApp(
     ChangeNotifierProvider(
@@ -52,7 +60,10 @@ class MainApp extends StatelessWidget {
         '/customer_form': (context) => const CustomerFormScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/goToWebPage': (context) => const GoToWebPage(),
-      },
+        '/myOrders': (context) => const MyOrdersScreen(),
+        '/favourites': (context) => const FavoritesScreen(),
+        '/settings':(context)=> const SettingsScreen()
+       },
     );
   }
 }

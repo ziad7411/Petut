@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/delivery_screen.dart';
+import 'package:petut/widgets/custom_button.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -56,6 +57,21 @@ class _CartScreenState extends State<CartScreen> {
       ),
       body: Column(
         children: [
+          if (globalCartItems.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Row(
+                children: [
+                  Text(
+                    "Items in Cart: ${globalCartItems.fold<int>(0, (sum, item) => sum + item.quantity)}",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: globalCartItems.isEmpty
                 ? Center(
@@ -69,25 +85,33 @@ class _CartScreenState extends State<CartScreen> {
                     itemBuilder: (context, index) {
                       final item = globalCartItems[index];
                       return Card(
-                        margin: const EdgeInsets.all(10),
+                        margin:
+                            const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                         child: Padding(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Image.network(item.image,
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  item.image,
                                   width: 80,
                                   height: 80,
-                                  fit: BoxFit.cover),
-                              const SizedBox(width: 10),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item.title,
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
+                                    Text(
+                                      item.title,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                     const SizedBox(height: 4),
                                     Text(item.description,
                                         style: theme.textTheme.bodyMedium),
@@ -103,8 +127,7 @@ class _CartScreenState extends State<CartScreen> {
                                           icon: const Icon(Icons.remove),
                                         ),
                                         Text("${item.quantity}",
-                                            style:
-                                                theme.textTheme.bodyMedium),
+                                            style: theme.textTheme.bodyMedium),
                                         IconButton(
                                           onPressed: () => increaseQty(index),
                                           icon: const Icon(Icons.add),
@@ -121,10 +144,12 @@ class _CartScreenState extends State<CartScreen> {
                                     icon: const Icon(Icons.delete,
                                         color: Colors.red),
                                   ),
-                                  Text("${item.price * item.quantity} EGP",
-                                      style: theme.textTheme.bodyMedium
-                                          ?.copyWith(
-                                              fontWeight: FontWeight.bold)),
+                                  Text(
+                                    "${item.price * item.quantity} EGP",
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -134,40 +159,43 @@ class _CartScreenState extends State<CartScreen> {
                     },
                   ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                Text(
-                  "Total: ${totalPrice.toStringAsFixed(2)} EGP",
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+          if (globalCartItems.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Text(
+                    "Total: ${totalPrice.toStringAsFixed(2)} EGP",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user == null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const LoginScreen()),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const DeliveryScreen()),
-                      );
-                    }
-                  },
-                  child: const Text("Proceed to Delivery"),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  CustomButton(
+                    text: "Proceed to Delivery",
+                    onPressed: () {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user == null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DeliveryScreen( subtotal: totalPrice,),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
-          )
         ],
       ),
     );
