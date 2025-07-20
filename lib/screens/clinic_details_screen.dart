@@ -134,7 +134,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                         // اتصال
                       },
                       icon: const Icon(Icons.call),
-                      label: const Text("اتصال"),
+                      label: const Text("Call"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey.shade300,
                         foregroundColor: Colors.black,
@@ -160,7 +160,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                             }
                           : null,
                       icon: const Icon(Icons.calendar_today),
-                      label: const Text("احجز الآن"),
+                      label: const Text("Book Appointment"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.gold,
                         foregroundColor: Colors.white,
