@@ -74,13 +74,17 @@ class CustomButton extends StatelessWidget {
         ),
         child:
             icon != null
-                ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
+                ? Stack(
+                  alignment: Alignment.center,
                   children: [
-                    icon!,
-                    if (iconSpacing > 0) SizedBox(width: iconSpacing),
-                    Flexible(
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: iconSpacing),
+                        child: icon,
+                      ),
+                    ),
+                    Center(
                       child: Text(
                         text,
                         style: TextStyle(

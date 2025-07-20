@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:petut/screens/my_order_screen.dart';
 import 'home_screen.dart';
 import 'services_screen.dart';
 import 'health_screen.dart';
@@ -17,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const ServicesScreen(),
+    const MyOrdersScreen(),
     const HealthScreen(),
     const FavoritesScreen(),
     const ProfileScreen(),
@@ -25,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<BottomNavigationBarItem> _navBarItems = [
     const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-    const BottomNavigationBarItem(icon: Icon(Icons.build), label: 'Services'),
+    const BottomNavigationBarItem(icon: Icon(Icons.build), label: 'myOrders'),
     const BottomNavigationBarItem(icon: Icon(Icons.health_and_safety), label: 'Health'),
     const BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorite'),
     const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
