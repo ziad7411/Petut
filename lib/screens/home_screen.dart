@@ -9,6 +9,7 @@ import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/cart_screen.dart';
 import 'package:petut/screens/product_details_screen.dart';
 import 'package:petut/screens/search_screen.dart';
+import 'package:petut/screens/side_draw.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:provider/provider.dart';
 
@@ -79,60 +80,67 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: SideDraw(),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Home',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).textTheme.bodyMedium!.color,
+    appBar: AppBar(
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+  elevation: 0,
+  automaticallyImplyLeading: false,
+  title: Row(
+    children: [
+      Builder(
+        builder: (context) => IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: Theme.of(context).iconTheme.color ?? Colors.grey,
           ),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
         ),
-        actions: [
-          iconContainer(
-            Icons.search,
-            Theme.of(context).iconTheme.color ?? Colors.grey,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SearchScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          iconContainer(
-            Icons.shopping_cart_outlined,
-            Theme.of(context).colorScheme.primary,
-            badgeCount: globalCartItems.fold(
-              0,
-              (sum, item) => sum + item.quantity,
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CartScreen()),
-              ).then((_) => setState(() {})); 
-            },
-          ),
-
-          const SizedBox(width: 8),
-          iconContainer(
-            Icons.brightness_6,
-            Theme.of(context).iconTheme.color ?? Colors.grey,
-            onTap: () {
-              Provider.of<ThemeController>(
-                context,
-                listen: false,
-              ).toggleTheme();
-            },
-          ),
-          const SizedBox(width: 12),
-        ],
       ),
+      const SizedBox(width: 8),
+      Text(
+        'Home',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).textTheme.bodyMedium!.color,
+        ),
+      ),
+    ],
+  ),
+  actions: [
+    iconContainer(
+      Icons.search,
+      Theme.of(context).iconTheme.color ?? Colors.grey,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SearchScreen()),
+        );
+      },
+    ),
+    const SizedBox(width: 8),
+    iconContainer(
+      Icons.shopping_cart_outlined,
+      Theme.of(context).colorScheme.primary,
+      badgeCount: globalCartItems.fold(
+        0,
+        (sum, item) => sum + item.quantity,
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const CartScreen()),
+        ).then((_) => setState(() {}));
+      },
+    ),
+   
+    const SizedBox(width: 12),
+  ],
+),
+
       body: Column(
         children: [
           SingleChildScrollView(
