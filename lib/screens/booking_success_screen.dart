@@ -20,7 +20,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   void initState() {
     super.initState();
 
-    // Icon Animation
     _iconController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -31,7 +30,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
     _iconController.forward();
 
-    // Show text after short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
@@ -61,8 +59,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = AppColors.getBackgroundColor(context);
+    final primaryTextColor = AppColors.getTextPrimaryColor(context);
+    final secondaryTextColor = AppColors.getTextSecondaryColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -79,12 +81,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                 AnimatedOpacity(
                   opacity: showText ? 1 : 0,
                   duration: const Duration(milliseconds: 600),
-                  child: const Text(
+                  child: Text(
                     "Appointment Confirmed!",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.dark,
+                      color: primaryTextColor,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -93,9 +95,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                 AnimatedOpacity(
                   opacity: showText ? 1 : 0,
                   duration: const Duration(milliseconds: 800),
-                  child: const Text(
+                  child: Text(
                     "Your appointment has been booked successfully.\nReturning to home...",
-                    style: TextStyle(fontSize: 16, color: AppColors.gray),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: secondaryTextColor,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
