@@ -26,7 +26,10 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   final List<BottomNavigationBarItem> _navBarItems = [
-   
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.user),
+      label: 'Profile',
+    ),
     BottomNavigationBarItem(
       icon: FaIcon(FontAwesomeIcons.receipt),
       label: 'My Orders',
@@ -43,10 +46,7 @@ class _MainScreenState extends State<MainScreen> {
       icon: FaIcon(FontAwesomeIcons.solidHeart),
       label: 'Favorite',
     ),
-    BottomNavigationBarItem(
-      icon: FaIcon(FontAwesomeIcons.user),
-      label: 'Profile',
-    ),
+   
   ];
 
   void _onItemTapped(int index) {
