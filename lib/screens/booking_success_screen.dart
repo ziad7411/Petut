@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 import './main_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
@@ -15,6 +14,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   late AnimationController _iconController;
   late Animation<double> _iconAnimation;
   bool showText = false;
+  late Timer _navigationTimer;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
     // FIX: Navigate to MainScreen and clear all previous routes.
     // This ensures the BottomNavigationBar is always present.
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -56,13 +56,15 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   @override
   void dispose() {
     _iconController.dispose();
+    _navigationTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -79,12 +81,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                 AnimatedOpacity(
                   opacity: showText ? 1 : 0,
                   duration: const Duration(milliseconds: 600),
-                  child: const Text(
+                  child: Text(
                     "Appointment Confirmed!",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.dark,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -93,9 +95,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                 AnimatedOpacity(
                   opacity: showText ? 1 : 0,
                   duration: const Duration(milliseconds: 800),
-                  child: const Text(
+                  child: Text(
                     "Your appointment has been booked successfully.\nReturning to home...",
-                    style: TextStyle(fontSize: 16, color: AppColors.gray),
+                    style: TextStyle(fontSize: 16, color: theme.hintColor),
                     textAlign: TextAlign.center,
                   ),
                 ),

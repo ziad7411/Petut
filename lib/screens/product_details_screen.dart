@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:petut/Data/card_data.dart';
+import 'package:petut/Data/globelCartItem.dart';
+import 'package:petut/screens/cart_screen.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final CardData data;
@@ -13,17 +15,52 @@ class ProductDetailsScreen extends StatefulWidget {
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int quantity = 1;
 
+  void _addToCart() {
+    final index = globalCartItems.indexWhere((item) => item.id == widget.data.id);
+    if (index != -1) {
+      // If item exists, just increase quantity
+      globalCartItems[index].quantity += quantity;
+    } else {
+      // Otherwise, add new item
+      globalCartItems.add(
+        CardData(
+          id: widget.data.id,
+          rate: widget.data.rate,
+          image: widget.data.image,
+          title: widget.data.title,
+          description: widget.data.description,
+          weight: widget.data.weight,
+          price: widget.data.price,
+          isFavorite: widget.data.isFavorite,
+          quantity: quantity,
+        ),
+      );
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Added to cart!")),
+    );
+  }
+
+  void _buyNow() {
+    _addToCart();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CartScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    double totalPrice = (widget.data.price * quantity) as double;
+    // --- FIX: Corrected the type casting error here ---
+    double totalPrice = (widget.data.price * quantity).toDouble();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        iconTheme: IconThemeData(color: theme.iconTheme.color),
+        iconTheme: theme.iconTheme,
         title: Text(
           widget.data.title,
           style: TextStyle(color: theme.textTheme.bodyLarge?.color),
@@ -50,11 +87,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.star, color: Colors.orange, size: 20),
+                Icon(Icons.star, color: theme.colorScheme.primary, size: 20),
                 const SizedBox(width: 4),
                 Text('${widget.data.rate}', style: theme.textTheme.bodyMedium),
                 const Spacer(),
-                Text("In stock", style: TextStyle(color: Colors.green)),
+                const Text("In stock", style: TextStyle(color: Colors.green)),
               ],
             ),
             const SizedBox(height: 12),
@@ -99,12 +136,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Add to Cart Logic
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.secondaryContainer,
+                  child: OutlinedButton(
+                    onPressed: _addToCart,
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      side: BorderSide(color: theme.colorScheme.primary),
+                      foregroundColor: theme.colorScheme.primary,
                     ),
                     child: const Text('Add to Cart'),
                   ),
@@ -112,11 +149,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      // Buy Now Logic
-                    },
+                    onPressed: _buyNow,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
+                      minimumSize: const Size.fromHeight(50),
                     ),
                     child: const Text('Buy Now'),
                   ),

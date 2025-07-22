@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:petut/screens/booking_loading_screen.dart';
 import '../models/Clinic.dart';
-import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 
 // Enum to manage payment method state
@@ -140,14 +139,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         title: const Text('Confirm appointment', style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
-        foregroundColor: AppColors.dark,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -194,7 +194,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: AppColors.gold, size: 18),
+                            Icon(Icons.star, color: theme.colorScheme.primary, size: 18),
                             const SizedBox(width: 4),
                             Text("${widget.clinic.rating}/5"),
                           ],
@@ -209,11 +209,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade100,
+                  color: theme.colorScheme.surface,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.event, color: AppColors.gold),
+                    Icon(Icons.event, color: theme.colorScheme.primary),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -241,7 +241,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text("Payment method", style: TextStyle(fontWeight: FontWeight.bold)),
-                  TextButton(onPressed: _changePaymentMethod, child: const Text("CHANGE")),
+                  TextButton(
+                      onPressed: _changePaymentMethod,
+                      child: const Text("CHANGE"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.primary,
+                      ),
+                  ),
                 ],
               ),
               // Display the text of the selected payment method
