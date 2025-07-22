@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -32,28 +33,22 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     Color backgroundColor;
     Color textColor;
     Color? borderColor;
 
-    // -- تعديل: تحديد الألوان بناءً على الثيم --
     if (customColor != null) {
       backgroundColor = customColor!;
-      textColor =
-          ThemeData.estimateBrightnessForColor(backgroundColor) ==
-                  Brightness.dark
-              ? Colors.white
-              : Colors.black;
+      textColor = AppColors.background;
       borderColor = null;
     } else if (isPrimary) {
-      backgroundColor = theme.colorScheme.primary;
-      textColor = theme.colorScheme.onPrimary;
+      backgroundColor = AppColors.gold;
+      textColor = AppColors.background;
       borderColor = null;
     } else {
-      backgroundColor = theme.colorScheme.surface;
-      textColor = theme.colorScheme.primary;
-      borderColor = theme.colorScheme.primary;
+      backgroundColor = AppColors.background;
+      textColor = AppColors.gold;
+      borderColor = AppColors.gold;
     }
 
     return SizedBox(
@@ -67,9 +62,7 @@ class CustomButton extends StatelessWidget {
           padding: padding,
           elevation: isPrimary ? 4 : 0,
           shadowColor:
-              isPrimary
-                  ? theme.colorScheme.primary.withOpacity(0.3)
-                  : Colors.transparent,
+              isPrimary ? AppColors.gold.withOpacity(0.3) : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
             side:

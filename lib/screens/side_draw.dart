@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
+import '../app_colors.dart';
 
 class SideDraw extends StatefulWidget {
   const SideDraw({super.key});
@@ -15,7 +16,7 @@ class SideDraw extends StatefulWidget {
 
 class _SideDrawState extends State<SideDraw> {
   String? name;
-  String? imageData;
+  String? imageData; // ممكن تكون URL أو Base64
 
   @override
   void initState() {
@@ -31,7 +32,7 @@ class _SideDrawState extends State<SideDraw> {
               .collection('users')
               .doc(user.uid)
               .get();
-      if (mounted && doc.exists) {
+      if (doc.exists) {
         final data = doc.data();
         setState(() {
           name = data?['name'] ?? 'Guest';
@@ -41,21 +42,42 @@ class _SideDrawState extends State<SideDraw> {
     }
   }
 
-  Widget _buildProfileImage(ThemeData theme) {
+  Widget _buildProfileImage() {
     if (imageData == null || imageData!.isEmpty) {
-      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
+      return Icon(Icons.person, color: AppColors.gold, size: 40);
     }
 
-    try {
-      final imageBytes = base64Decode(imageData!);
-      return Image.memory(
-        imageBytes,
+    // Check if it's a URL (simple check)
+    final isUrl = imageData!.startsWith('http');
+
+    if (isUrl) {
+      return Image.network(
+        imageData!,
         fit: BoxFit.cover,
         width: 60,
         height: 60,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, color: AppColors.gold, size: 40);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.gold),
+          );
+        },
       );
-    } catch (e) {
-      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
+    } else {
+      try {
+        final imageBytes = base64Decode(imageData!);
+        return Image.memory(
+          imageBytes,
+          fit: BoxFit.cover,
+          width: 60,
+          height: 60,
+        );
+      } catch (e) {
+        return Icon(Icons.person, color: AppColors.gold, size: 40);
+      }
     }
   }
 
@@ -63,29 +85,28 @@ class _SideDrawState extends State<SideDraw> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final themeProvider = Provider.of<ThemeController>(context);
-    final theme = Theme.of(context);
 
     return Drawer(
       child: Container(
-        color: theme.scaffoldBackgroundColor,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: theme.colorScheme.primary),
+              decoration: BoxDecoration(color: AppColors.gold.withOpacity(0.9)),
               accountName: Text(
                 user != null ? (name ?? 'Loading...') : "Guest",
                 style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
+                  color: AppColors.background,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               accountEmail: Text(
                 user?.email ?? "Please login to continue",
-                style: TextStyle(color: theme.colorScheme.onPrimary.withOpacity(0.9)),
+                style: TextStyle(color: AppColors.background.withOpacity(0.9)),
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: theme.scaffoldBackgroundColor,
-                child: ClipOval(child: _buildProfileImage(theme)),
+                backgroundColor: AppColors.background,
+                child: ClipOval(child: _buildProfileImage()),
               ),
             ),
 
@@ -117,47 +138,50 @@ class _SideDrawState extends State<SideDraw> {
                       ),
                     ),
                   ] else ...[
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     ListTile(
-                      leading: Icon(Icons.person, color: theme.colorScheme.primary),
-                      title: const Text("Profile"),
+                      leading: Icon(Icons.person, color: AppColors.gold),
+                      title: Text("Profile"),
                       onTap: () {
                         Navigator.pushNamed(context, '/profile');
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     ListTile(
-                      leading: Icon(Icons.history, color: theme.colorScheme.primary),
-                      title: const Text("History"),
+                      leading: Icon(Icons.history, color: AppColors.gold),
+                      title: Text("History"),
                       onTap: () {
                         Navigator.pushNamed(context, '/myOrders');
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
+
                     ListTile(
-                      leading: Icon(Icons.favorite, color: theme.colorScheme.primary),
-                      title: const Text("Favorites"),
+                      leading: Icon(Icons.favorite, color: AppColors.gold),
+                      title: Text("Favorites"),
                       onTap: () {
                         Navigator.pushNamed(context, '/favorites');
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
+
                     ListTile(
-                      leading: Icon(Icons.settings, color: theme.colorScheme.primary),
-                      title: const Text("Settings"),
+                      leading: Icon(Icons.settings, color: AppColors.gold),
+                      title: Text("Settings"),
                       onTap: () {
                         Navigator.pushNamed(context, '/settings');
                       },
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
+
                     ListTile(
-                      leading: Icon(Icons.logout, color: theme.colorScheme.error),
-                      title: const Text("Logout"),
+                      leading: Icon(Icons.logout, color: Colors.redAccent),
+                      title: Text("Logout"),
                       onTap: () async {
                         await FirebaseAuth.instance.signOut();
                         Navigator.pushNamedAndRemoveUntil(
                           context,
-                          '/start',
+                          '/signup',
                           (route) => false,
                         );
                       },
@@ -175,10 +199,10 @@ class _SideDrawState extends State<SideDraw> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Dark Mode', style: TextStyle(fontSize: 16)),
+                  Text('Dark Mode', style: TextStyle(fontSize: 16)),
                   Switch(
                     value: themeProvider.isDark,
-                    activeColor: theme.colorScheme.primary,
+                    activeColor: AppColors.gold,
                     onChanged: (value) {
                       themeProvider.toggleTheme();
                     },

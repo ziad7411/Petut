@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/payment_screen.dart';
-import 'package:petut/widgets/custom_button.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final String name;
@@ -14,7 +13,7 @@ class PaymentMethodScreen extends StatefulWidget {
   final double subtotal;
   final double deliveryFee;
   final double total;
-  final DateTime deliveryTime;
+  final DateTime deliveryTime; // ✅ أضف وقت التوصيل
 
   const PaymentMethodScreen({
     super.key,
@@ -24,7 +23,7 @@ class PaymentMethodScreen extends StatefulWidget {
     required this.subtotal,
     required this.deliveryFee,
     required this.total,
-    required this.deliveryTime,
+    required this.deliveryTime, // ✅ أضف هنا
   });
 
   @override
@@ -43,7 +42,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         'name': widget.name,
         'phone': widget.phone,
         'address': widget.address,
-        'deliveryTime': DateFormat('yyyy-MM-dd HH:mm').format(widget.deliveryTime),
+        'deliveryTime': DateFormat('yyyy-MM-dd HH:mm').format(widget.deliveryTime), // ✅ احفظ الوقت هنا
       },
       'paymentInfo': {
         'subtotal': widget.subtotal,
@@ -62,12 +61,24 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
     final orderId = FirebaseFirestore.instance.collection('orders').doc().id;
 
+    // 1. سجل الأوردر في orders/{userId}/userOrders/{orderId}
+    await FirebaseFirestore.instance
+        .collection('orders')
+        .doc(user.uid)
+        .collection('userOrders')
+        .doc(orderId)
+        .set(orderData);
+
+    // 2. سجل الأوردر كمان في users/{userId}/orders/{orderId}
     await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .collection('orders')
         .doc(orderId)
         .set(orderData);
+
+    // 3. امسح محتوى السلة
+    globalCartItems.clear();
   }
 
   void _goToPayment() async {
@@ -78,7 +89,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       return;
     }
 
-    String method = (selectedIntegrationId == 5189805) ? 'cash' : 'card';
+    String method = '';
+    if (selectedIntegrationId == 5189805) {
+      method = 'cash';
+    } else if (selectedIntegrationId == 5189728) {
+      method = 'card';
+    }
 
     await saveOrderToFirestore(method);
 
@@ -86,7 +102,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("You will pay with Cash on Delivery.")),
       );
-      globalCartItems.clear();
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainScreen()),
         (route) => false,
@@ -105,8 +121,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           integrationId: selectedIntegrationId!,
           address: widget.address,
           paymentMethod: method,
-          subtotal: widget.subtotal,
           deliveryFee: widget.deliveryFee,
+          subtotal: widget.subtotal,
           total: widget.total,
           products: globalCartItems,
         ),
@@ -116,43 +132,28 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text("Select Payment Method"),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text("Select Payment Method")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Choose your payment method", style: theme.textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Card(
-              child: RadioListTile<int>(
-                value: 5189805,
-                groupValue: selectedIntegrationId,
-                onChanged: (value) => setState(() => selectedIntegrationId = value),
-                title: const Text("💵 Cash on Delivery"),
-              ),
+            RadioListTile<int>(
+              value: 5189805,
+              groupValue: selectedIntegrationId,
+              onChanged: (value) => setState(() => selectedIntegrationId = value),
+              title: const Text("💵 Cash"),
             ),
-            Card(
-              child: RadioListTile<int>(
-                value: 5189728,
-                groupValue: selectedIntegrationId,
-                onChanged: (value) => setState(() => selectedIntegrationId = value),
-                title: const Text("💳 Visa / Mastercard"),
-              ),
+            RadioListTile<int>(
+              value: 5189728,
+              groupValue: selectedIntegrationId,
+              onChanged: (value) => setState(() => selectedIntegrationId = value),
+              title: const Text("💳 Visa / Mastercard"),
             ),
             const Spacer(),
-            CustomButton(
-              text: "Proceed to Pay",
+            ElevatedButton(
               onPressed: _goToPayment,
-              width: double.infinity,
+              child: const Text("Proceed to Pay"),
             ),
           ],
         ),

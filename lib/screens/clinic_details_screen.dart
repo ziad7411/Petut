@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// NEW: Import Firebase Auth to check login status
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/Clinic.dart';
-import './booking_confirmation_screen.dart';
+import '../app_colors.dart';
+import './booking_confirmation_screen.dart'; 
 import 'package:intl/intl.dart';
-import './Signup&Login/login_screen.dart';
+// NEW: Import your login screen. Make sure the path is correct.
+import './Signup&Login/login_screen.dart'; // Make sure you have a LoginScreen
 
 class ClinicDetailsScreen extends StatefulWidget {
   final Clinic clinic;
@@ -53,7 +56,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
       DateTime slotTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day, startParts[0], startParts[1]);
       final endTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day, endParts[0], endParts[1]);
-
+      
       while(slotTime.isBefore(endTime)) {
         allTimeSlots.add(DateFormat.jm().format(slotTime));
         slotTime = slotTime.add(const Duration(minutes: 30));
@@ -93,7 +96,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate ?? now,
+      initialDate: now,
       firstDate: now,
       lastDate: now.add(const Duration(days: 30)),
     );
@@ -123,15 +126,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final clinic = widget.clinic;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(clinic.name),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.dark,
         elevation: 0,
       ),
       body: Padding(
@@ -185,13 +187,17 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: selectedDate != null && selectedTime != null
                           ? () {
+                              // FIX: Check if user is logged in before proceeding.
                               final user = FirebaseAuth.instance.currentUser;
+
                               if (user == null) {
+                                // If user is not logged in, navigate to LoginScreen.
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                                 );
                               } else {
+                                // If user is logged in, proceed to booking confirmation.
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -209,7 +215,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       icon: const Icon(Icons.calendar_today),
                       label: const Text("Book Appointment"),
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.gold,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        disabledBackgroundColor: Colors.grey,
                       ),
                     ),
                   ),
@@ -223,29 +232,26 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   }
 
   Widget _buildAvailableTimesWidget() {
-    final theme = Theme.of(context);
     if (selectedDate == null) {
       return Container(
         padding: const EdgeInsets.all(12),
-        width: double.infinity,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
-        child: Text('Please pick a date to see available times.', style: TextStyle(color: theme.hintColor)),
+        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+        child: Text('Please pick a date to see available times.', style: TextStyle(color: Colors.grey.shade700)),
       );
     }
     if (_isLoadingTimes) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_errorLoadingTimes != null) {
-      return Center(child: Text(_errorLoadingTimes!, style: TextStyle(color: theme.colorScheme.error)));
+      return Center(child: Text(_errorLoadingTimes!, style: const TextStyle(color: Colors.red)));
     }
     if (_availableTimes.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(12),
-        width: double.infinity,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
-        child: Text('No available appointments for this day.', style: TextStyle(color: theme.hintColor)),
+        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+        child: Text('No available appointments for this day.', style: TextStyle(color: Colors.grey.shade700)),
       );
     }
 
@@ -260,9 +266,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           onSelected: (selected) {
             setState(() => selectedTime = time);
           },
-          selectedColor: theme.colorScheme.primary,
-          backgroundColor: theme.colorScheme.surface,
-          labelStyle: TextStyle(color: isSelected ? theme.colorScheme.onPrimary : theme.textTheme.bodyLarge?.color),
+          selectedColor: AppColors.gold,
+          labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
         );
       }).toList(),
     );
@@ -273,7 +278,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Theme.of(context).hintColor),
+          Icon(icon, size: 20, color: AppColors.gray),
           const SizedBox(width: 8),
           Expanded(child: Text(text)),
         ],

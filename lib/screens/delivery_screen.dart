@@ -58,14 +58,14 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 30)),
-      initialDate: selectedDateTime ?? DateTime.now().add(const Duration(days: 1)),
+      initialDate: DateTime.now().add(const Duration(days: 1)),
     );
 
     if (pickedDate == null) return;
 
     final pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(selectedDateTime ?? DateTime.now()),
+      initialTime: const TimeOfDay(hour: 12, minute: 0),
     );
 
     if (pickedTime == null) return;
@@ -188,19 +188,15 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: theme.dividerColor),
-                    borderRadius: BorderRadius.circular(12),
-                    color: theme.colorScheme.surface
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     governorate != null
                         ? "$governorate - $city - $street"
                         : "Select Address from Map",
-                    style: TextStyle(
-                      color: governorate != null ? theme.textTheme.bodyLarge?.color : theme.hintColor,
-                    ),
                   ),
                 ),
               ),
@@ -247,9 +243,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: theme.dividerColor),
-                    borderRadius: BorderRadius.circular(12),
-                    color: theme.colorScheme.surface,
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -259,9 +254,6 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                             ? DateFormat('yyyy-MM-dd hh:mm a')
                                 .format(selectedDateTime!)
                             : "Select delivery date & time",
-                        style: TextStyle(
-                           color: selectedDateTime != null ? theme.textTheme.bodyLarge?.color : theme.hintColor,
-                        ),
                       ),
                       const Icon(Icons.calendar_today),
                     ],
