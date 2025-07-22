@@ -1,37 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:petut/app_colors.dart';
 
+
 final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: AppColors.darkBackground,
+  scaffoldBackgroundColor: AppColors.darkGrayBackground,
   appBarTheme: const AppBarTheme(
-    backgroundColor: AppColors.darkBackground,
-    foregroundColor: AppColors.darkTextPrimary,
-    elevation: 0,
+    backgroundColor: AppColors.darkGrayBackground,
+    foregroundColor: Colors.white,
   ),
   textTheme: const TextTheme(
-    bodyMedium: TextStyle(color: AppColors.darkTextPrimary),
+    bodyMedium: TextStyle(color: AppColors.darkText),
   ),
-  iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
+  iconTheme: const IconThemeData(color: Colors.white),
   colorScheme: const ColorScheme.dark(
-    primary: AppColors.darkPrimary,
-    secondary: AppColors.darkSecondary,
-    error: Colors.red,
-    background: AppColors.darkBackground,
-    surface: AppColors.darkSurface,
-    onPrimary: Colors.black,
-    onSecondary: Colors.white,
-    onBackground: AppColors.darkTextPrimary,
-    onSurface: AppColors.darkTextSecondary,
-    onError: Colors.black,
+    primary: AppColors.yellow,
+    secondary: AppColors.darkGold,
+    error: AppColors.error,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.darkAccent,
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.goldDark,
+      foregroundColor: Colors.black,
     ),
   ),
-);              
-
-
-  
+);

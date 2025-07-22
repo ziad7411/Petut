@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/screens/select_location_screen.dart';
 import 'package:intl/intl.dart';
+import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -74,13 +75,25 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
   }
 
-  // -- تعديل: إزالة الـ builder من منتقي الوقت ليعتمد على ثيم التطبيق --
   Future<void> _selectTime(bool isStartTime) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: isStartTime
           ? (_startTime ?? const TimeOfDay(hour: 9, minute: 0))
           : (_endTime ?? const TimeOfDay(hour: 18, minute: 0)),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.gold,
+              onPrimary: AppColors.background,
+              surface: AppColors.background,
+              onSurface: AppColors.dark,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
@@ -144,6 +157,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (_instagramController.text.trim().isNotEmpty) socialMedia['instagram'] = _instagramController.text.trim();
       if (_twitterController.text.trim().isNotEmpty) socialMedia['twitter'] = _twitterController.text.trim();
       if (_linkedinController.text.trim().isNotEmpty) socialMedia['linkedin'] = _linkedinController.text.trim();
+
+      // EDIT: Removed the pre-generation of all time slots.
+      // We will now only save the start and end times.
       
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'role': 'Doctor',
@@ -155,8 +171,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'experience': _experienceController.text.trim(),
         'workingHours': _workingHoursController.text.trim(),
         'workingDays': _selectedDays,
+        // EDIT: Save start and end time in a consistent format (e.g., 'HH:mm')
         'startTime': _startTime != null ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}' : null,
         'endTime': _endTime != null ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}' : null,
+        // EDIT: Removed 'availableHours' field.
         'description': _descriptionController.text.trim(),
         'socialMedia': socialMedia,
         'profileImage': profileBase64,
@@ -197,26 +215,23 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // -- تعديل: استخدام متغير الثيم لجميع الألوان في الواجهة --
-    final theme = Theme.of(context);
-
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: AppColors.getBackgroundColor(context),
         elevation: 0,
-        foregroundColor: theme.appBarTheme.foregroundColor,
+        foregroundColor: AppColors.getTextColor(context),
         title: Text(
           'Doctor Registration',
           style: TextStyle(
-            color: theme.textTheme.titleLarge?.color,
+            color: AppColors.getTextColor(context),
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: theme.colorScheme.primary,
+            color: AppColors.getPrimaryColor(context),
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -233,7 +248,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -241,7 +256,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   'Please provide your professional information',
                   style: TextStyle(
                     fontSize: 14,
-                    color: theme.hintColor,
+                    color: AppColors.getSecondaryTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -252,10 +267,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
+                        color: AppColors.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(60),
                         border: Border.all(
-                          color: theme.colorScheme.primary,
+                          color: AppColors.getPrimaryColor(context),
                           width: 3,
                         ),
                       ),
@@ -267,7 +282,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                           : Icon(
                               Icons.person,
                               size: 50,
-                              color: theme.hintColor,
+                              color: AppColors.getSecondaryTextColor(context),
                             ),
                     ),
                   ),
@@ -277,7 +292,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   child: Text(
                     'Tap to add photo',
                     style: TextStyle(
-                      color: theme.hintColor,
+                      color: AppColors.getSecondaryTextColor(context),
                       fontSize: 12,
                     ),
                   ),
@@ -288,7 +303,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -324,7 +339,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -395,7 +410,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: theme.textTheme.bodyLarge?.color,
+                      color: AppColors.getTextColor(context),
                     ),
                   ),
                 ),
@@ -407,19 +422,19 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
+                            color: AppColors.getSurfaceColor(context),
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.access_time, color: theme.hintColor),
+                              Icon(Icons.access_time, color: AppColors.getSecondaryTextColor(context)),
                               const SizedBox(width: 12),
                               Text(
                                 _startTime?.format(context) ?? 'Start Time',
                                 style: TextStyle(
                                   color: _startTime != null
-                                      ? theme.textTheme.bodyLarge?.color
-                                      : theme.hintColor,
+                                      ? AppColors.getTextColor(context)
+                                      : AppColors.getSecondaryTextColor(context),
                                   fontSize: 16,
                                 ),
                               ),
@@ -435,19 +450,19 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surface,
+                            color: AppColors.getSurfaceColor(context),
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.access_time, color: theme.hintColor),
+                              Icon(Icons.access_time, color: AppColors.getSecondaryTextColor(context)),
                               const SizedBox(width: 12),
                               Text(
                                 _endTime?.format(context) ?? 'End Time',
                                 style: TextStyle(
                                   color: _endTime != null
-                                      ? theme.textTheme.bodyLarge?.color
-                                      : theme.hintColor,
+                                      ? AppColors.getTextColor(context)
+                                      : AppColors.getSecondaryTextColor(context),
                                   fontSize: 16,
                                 ),
                               ),
@@ -464,13 +479,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
                 ..._daysOfWeek.map((day) {
                   return CheckboxListTile(
-                    title: Text(day, style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                    title: Text(day, style: TextStyle(color: AppColors.getTextColor(context))),
                     value: _selectedDays.contains(day),
                     onChanged: (bool? selected) {
                       setState(() {
@@ -481,10 +496,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                         }
                       });
                     },
-                    activeColor: theme.colorScheme.primary,
-                    checkColor: theme.colorScheme.onPrimary,
+                    activeColor: AppColors.getPrimaryColor(context),
+                    checkColor: AppColors.getBackgroundColor(context),
                     controlAffinity: ListTileControlAffinity.leading,
-                    tileColor: theme.colorScheme.surface,
+                    tileColor: AppColors.getSurfaceColor(context),
                   );
                 }).toList(),
                 const SizedBox(height: 16),
@@ -506,7 +521,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -514,7 +529,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   'Add your social media profiles to help clients find you',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.hintColor,
+                    color: AppColors.getSecondaryTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -528,7 +543,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: theme.textTheme.bodyLarge?.color,
+                    color: AppColors.getTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -536,7 +551,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   'Please upload your professional documents for verification',
                   style: TextStyle(
                     fontSize: 12,
-                    color: theme.hintColor,
+                    color: AppColors.getSecondaryTextColor(context),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -549,18 +564,18 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    color: AppColors.getPrimaryColor(context).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                    border: Border.all(color: AppColors.getPrimaryColor(context).withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 20),
+                      Icon(Icons.info_outline, color: AppColors.getPrimaryColor(context), size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Your information will be reviewed and verified within 24-48 hours. You will be notified once approved.',
-                          style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color),
+                          style: TextStyle(fontSize: 12, color: AppColors.getTextColor(context)),
                         ),
                       ),
                     ],
@@ -585,7 +600,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   }
 
   Widget _buildImagePicker(String type, String label) {
-    final theme = Theme.of(context);
     File? imageFile;
     switch (type) {
       case 'cardFront':
@@ -604,9 +618,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       child: Container(
         height: 120,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+          color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.colorScheme.primary, width: 2),
+          border: Border.all(color: AppColors.getPrimaryColor(context), width: 2),
         ),
         child: imageFile != null
             ? ClipRRect(
@@ -617,9 +631,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.upload_file, color: theme.hintColor, size: 32),
+                    Icon(Icons.upload_file, color: AppColors.getSecondaryTextColor(context), size: 32),
                     const SizedBox(height: 8),
-                    Text(label, style: TextStyle(color: theme.hintColor)),
+                    Text(label, style: TextStyle(color: AppColors.getSecondaryTextColor(context))),
                   ],
                 ),
               ),

@@ -6,7 +6,7 @@ class HealthScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // This screen simply displays the ClinicsScreen, which is already theme-aware.
-    return const ClinicsScreen();
+  return ClinicsScreen();
+ 
   }
 }

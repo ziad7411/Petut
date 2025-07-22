@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:petut/theme/theme_controller.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:petut/app_colors.dart';
+
 
 class SettingsScreen extends StatelessWidget {
   final String? userName;
@@ -18,27 +17,24 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final themeProvider = Provider.of<ThemeController>(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: theme.appBarTheme.backgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
-        elevation: 0,
+        backgroundColor: AppColors.gold,
+        foregroundColor: AppColors.background,
       ),
       body: Column(
         children: [
           UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: theme.colorScheme.primary),
-            accountName: Text(userName ?? '', style: TextStyle(color: theme.colorScheme.onPrimary)),
-            accountEmail: Text(email ?? '', style: TextStyle(color: theme.colorScheme.onPrimary.withOpacity(0.8))),
+            decoration: const BoxDecoration(color: AppColors.gold),
+            accountName: Text(userName ?? ''),
+            accountEmail: Text(email ?? ''),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: theme.scaffoldBackgroundColor,
+              backgroundColor: AppColors.background,
               backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
               child: imageUrl == null
-                  ? Icon(Icons.person, color: theme.colorScheme.primary, size: 40)
+                  ? Icon(Icons.person, color: AppColors.gold, size: 40)
                   : null,
             ),
           ),
@@ -53,11 +49,10 @@ class SettingsScreen extends StatelessWidget {
             leading: const Icon(Icons.dark_mode),
             title: const Text('Dark Mode'),
             trailing: Switch(
-              value: themeProvider.isDark,
+              value: theme.brightness == Brightness.dark,
               onChanged: (val) {
-                themeProvider.toggleTheme();
+                // TODO: Implement theme toggle with Provider or Bloc
               },
-              activeColor: theme.colorScheme.primary,
             ),
           ),
           const Spacer(),
@@ -69,13 +64,12 @@ class SettingsScreen extends StatelessWidget {
                 icon: const Icon(Icons.logout),
                 label: const Text('Logout'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.error,
-                  foregroundColor: theme.colorScheme.onError,
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () async {
-                  await FirebaseAuth.instance.signOut();
-                  Navigator.pushNamedAndRemoveUntil(context, '/start', (route) => false);
+                onPressed: () {
+                  // TODO: Logout logic
                 },
               ),
             ),

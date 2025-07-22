@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../app_colors.dart';
 import './clinic_details_screen.dart';
 import '../models/Clinic.dart';
 
@@ -28,25 +29,21 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   }
 
   Future<void> _getUserLocation() async {
-    try {
-      LocationPermission permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        // Lida com o caso de o usuário negar a permissão
-        return;
-      }
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      // Handle the case where the user denies permission
+      return;
+    }
 
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
-      if (mounted) {
-        setState(() {
-          userLocation = LatLng(position.latitude, position.longitude);
-        });
-      }
-    } catch(e) {
-      // Lida com erros em potencial, por exemplo, serviços de localização desativados.
+    if (mounted) {
+      setState(() {
+        userLocation = LatLng(position.latitude, position.longitude);
+      });
     }
   }
 
@@ -58,17 +55,16 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
+        backgroundColor: AppColors.background,
+        foregroundColor: AppColors.dark,
         title: const Text(
-          'Encontre um Veterinário',
+          'Find a Vet',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -94,17 +90,17 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             ),
         ],
       ),
-      // REESTRUTURAÇÃO: Substituí a Coluna por CustomScrollView para tornar o mapa rolável.
+      // REFACTOR: Replaced Column with CustomScrollView to make the map scrollable.
       body: CustomScrollView(
         slivers: [
-          // SLIVER 1: O Mapa
+          // SLIVER 1: The Map
           SliverToBoxAdapter(
             child: Container(
               margin: const EdgeInsets.all(16),
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: theme.colorScheme.surface,
+                color: Colors.grey.shade200,
               ),
               clipBehavior: Clip.hardEdge,
               child: Stack(
@@ -139,14 +135,13 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     bottom: 16,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
+                        backgroundColor: Colors.orange,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       icon: const Icon(Icons.access_time),
-                      label: const Text('Cuidados fora do horário'),
+                      label: const Text('After hours care'),
                       onPressed: () {},
                     ),
                   ),
@@ -155,14 +150,14 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     bottom: 16,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.primary,
-                        side: BorderSide(color: theme.colorScheme.primary),
+                        foregroundColor: Colors.orange,
+                        side: const BorderSide(color: Colors.orange),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       icon: const Icon(Icons.local_hospital),
-                      label: const Text('Serviços de Emergência'),
+                      label: const Text('Emergency Services'),
                       onPressed: () {},
                     ),
                   ),
@@ -170,7 +165,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               ),
             ),
           ),
-          // SLIVER 2: Barra de Pesquisa e Filtro
+          // SLIVER 2: Search and Filter Bar
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -185,10 +180,10 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         });
                       },
                       decoration: InputDecoration(
-                        hintText: 'Pesquisar nome da clínica ou do médico',
+                        hintText: 'Search clinic or doctor name',
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
-                        fillColor: theme.colorScheme.surface,
+                        fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 0,
                           horizontal: 16,
@@ -202,7 +197,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   ),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Icons.filter_list, color: theme.colorScheme.primary),
+                    icon: const Icon(Icons.filter_list, color: Colors.orange),
                     onPressed: () {
                       showModalBottomSheet(
                         context: context,
@@ -215,9 +210,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Ordenar por:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Sort by:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               ListTile(
-                                title: const Text('Mais Próximo'),
+                                title: const Text('Nearest'),
                                 leading: Radio<String>(
                                   value: 'distance',
                                   groupValue: _sortBy,
@@ -228,7 +223,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               ListTile(
-                                title: const Text('Preço (Menor para Maior)'),
+                                title: const Text('Price (Low to High)'),
                                 leading: Radio<String>(
                                   value: 'price_asc',
                                   groupValue: _sortBy,
@@ -239,7 +234,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               ListTile(
-                                title: const Text('Preço (Maior para Menor)'),
+                                title: const Text('Price (High to Low)'),
                                 leading: Radio<String>(
                                   value: 'price_desc',
                                   groupValue: _sortBy,
@@ -250,21 +245,21 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text('Avaliação Mínima:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Minimum Rating:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               StatefulBuilder(
                                 builder: (context, setModalState) {
                                   return Row(
                                     children: List.generate(5, (index) => IconButton(
                                       icon: Icon(
                                         index < _minRating ? Icons.star : Icons.star_border,
-                                        color: theme.colorScheme.primary,
+                                        color: Colors.orange,
                                       ),
                                       onPressed: () {
-                                        // Usa setModalState para atualizar a UI da folha inferior
+                                        // Use setModalState to update the bottom sheet's UI
                                         setModalState(() {
                                            _minRating = index + 1.0;
                                         });
-                                        // Usa setState para atualizar a UI da tela principal após o fechamento da folha
+                                        // Use setState to update the main screen's UI after the sheet is closed
                                         setState((){});
                                       },
                                     )),
@@ -281,7 +276,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               ),
             ),
           ),
-          // SLIVER 3: Lista de Clínicas
+          // SLIVER 3: Clinic List
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('users')
@@ -291,7 +286,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return const SliverFillRemaining(
-                  child: Center(child: Text('Ocorreu um erro ao carregar')),
+                  child: Center(child: Text('An error occurred while loading')),
                 );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -311,12 +306,12 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     rating >= _minRating;
               }).toList();
 
-              // Lógica de ordenação...
+              // Sorting logic...
               if (_sortBy == 'distance' && userLocation != null) {
                   docs.sort((a, b) {
                     final aData = a.data() as Map<String, dynamic>;
                     final bData = b.data() as Map<String, dynamic>;
-                    // Supondo que você armazene lat/lng no Firestore
+                    // Assuming you store lat/lng in Firestore
                     final aLat = (aData['lat'] ?? 0.0).toDouble();
                     final aLng = (aData['lng'] ?? 0.0).toDouble();
                     final bLat = (bData['lat'] ?? 0.0).toDouble();
@@ -343,28 +338,36 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       children: [
                         Image.asset('assets/images/4939569d-6a3c-4878-8960-803e5521f119.jpg', width: 200),
                         const SizedBox(height: 16),
-                        Text('Ainda não há dados', style: TextStyle(fontSize: 18, color: theme.hintColor)),
+                        const Text('There is no data yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
                       ],
                     ),
                   ),
                 );
               }
 
-              // REESTRUTURAÇÃO: Substituí ListView por SliverList
+              // REFACTOR: Replaced ListView with SliverList
               return SliverList.separated(
                 itemCount: docs.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 12),
                 itemBuilder: (context, i) {
-                  // CORREÇÃO: Usa o modelo Clinic atualizado que agora inclui o ID do documento
+                  // FIX: Use the updated Clinic model which now includes the document ID
                   final clinic = Clinic.fromFirestore(docs[i]);
                   final rating = clinic.rating;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Card(
-                      elevation: 4,
-                      shadowColor: Colors.black.withOpacity(0.1),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         leading: ClipRRect(
@@ -375,20 +378,20 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                   width: 50,
                                   height: 50,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
+                                  errorBuilder: (context, error, stackTrace) => 
                                     Container(
-                                        width: 50, height: 50, color: theme.colorScheme.surface,
-                                        child: Icon(Icons.local_hospital, color: theme.colorScheme.primary)
+                                        width: 50, height: 50, color: Colors.grey.shade200, 
+                                        child: const Icon(Icons.local_hospital, color: Colors.orange)
                                     ),
                                 )
                               : Container(
                                   width: 50,
                                   height: 50,
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
+                                    color: Colors.orange.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(Icons.local_hospital, color: theme.colorScheme.primary, size: 28),
+                                  child: const Icon(Icons.local_hospital, color: Colors.orange, size: 28),
                                 ),
                         ),
                         title: Text(
@@ -403,7 +406,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
+                                const Icon(Icons.verified, size: 16, color: Colors.orange),
                                 const SizedBox(width: 4),
                                 Text('Dr. ${clinic.name}'),
                               ],
@@ -412,7 +415,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             Row(
                               children: List.generate(5, (index) => Icon(
                                 index < rating ? Icons.star : Icons.star_border,
-                                color: theme.colorScheme.primary,
+                                color: Colors.orange,
                                 size: 16,
                               )),
                             ),
@@ -420,7 +423,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                         onTap: () {
-                          // O objeto clinic agora contém corretamente o ID.
+                          // The clinic object now correctly contains the ID.
                           Navigator.push(
                             context,
                             MaterialPageRoute(

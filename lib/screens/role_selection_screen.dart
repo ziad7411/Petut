@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -30,9 +31,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: theme.colorScheme.primary,
+            color: AppColors.gold,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -47,6 +48,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 'Select Your Role',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: AppColors.gray,
                 ),
               ),
               const SizedBox(height: 32),
@@ -54,7 +56,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 value: _selectedRole,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: theme.colorScheme.surface,
+                  fillColor: AppColors.fieldColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -64,7 +66,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     vertical: 12,
                   ),
                 ),
-                hint: Text('Choose your role', style: TextStyle(color: theme.hintColor)),
+                hint: const Text('Choose your role'),
                 items: const [
                   DropdownMenuItem(value: 'Customer', child: Text('Customer')),
                   DropdownMenuItem(value: 'Doctor', child: Text('Doctor')),
