@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:petut/app_colors.dart' show AppColors;
 import 'package:petut/widgets/custom_button.dart';
 import 'package:petut/widgets/custom_text_field.dart';
 
@@ -160,7 +159,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               _obscurePassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: Colors.grey,
+                              // -- تعديل: استخدام لون من الثيم --
+                              color: theme.hintColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -183,7 +183,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               _obscureConfirmPassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: Colors.grey,
+                              // -- تعديل: استخدام لون من الثيم --
+                              color: theme.hintColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -198,7 +199,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           value: selectedRole,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppColors.fieldColor,
+                            // -- تعديل: استخدام لون من الثيم --
+                            fillColor: theme.colorScheme.surface,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -208,7 +210,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               vertical: 12,
                             ),
                           ),
-                          hint: const Text('Choose your role'),
+                          hint: Text('Choose your role', style: TextStyle(color: theme.hintColor)),
                           items: const [
                             DropdownMenuItem(
                               value: 'Customer',
