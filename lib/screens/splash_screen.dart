@@ -34,9 +34,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
 
     Timer(const Duration(seconds: 6), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/start');
-      }
+      Navigator.pushReplacementNamed(context, '/start');
     });
   }
 
@@ -63,6 +61,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                // ✅ الصورة في الأعلى
                 Expanded(
                   flex: 6,
                   child: Center(
@@ -72,6 +71,8 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
+
+                // ✅ النص والمؤشر في الأسفل
                 Expanded(
                   flex: 3,
                   child: Column(
@@ -87,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 24),
                       CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
+                        color: theme.colorScheme.secondary,
                         strokeWidth: 2.5,
                       ),
                     ],

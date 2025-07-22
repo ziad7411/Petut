@@ -1,59 +1,51 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
-
 class AppColors {
-  // 🌞 Light Theme Colors
-  static const Color lightPrimary = Color(0xFFFFC107);
-  static const Color lightSecondary = Color(0xFF2196F3);
-  static const Color lightBackground = Color(0xFFFFFFFF);
-  static const Color lightSurface = Color(0xFFF5F5F5);
-  static const Color lightTextPrimary = Color(0xFF212121);
-  static const Color lightTextSecondary = Color(0xFF757575);
-  static const Color lightAccent = Color(0xFFFF7043);
+  // Light Theme Colors
+  static const Color background = Color(0xFFf7f3eb);
+  static const Color fieldColor = Color(0xFFe5e2d3);
+  static const Color gray = Color(0xFF8c8a80);
+  static const Color gold = Color(0xFFd9a741);
+  static const Color dark = Color(0xFF2c2c2c);
+  static const Color error = Color(0xFFE53935);
 
-  // 🌚 Dark Theme Colors
-  static const Color darkPrimary = Color(0xFFFFB300);
-  static const Color darkSecondary = Color(0xFF1565C0);
-  static const Color darkBackground = Color(0xFF121212);
-  static const Color darkSurface = Color(0xFF1E1E1E);
-  static const Color darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFBDBDBD);
-  static const Color darkAccent = Color(0xFFFF8A65);
+  // Dark Theme Colors
+  static const Color darkGrayBackground = Color(0xFF4A444A);
+  static const Color darkText = Color(0xFFB0B0B0);
+  static const Color yellow = Color(0xFFF7C948);
+  static const Color goldDark = Color(0xFFE5B733);
+  static const Color darkGold = Color(0xFFC29229);
 
-  // 🧠 Theme-aware Getters
-  static Color getPrimaryColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkPrimary
-          : lightPrimary;
+  // Theme-aware colors
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF1a1a1a)
+        : background;
+  }
 
-  static Color getSecondaryColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkSecondary
-          : lightSecondary;
+  static Color getSurfaceColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF2d2d2d)
+        : fieldColor;
+  }
 
-  static Color getBackgroundColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkBackground
-          : lightBackground;
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? darkText : dark;
+  }
 
-  static Color getSurfaceColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkSurface
-          : lightSurface;
+  static Color getSecondaryTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? darkText.withOpacity(0.7)
+        : gray;
+  }
 
-  static Color getTextPrimaryColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkTextPrimary
-          : lightTextPrimary;
+  static Color getPrimaryColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark ? goldDark : gold;
+  }
 
-  static Color getTextSecondaryColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkTextSecondary
-          : lightTextSecondary;
-
-  static Color getAccentColor(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? darkAccent
-          : lightAccent;
+  static Color getErrorColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFCF6679)
+        : error;
+  }
 }

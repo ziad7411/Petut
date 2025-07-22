@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:petut/widgets/custom_text_field.dart'; // Assuming you have this
-import 'package:petut/widgets/custom_button.dart'; // Assuming you have this
 
 class SelectLocationScreen extends StatefulWidget {
   const SelectLocationScreen({super.key});
@@ -44,11 +42,6 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
           governorate = place.administrativeArea;
           city = place.locality ?? place.subAdministrativeArea;
           street = "${place.street}, ${place.subLocality}";
-          
-          // Update text controllers as well
-          governorateController.text = governorate ?? '';
-          cityController.text = city ?? '';
-          streetController.text = street ?? '';
         });
       }
     } catch (e) {
@@ -78,20 +71,13 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
       return;
     }
 
-    Navigator.pop(context, selectedData.values.join(', '));
+    Navigator.pop(context, selectedData);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Select Address'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Select Address')),
       body: Column(
         children: [
           SwitchListTile(
@@ -102,7 +88,6 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                 useMap = val;
               });
             },
-            activeColor: theme.colorScheme.primary,
           ),
           if (useMap)
             Expanded(
@@ -125,8 +110,8 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                         point: selectedLocation,
                         width: 50,
                         height: 50,
-                        child: Icon(Icons.location_on,
-                            size: 40, color: theme.colorScheme.error),
+                        child: const Icon(Icons.location_on,
+                            size: 40, color: Colors.red),
                       )
                     ],
                   ),
@@ -137,23 +122,31 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
             padding: const EdgeInsets.all(12.0),
             child: Column(
               children: [
-                CustomTextField(
+                TextFormField(
                   controller: governorateController,
-                  hintText: governorate ?? 'Governorate',
+                  decoration: InputDecoration(
+                    labelText: 'Governorate',
+                    hintText: governorate ?? '',
+                  ),
                 ),
-                CustomTextField(
+                TextFormField(
                   controller: cityController,
-                  hintText: city ?? 'City / Area',
+                  decoration: InputDecoration(
+                    labelText: 'City / Area',
+                    hintText: city ?? '',
+                  ),
                 ),
-                CustomTextField(
+                TextFormField(
                   controller: streetController,
-                  hintText: street ?? 'Street & House No.',
+                  decoration: InputDecoration(
+                    labelText: 'Street & House No.',
+                    hintText: street ?? '',
+                  ),
                 ),
                 const SizedBox(height: 10),
-                CustomButton(
+                ElevatedButton(
                   onPressed: _submit,
-                  text: 'Confirm Address',
-                  width: double.infinity,
+                  child: const Text('Confirm Address'),
                 ),
               ],
             ),

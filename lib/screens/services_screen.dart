@@ -5,15 +5,8 @@ class ServicesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Services'),
-        backgroundColor: theme.scaffoldBackgroundColor,
-        foregroundColor: theme.appBarTheme.foregroundColor,
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Services')),
       body: const Center(child: Text('Services Page')),
     );
   }

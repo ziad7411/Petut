@@ -27,7 +27,7 @@ dependencies:
   url_launcher: ^6.3.2
   geocoding: ^2.1.0
   table_calendar: ^3.0.9
-  font_awesome_flutter: ^10.7.0
+
 
 dependency_overrides:
   firebase_auth_web: ^5.15.2

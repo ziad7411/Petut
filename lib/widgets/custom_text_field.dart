@@ -35,8 +35,10 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // -- تعديل: استخدام لون السطح من الثيم الحالي --
-    final fillColor = customFillColor ?? theme.colorScheme.surface;
+    final fillColor = customFillColor ??
+        (theme.brightness == Brightness.dark
+            ? Colors.grey.shade800
+            : Colors.grey.shade200);
 
 
     return Container(

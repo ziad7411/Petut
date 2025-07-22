@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/custom_button.dart';
+import '../app_colors.dart';
 
 class GoToWebPage extends StatefulWidget {
   const GoToWebPage({super.key});
@@ -24,59 +25,55 @@ class _GoToWebPageState extends State<GoToWebPage> {
   }
 
   Future<void> _fetchDoctorName() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        setState(() => isLoading = false);
-        return;
-      }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (mounted && doc.exists && doc.data() != null) {
-        setState(() {
-          doctorName = doc.data()!['doctorName'] ?? '';
-        });
-      }
-    } catch (e) {
-      _showErrorSnackBar('Could not fetch doctor details.');
-    } finally {
-      if(mounted) {
-        setState(() => isLoading = false);
-      }
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data() != null) {
+      setState(() {
+        doctorName = doc.data()!['doctorName'] ?? '';
+        isLoading = false;
+      });
     }
   }
 
   Future<void> _launchWeb() async {
     try {
-      if (!await canLaunchUrl(webUrl)) {
+      final canLaunch = await canLaunchUrl(webUrl);
+      if (!canLaunch) {
         _showErrorSnackBar('Cannot open the link');
         return;
       }
-      await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+
+      final success = await launchUrl(
+        webUrl,
+        mode: LaunchMode.externalApplication, 
+      );
+
+      if (!success) {
+        _showErrorSnackBar('Failed to open the link');
+      }
     } catch (e) {
       _showErrorSnackBar('Error occurred while launching: $e');
     }
   }
 
   void _showErrorSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final textColor = AppColors.getTextColor(context);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Doctor Panel"),
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: AppColors.getBackgroundColor(context),
         elevation: 0,
-        foregroundColor: theme.appBarTheme.foregroundColor,
+        foregroundColor: textColor,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -89,8 +86,10 @@ class _GoToWebPageState extends State<GoToWebPage> {
                     Text(
                       "Welcome Doctor ${doctorName.isNotEmpty ? doctorName : ''}",
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.textTheme.bodyLarge?.color,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -99,7 +98,7 @@ class _GoToWebPageState extends State<GoToWebPage> {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
-                        color: theme.hintColor,
+                        color: AppColors.getSecondaryTextColor(context),
                       ),
                     ),
                     const SizedBox(height: 32),
