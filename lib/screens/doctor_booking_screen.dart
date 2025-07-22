@@ -69,14 +69,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color backgroundColor = AppColors.getBackgroundColor(context);
+    final Color textPrimary = AppColors.getTextPrimaryColor(context);
+    final Color surfaceColor = AppColors.getSurfaceColor(context);
+    final Color accentColor = AppColors.getAccentColor(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: backgroundColor,
         elevation: 0,
-        title: const Text('Confirm appointment', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Confirm appointment', style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary)),
         centerTitle: true,
-        foregroundColor: AppColors.dark,
+        iconTheme: IconThemeData(color: textPrimary),
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -85,15 +90,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             Expanded(
               child: Text(
                 "${widget.clinic.price} EGP",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textPrimary),
               ),
             ),
             Expanded(
               child: CustomButton(
                 text: "Confirm and pay",
-                onPressed: () {
-                  // Handle confirm and payment logic
-                },
+                onPressed: () {},
               ),
             )
           ],
@@ -105,13 +108,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Clinic info
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.orange,
-                    child: Icon(Icons.local_hospital, color: Colors.white, size: 32),
+                    backgroundColor: AppColors.getPrimaryColor(context),
+                    child: const Icon(Icons.local_hospital, color: Colors.white, size: 32),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -120,19 +122,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       children: [
                         Text(
                           widget.clinic.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
                         ),
-                        Text(widget.clinic.location),
+                        Text(widget.clinic.location, style: TextStyle(color: textPrimary)),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.star, color: AppColors.gold, size: 18),
+                            Icon(Icons.star, color: accentColor, size: 18),
                             const SizedBox(width: 4),
-                            Text("${widget.clinic.rating}/5"),
+                            Text("${widget.clinic.rating}/5", style: TextStyle(color: textPrimary)),
                             const SizedBox(width: 12),
                             const Icon(Icons.call, size: 18, color: Colors.green),
                             const SizedBox(width: 4),
-                            Text(widget.clinic.phoneNumber),
+                            Text(widget.clinic.phoneNumber, style: TextStyle(color: textPrimary)),
                           ],
                         )
                       ],
@@ -140,53 +142,52 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   )
                 ],
               ),
-
               const SizedBox(height: 24),
-
-              // Appointment time info
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.event, color: AppColors.gold),
+                    Icon(Icons.event, color: accentColor),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("Appointment time"),
+                          Text("Appointment time", style: TextStyle(color: textPrimary)),
                           Text(
                             "${widget.selectedDay}, ${widget.selectedTime}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary),
                           )
                         ],
                       ),
                     ),
-                    const Icon(Icons.timer, size: 20, color: AppColors.gray),
+                    Icon(Icons.timer, size: 20, color: textPrimary.withOpacity(0.6)),
                     const SizedBox(width: 4),
-                    const Text("Starts soon")
+                    Text("Starts soon", style: TextStyle(color: textPrimary.withOpacity(0.8)))
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Coupon section
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.local_offer, color: AppColors.gold),
+                    Icon(Icons.local_offer, color: accentColor),
                     const SizedBox(width: 12),
-                    const Expanded(child: Text("Apply coupon code\nUnlock offers with coupon code")),
+                    Expanded(
+                      child: Text(
+                        "Apply coupon code\nUnlock offers with coupon code",
+                        style: TextStyle(color: textPrimary),
+                      ),
+                    ),
                     TextButton(
                       onPressed: () {},
                       child: const Text("APPLY"),
@@ -194,41 +195,33 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Billing Details
-              const Text("Billing details", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Billing details", style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 8),
-              _infoRow("Consultation fee", "${widget.clinic.price} EGP"),
-              _infoRow("Service fee & tax", "FREE"),
-              _infoRow("Total payable", "${widget.clinic.price} EGP", isBold: true),
-
+              _infoRow("Consultation fee", "${widget.clinic.price} EGP", textPrimary),
+              _infoRow("Service fee & tax", "FREE", textPrimary),
+              _infoRow("Total payable", "${widget.clinic.price} EGP", textPrimary, isBold: true),
               const SizedBox(height: 16),
-
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.gold.withOpacity(0.1),
+                  color: accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   "You will get reward points after successful consultation. Learn more",
-                  style: TextStyle(fontSize: 13),
+                  style: TextStyle(fontSize: 13, color: textPrimary),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Payment Method
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Payment method", style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text("Payment method", style: TextStyle(fontWeight: FontWeight.bold, color: textPrimary)),
                   TextButton(onPressed: _changePaymentMethod, child: const Text("CHANGE")),
                 ],
               ),
-              Text(selectedPaymentMethod),
+              Text(selectedPaymentMethod, style: TextStyle(color: textPrimary)),
             ],
           ),
         ),
@@ -236,14 +229,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     );
   }
 
-  Widget _infoRow(String label, String value, {bool isBold = false}) {
+  Widget _infoRow(String label, String value, Color textColor, {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal))
+          Text(label, style: TextStyle(color: textColor)),
+          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal, color: textColor))
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/payment_screen.dart';
+import 'package:petut/widgets/custom_button.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final String name;
@@ -151,9 +152,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               title: const Text("💳 Visa / Mastercard"),
             ),
             const Spacer(),
-            ElevatedButton(
+            CustomButton(
               onPressed: _goToPayment,
-              child: const Text("Proceed to Pay"),
+               text: "Proceed to Pay",
+               
             ),
           ],
         ),

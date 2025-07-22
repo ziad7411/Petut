@@ -22,13 +22,18 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final clinic = widget.clinic;
+    final bgColor = AppColors.getBackgroundColor(context);
+    final textColor = AppColors.getTextPrimaryColor(context);
+    final surfaceColor = AppColors.getSurfaceColor(context);
+    final grayColor = AppColors.getTextSecondaryColor(context);
+    final accentColor = AppColors.getAccentColor(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: bgColor,
       appBar: AppBar(
-        title: Text(clinic.name),
-        backgroundColor: AppColors.background,
-        foregroundColor: AppColors.dark,
+        title: Text(clinic.name, style: TextStyle(color: textColor)),
+        backgroundColor: bgColor,
+        foregroundColor: textColor,
         elevation: 0,
       ),
       body: Padding(
@@ -49,11 +54,16 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(clinic.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(clinic.name,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            )),
                         const SizedBox(height: 4),
-                        Text("Specialty: ${clinic.specialty ?? 'Unknown'}"),
-                        Text("${clinic.rating} ★ | ${clinic.phoneNumber}"),
-                        Text("Experience: ${clinic.experience ?? 'N/A'} years"),
+                        Text("Specialty: ${clinic.specialty ?? 'Unknown'}", style: TextStyle(color: grayColor)),
+                        Text("${clinic.rating} ★ | ${clinic.phoneNumber}", style: TextStyle(color: grayColor)),
+                        Text("Experience: ${clinic.experience ?? 'N/A'} years", style: TextStyle(color: grayColor)),
                       ],
                     ),
                   )
@@ -62,13 +72,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
               const SizedBox(height: 20),
 
-              _infoRow(Icons.location_on, clinic.location),
-              _infoRow(Icons.attach_money, "${clinic.price} EGP"),
-              _infoRow(Icons.timer, clinic.isOpen ? "Open Now" : "Closed"),
+              _infoRow(Icons.location_on, clinic.location, grayColor),
+              _infoRow(Icons.attach_money, "${clinic.price} EGP", grayColor),
+              _infoRow(Icons.timer, clinic.isOpen ? "Open Now" : "Closed", grayColor),
 
               const SizedBox(height: 24),
 
-              const Text("Available Days", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Available Days",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -80,13 +91,15 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     onSelected: (_) {
                       setState(() => selectedDay = day);
                     },
+                    selectedColor: accentColor.withOpacity(0.2),
                   );
                 }).toList(),
               ),
 
               const SizedBox(height: 24),
 
-              const Text("Available Times", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Available Times",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -98,28 +111,34 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     onSelected: (_) {
                       setState(() => selectedTime = time);
                     },
+                    selectedColor: accentColor.withOpacity(0.2),
                   );
                 }).toList(),
               ),
 
               const SizedBox(height: 24),
 
-              const Text("Patient Reviews", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text("Patient Reviews",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Ahmed M.", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("Very professional doctor, listened carefully and explained everything."),
-                    SizedBox(height: 8),
-                    Text("Sara A.", style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text("The clinic was clean and the staff was helpful."),
+                    Text("Ahmed M.",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                    Text("Very professional doctor, listened carefully and explained everything.",
+                        style: TextStyle(color: grayColor)),
+                    const SizedBox(height: 8),
+                    Text("Sara A.",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+                    Text("The clinic was clean and the staff was helpful.",
+                        style: TextStyle(color: grayColor)),
                   ],
                 ),
               ),
@@ -136,8 +155,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       icon: const Icon(Icons.call),
                       label: const Text("Call"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black,
+                        backgroundColor: surfaceColor,
+                        foregroundColor: textColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
@@ -162,10 +181,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                       icon: const Icon(Icons.calendar_today),
                       label: const Text("Book Appointment"),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.gold,
+                        backgroundColor: accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        disabledBackgroundColor: Colors.grey,
+                        disabledBackgroundColor: grayColor,
                       ),
                     ),
                   ),
@@ -178,14 +197,19 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
+  Widget _infoRow(IconData icon, String text, Color iconColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.gray),
+          Icon(icon, size: 20, color: iconColor),
           const SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: iconColor),
+            ),
+          ),
         ],
       ),
     );

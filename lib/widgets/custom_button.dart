@@ -33,22 +33,26 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor;
-    Color textColor;
+    final Color primaryColor = AppColors.getPrimaryColor(context);
+    final Color backgroundColor = AppColors.getBackgroundColor(context);
+    final Color textPrimary = AppColors.getTextPrimaryColor(context);
+
+    Color finalBackgroundColor;
+    Color finalTextColor;
     Color? borderColor;
 
     if (customColor != null) {
-      backgroundColor = customColor!;
-      textColor = AppColors.background;
+      finalBackgroundColor = customColor!;
+      finalTextColor = backgroundColor;
       borderColor = null;
     } else if (isPrimary) {
-      backgroundColor = AppColors.gold;
-      textColor = AppColors.background;
+      finalBackgroundColor = primaryColor;
+      finalTextColor = backgroundColor;
       borderColor = null;
     } else {
-      backgroundColor = AppColors.background;
-      textColor = AppColors.gold;
-      borderColor = AppColors.gold;
+      finalBackgroundColor = backgroundColor;
+      finalTextColor = primaryColor;
+      borderColor = primaryColor;
     }
 
     return SizedBox(
@@ -57,57 +61,56 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
+          backgroundColor: finalBackgroundColor,
+          foregroundColor: finalTextColor,
           padding: padding,
           elevation: isPrimary ? 4 : 0,
-          shadowColor:
-              isPrimary ? AppColors.gold.withOpacity(0.3) : Colors.transparent,
+          shadowColor: isPrimary ? primaryColor.withOpacity(0.3) : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
-            side:
-                borderColor != null
-                    ? BorderSide(color: borderColor, width: 1.5)
-                    : BorderSide.none,
+            side: borderColor != null
+                ? BorderSide(color: borderColor, width: 1.5)
+                : BorderSide.none,
           ),
-          disabledBackgroundColor: backgroundColor.withOpacity(0.6),
+          disabledBackgroundColor: finalBackgroundColor.withOpacity(0.6),
         ),
-        child:
-            icon != null
-                ? Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: iconSpacing),
-                        child: icon,
-                      ),
+        child: icon != null
+            ? Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: iconSpacing),
+                      child: icon,
                     ),
-                    Center(
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: fontSize,
-                          fontWeight: fontWeight,
-                          letterSpacing: 0.7,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                )
-                : Center(
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: fontWeight,
-                      letterSpacing: 0.7,
-                    ),
-                    overflow: TextOverflow.ellipsis,
                   ),
+                  Center(
+                    child: Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                        fontWeight: fontWeight,
+                        letterSpacing: 0.7,
+                        color: finalTextColor,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              )
+            : Center(
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: fontWeight,
+                    letterSpacing: 0.7,
+                    color: finalTextColor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
+              ),
       ),
     );
   }

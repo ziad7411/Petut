@@ -44,36 +44,38 @@ class _BookingLoadingScreenState extends State<BookingLoadingScreen> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Lottie Animation
-            SizedBox(
-              height: 180,
-              width: 180,
-              child: Lottie.asset(
-                'assets/animations/Catloader.json',
-                repeat: true,
-              ),
+ @override
+Widget build(BuildContext context) {
+  final theme = Theme.of(context);
+  return Scaffold(
+    backgroundColor: theme.colorScheme.background,
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SizedBox(
+            height: 180,
+            width: 180,
+            child: Lottie.asset(
+              'assets/animations/Catloader.json',
+              repeat: true,
             ),
-            const SizedBox(height: 24),
-            Text(
-              loadingText,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.gray,
-              ),
-              textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            loadingText,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: theme.colorScheme.outline, // بدل AppColors.gray
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+  
 }

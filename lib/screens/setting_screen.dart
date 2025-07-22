@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:petut/app_colors.dart';
-
 
 class SettingsScreen extends StatelessWidget {
   final String? userName;
@@ -17,27 +15,36 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: AppColors.gold,
-        foregroundColor: AppColors.background,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.gold),
-            accountName: Text(userName ?? ''),
-            accountEmail: Text(email ?? ''),
+            decoration: BoxDecoration(color: theme.colorScheme.primary),
+            accountName: Text(
+              userName ?? '',
+              style: theme.textTheme.bodyLarge?.copyWith(color: theme.colorScheme.onPrimary),
+            ),
+            accountEmail: Text(
+              email ?? '',
+              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onPrimary),
+            ),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.background,
+              backgroundColor: theme.colorScheme.onPrimary,
               backgroundImage: imageUrl != null ? NetworkImage(imageUrl!) : null,
               child: imageUrl == null
-                  ? Icon(Icons.person, color: AppColors.gold, size: 40)
+                  ? Icon(Icons.person, color: theme.colorScheme.primary, size: 40)
                   : null,
             ),
           ),
+
           ListTile(
             leading: const Icon(Icons.lock_outline),
             title: const Text('Change Password'),
@@ -45,17 +52,20 @@ class SettingsScreen extends StatelessWidget {
               // TODO: Navigate to change password screen
             },
           ),
+
           ListTile(
             leading: const Icon(Icons.dark_mode),
             title: const Text('Dark Mode'),
             trailing: Switch(
-              value: theme.brightness == Brightness.dark,
+              value: isDark,
               onChanged: (val) {
-                // TODO: Implement theme toggle with Provider or Bloc
+                // TODO: استخدم Provider أو Bloc لتغيير الثيم
               },
             ),
           ),
+
           const Spacer(),
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
