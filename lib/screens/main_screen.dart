@@ -17,19 +17,38 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const HomeScreen(),
+    
     const MyOrdersScreen(),
     const HealthScreen(),
+    const HomeScreen(),
     const FavoritesScreen(),
     const ProfileScreen(),
   ];
 
   final List<BottomNavigationBarItem> _navBarItems = [
-    const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-    const BottomNavigationBarItem(icon: Icon(Icons.build), label: 'myOrders'),
-    const BottomNavigationBarItem(icon: Icon(Icons.health_and_safety), label: 'Health'),
-    const BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorite'),
-    const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.user),
+      label: 'Profile',
+    ),
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.receipt),
+      label: 'My Orders',
+    ),
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.heartPulse),
+      label: 'Health',
+    ),
+     BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.house),
+      label: 'Home',
+    ),
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.solidHeart),
+      label: 'Favorite',
+    ),
+   
+
   ];
 
   void _onItemTapped(int index) {
@@ -43,54 +62,123 @@ class _MainScreenState extends State<MainScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      extendBody: true, // لتظهر المنحنيات فوق الخلفية
       body: _pages[_currentIndex],
-      bottomNavigationBar: Container(
-        color: theme.scaffoldBackgroundColor,
-        height: kBottomNavigationBarHeight,
-        child: Row(
-          children: List.generate(_navBarItems.length, (index) {
-            final isSelected = _currentIndex == index;
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => _onItemTapped(index),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        (_navBarItems[index].icon as Icon).icon,
-                        size: 20,
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.iconTheme.color,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _navBarItems[index].label!,
-                        style: TextStyle(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.textTheme.bodySmall!.color,
-                          fontSize: 12,
+      bottomNavigationBar: Stack(
+        children: [
+          // الخلفية المنحنية للبار
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ClipPath(
+              clipper: NavBarClipper(),
+              child: Container(
+                height: 70,
+                color: theme.scaffoldBackgroundColor,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              child: Container(
+                height: 70,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(_navBarItems.length, (index) {
+                    final isSelected = _currentIndex == index;
+                    final item = _navBarItems[index];
+
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () => _onItemTapped(index),
+                        behavior: HitTestBehavior.opaque,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutBack,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          color: Colors.transparent,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedSlide(
+                                offset: isSelected ? const Offset(0, -0.3) : Offset.zero,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutBack,
+                                child: AnimatedScale(
+                                  scale: isSelected ? 1.3 : 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutBack,
+                                  child: IconTheme(
+                                    data: IconThemeData(
+                                      size: 24,
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.hintColor,
+                                    ),
+                                    child: item.icon,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                item.label!,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.hintColor,
+                                  fontSize: 12,
+                                  fontWeight:
+                                      isSelected ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              ),
+                            ],
+                          ),
+
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  }),
                 ),
               ),
-            );
-          }),
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class NavBarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+
+    const curveHeight = 20.0;
+    const centerWidth = 80.0;
+
+    path.lineTo((size.width - centerWidth) / 2, 0);
+
+    path.quadraticBezierTo(
+      size.width / 2,
+      -curveHeight,
+      (size.width + centerWidth) / 2,
+      0,
+    );
+
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

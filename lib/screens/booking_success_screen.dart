@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../app_colors.dart';
-import './home_screen.dart';
+import './main_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   const BookingSuccessScreen({super.key});
@@ -31,17 +31,23 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     _iconController.forward();
 
     Future.delayed(const Duration(milliseconds: 500), () {
-      setState(() {
-        showText = true;
-      });
+      if (mounted) {
+        setState(() {
+          showText = true;
+        });
+      }
     });
 
-    Timer(const Duration(seconds: 2), () {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-        (route) => false,
-      );
+    // FIX: Navigate to MainScreen and clear all previous routes.
+    // This ensures the BottomNavigationBar is always present.
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      }
     });
   }
 
