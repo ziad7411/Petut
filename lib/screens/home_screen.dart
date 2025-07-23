@@ -11,7 +11,6 @@ import 'package:petut/screens/product_details_screen.dart';
 import 'package:petut/screens/search_screen.dart';
 import 'package:petut/screens/side_draw.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -44,9 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
             .collection('favorites')
             .get();
 
-    setState(() {
-      favoriteIds = snapshot.docs.map((doc) => doc.id).toSet();
-    });
+    if (mounted) {
+      setState(() {
+        favoriteIds = snapshot.docs.map((doc) => doc.id).toSet();
+      });
+    }
   }
 
   List<Product> filterByCategory(List<Product> products, String category) {
@@ -78,113 +79,107 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      drawer: SideDraw(),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-    appBar: AppBar(
-  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-  elevation: 0,
-  automaticallyImplyLeading: false,
-  title: Row(
-    children: [
-      Builder(
-        builder: (context) => IconButton(
-          icon: Icon(
-            Icons.menu,
-            color: Theme.of(context).iconTheme.color ?? Colors.grey,
+      drawer: const SideDraw(),
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            Builder(
+              builder: (context) => IconButton(
+                icon: Icon(
+                  Icons.menu,
+                  color: theme.iconTheme.color,
+                ),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Home',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: theme.textTheme.bodyMedium!.color,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          iconContainer(
+            Icons.search,
+            theme.iconTheme.color ?? Colors.grey,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SearchScreen()),
+              );
+            },
           ),
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
-        ),
+          const SizedBox(width: 8),
+          iconContainer(
+            Icons.shopping_cart_outlined,
+            theme.colorScheme.primary,
+            badgeCount: globalCartItems.fold(
+              0,
+              (sum, item) => sum + item.quantity,
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CartScreen()),
+              ).then((_) => setState(() {}));
+            },
+          ),
+          const SizedBox(width: 12),
+        ],
       ),
-      const SizedBox(width: 8),
-      Text(
-        'Home',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).textTheme.bodyMedium!.color,
-        ),
-      ),
-    ],
-  ),
-  actions: [
-    iconContainer(
-      Icons.search,
-      Theme.of(context).iconTheme.color ?? Colors.grey,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SearchScreen()),
-        );
-      },
-    ),
-    const SizedBox(width: 8),
-    iconContainer(
-      Icons.shopping_cart_outlined,
-      Theme.of(context).colorScheme.primary,
-      badgeCount: globalCartItems.fold(
-        0,
-        (sum, item) => sum + item.quantity,
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CartScreen()),
-        ).then((_) => setState(() {}));
-      },
-    ),
-   
-    const SizedBox(width: 12),
-  ],
-),
-
       body: Column(
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
-              children:
-                  categories.map((category) {
-                    final isSelected = category == selectedCategory;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              isSelected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Theme.of(context).colorScheme.surface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            selectedCategory = category;
-                          });
-                        },
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            color:
-                                isSelected
-                                    ? Theme.of(context).colorScheme.onPrimary
-                                    : Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge!.color,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+              children: categories.map((category) {
+                final isSelected = category == selectedCategory;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSelected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.surface,
+                      foregroundColor: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.textTheme.bodyLarge!.color,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    );
-                  }).toList(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        selectedCategory = category;
+                      });
+                    },
+                    child: Text(
+                      category,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
           Expanded(
@@ -194,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
                     child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: theme.colorScheme.primary,
                     ),
                   );
                 } else if (snapshot.hasError) {
@@ -211,9 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
                     const itemWidth = 180;
-                    final crossAxisCount = (screenWidth / itemWidth)
-                        .floor()
-                        .clamp(1, 2);
+                    final crossAxisCount = (screenWidth / itemWidth).floor().clamp(1, 2);
 
                     return GridView.builder(
                       padding: const EdgeInsets.all(12),
@@ -238,9 +231,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        ProductDetailsScreen(data: cardData),
+                                builder: (context) =>
+                                    ProductDetailsScreen(data: cardData),
                               ),
                             );
                           },
@@ -284,8 +276,9 @@ class _HomeScreenState extends State<HomeScreen> {
     IconData icon,
     Color color, {
     VoidCallback? onTap,
-    int badgeCount = 0, // ✨ هنا الإضافة
+    int badgeCount = 0,
   }) {
+    final theme = Theme.of(context);
     return Stack(
       alignment: Alignment.topRight,
       children: [
@@ -293,9 +286,9 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Theme.of(context).dividerColor),
+            border: Border.all(color: theme.dividerColor),
           ),
           child: IconButton(
             padding: EdgeInsets.zero,
@@ -310,14 +303,14 @@ class _HomeScreenState extends State<HomeScreen> {
             top: 2,
             child: Container(
               padding: const EdgeInsets.all(3),
-              decoration: const BoxDecoration(
-                color: Colors.red,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error,
                 shape: BoxShape.circle,
               ),
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               child: Text(
                 '$badgeCount',
-                style: const TextStyle(color: Colors.white, fontSize: 10),
+                style: TextStyle(color: theme.colorScheme.onError, fontSize: 10),
                 textAlign: TextAlign.center,
               ),
             ),

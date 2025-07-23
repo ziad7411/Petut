@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:petut/screens/my_order_screen.dart';
 import 'home_screen.dart';
-import 'services_screen.dart';
 import 'health_screen.dart';
 import 'favorites_screen.dart';
 import 'profile_screen.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,7 +26,6 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   final List<BottomNavigationBarItem> _navBarItems = [
-
     BottomNavigationBarItem(
       icon: FaIcon(FontAwesomeIcons.user),
       label: 'Profile',
@@ -48,7 +47,6 @@ class _MainScreenState extends State<MainScreen> {
       label: 'Favorite',
     ),
    
-
   ];
 
   void _onItemTapped(int index) {
@@ -64,7 +62,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       extendBody: true, // لتظهر المنحنيات فوق الخلفية
       body: _pages[_currentIndex],
-
       bottomNavigationBar: Stack(
         children: [
           // الخلفية المنحنية للبار
@@ -139,7 +136,6 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ],
                           ),
-
                         ),
                       ),
                     );

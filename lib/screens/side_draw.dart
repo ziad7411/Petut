@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
-import '../app_colors.dart';
 
 class SideDraw extends StatefulWidget {
   const SideDraw({super.key});
@@ -27,11 +26,12 @@ class _SideDrawState extends State<SideDraw> {
   Future<void> fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (doc.exists) {
+      final doc =
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+      if (mounted && doc.exists) {
         final data = doc.data();
         setState(() {
           name = data?['name'] ?? 'Guest';
@@ -41,41 +41,21 @@ class _SideDrawState extends State<SideDraw> {
     }
   }
 
-  Widget _buildProfileImage(Color fallbackColor) {
+  Widget _buildProfileImage(ThemeData theme) {
     if (imageData == null || imageData!.isEmpty) {
-      return Icon(Icons.person, color: fallbackColor, size: 40);
+      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
     }
 
-    final isUrl = imageData!.startsWith('http');
-
-    if (isUrl) {
-      return Image.network(
-        imageData!,
+    try {
+      final imageBytes = base64Decode(imageData!);
+      return Image.memory(
+        imageBytes,
         fit: BoxFit.cover,
         width: 60,
         height: 60,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.person, color: fallbackColor, size: 40);
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(color: fallbackColor),
-          );
-        },
       );
-    } else {
-      try {
-        final imageBytes = base64Decode(imageData!);
-        return Image.memory(
-          imageBytes,
-          fit: BoxFit.cover,
-          width: 60,
-          height: 60,
-        );
-      } catch (e) {
-        return Icon(Icons.person, color: fallbackColor, size: 40);
-      }
+    } catch (e) {
+      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
     }
   }
 
@@ -83,34 +63,29 @@ class _SideDrawState extends State<SideDraw> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final themeProvider = Provider.of<ThemeController>(context);
-
-    // 🌗 Colors from theme
-    final primaryColor = AppColors.getPrimaryColor(context);
-    final backgroundColor = AppColors.getBackgroundColor(context);
-    final textPrimary = AppColors.getTextPrimaryColor(context);
-    final textSecondary = AppColors.getTextSecondaryColor(context);
+    final theme = Theme.of(context);
 
     return Drawer(
       child: Container(
-        color: backgroundColor,
+        color: theme.scaffoldBackgroundColor,
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.9)),
+              decoration: BoxDecoration(color: theme.colorScheme.primary),
               accountName: Text(
                 user != null ? (name ?? 'Loading...') : "Guest",
                 style: TextStyle(
-                  color: backgroundColor,
+                  color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               accountEmail: Text(
                 user?.email ?? "Please login to continue",
-                style: TextStyle(color: backgroundColor.withOpacity(0.9)),
+                style: TextStyle(color: theme.colorScheme.onPrimary.withOpacity(0.9)),
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: backgroundColor,
-                child: ClipOval(child: _buildProfileImage(primaryColor)),
+                backgroundColor: theme.scaffoldBackgroundColor,
+                child: ClipOval(child: _buildProfileImage(theme)),
               ),
             ),
 
@@ -120,10 +95,15 @@ class _SideDrawState extends State<SideDraw> {
                 children: [
                   if (user == null) ...[
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8,
+                      ),
                       child: CustomButton(
                         text: 'Login',
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/login');
+                        },
                       ),
                     ),
                     Padding(
@@ -131,21 +111,55 @@ class _SideDrawState extends State<SideDraw> {
                       child: CustomButton(
                         text: 'Sign Up',
                         isPrimary: false,
-                        onPressed: () => Navigator.pushNamed(context, '/signup'),
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/signup');
+                        },
                       ),
                     ),
                   ] else ...[
-                    SizedBox(height: 16),
-                    _buildListTile(Icons.person, "Profile", () => Navigator.pushNamed(context, '/profile'), primaryColor, textPrimary),
-                    _buildListTile(Icons.history, "History", () => Navigator.pushNamed(context, '/myOrders'), primaryColor, textPrimary),
-                    _buildListTile(Icons.favorite, "Favorites", () => Navigator.pushNamed(context, '/favorites'), primaryColor, textPrimary),
-                    _buildListTile(Icons.settings, "Settings", () => Navigator.pushNamed(context, '/settings'), primaryColor, textPrimary),
+                    const SizedBox(height: 16),
                     ListTile(
-                      leading: Icon(Icons.logout, color: Colors.redAccent),
-                      title: Text("Logout", style: TextStyle(color: textPrimary)),
+                      leading: Icon(Icons.person, color: theme.colorScheme.primary),
+                      title: const Text("Profile"),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/profile');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.history, color: theme.colorScheme.primary),
+                      title: const Text("History"),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/myOrders');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.favorite, color: theme.colorScheme.primary),
+                      title: const Text("Favorites"),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/favorites');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.settings, color: theme.colorScheme.primary),
+                      title: const Text("Settings"),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/settings');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.logout, color: theme.colorScheme.error),
+                      title: const Text("Logout"),
                       onTap: () async {
                         await FirebaseAuth.instance.signOut();
-                        Navigator.pushNamedAndRemoveUntil(context, '/signup', (route) => false);
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/start',
+                          (route) => false,
+                        );
                       },
                     ),
                   ],
@@ -154,33 +168,26 @@ class _SideDrawState extends State<SideDraw> {
             ),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Dark Mode', style: TextStyle(fontSize: 16, color: textPrimary)),
+                  const Text('Dark Mode', style: TextStyle(fontSize: 16)),
                   Switch(
                     value: themeProvider.isDark,
-                    activeColor: primaryColor,
-                    onChanged: (value) => themeProvider.toggleTheme(),
+                    activeColor: theme.colorScheme.primary,
+                    onChanged: (value) {
+                      themeProvider.toggleTheme();
+                    },
                   ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildListTile(
-      IconData icon, String title, VoidCallback onTap, Color iconColor, Color textColor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: ListTile(
-        leading: Icon(icon, color: iconColor),
-        title: Text(title, style: TextStyle(color: textColor)),
-        onTap: onTap,
       ),
     );
   }

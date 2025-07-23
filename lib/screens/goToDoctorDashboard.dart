@@ -24,43 +24,46 @@ class _GoToWebPageState extends State<GoToWebPage> {
   }
 
   Future<void> _fetchDoctorName() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        setState(() => isLoading = false);
+        return;
+      }
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    if (doc.exists && doc.data() != null) {
-      setState(() {
-        doctorName = doc.data()!['doctorName'] ?? '';
-        isLoading = false;
-      });
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (mounted && doc.exists && doc.data() != null) {
+        setState(() {
+          doctorName = doc.data()!['doctorName'] ?? '';
+        });
+      }
+    } catch (e) {
+      _showErrorSnackBar('Could not fetch doctor details.');
+    } finally {
+      if(mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
   Future<void> _launchWeb() async {
     try {
-      final canLaunch = await canLaunchUrl(webUrl);
-      if (!canLaunch) {
+      if (!await canLaunchUrl(webUrl)) {
         _showErrorSnackBar('Cannot open the link');
         return;
       }
-
-      final success = await launchUrl(
-        webUrl,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!success) {
-        _showErrorSnackBar('Failed to open the link');
-      }
+      await launchUrl(webUrl, mode: LaunchMode.externalApplication);
     } catch (e) {
-      _showErrorSnackBar('Error occurred while launching the URL');
+      _showErrorSnackBar('Error occurred while launching: $e');
     }
   }
 
   void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+      );
+    }
   }
 
   @override
@@ -68,11 +71,12 @@ class _GoToWebPageState extends State<GoToWebPage> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Doctor Panel"),
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: theme.colorScheme.onBackground,
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -86,15 +90,16 @@ class _GoToWebPageState extends State<GoToWebPage> {
                       "Welcome Doctor ${doctorName.isNotEmpty ? doctorName : ''}",
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       "To manage your services, go to the web panel",
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.secondary,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: theme.hintColor,
                       ),
                     ),
                     const SizedBox(height: 32),

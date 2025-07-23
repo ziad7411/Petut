@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -33,26 +32,28 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = AppColors.getPrimaryColor(context);
-    final Color backgroundColor = AppColors.getBackgroundColor(context);
-    final Color textPrimary = AppColors.getTextPrimaryColor(context);
-
-    Color finalBackgroundColor;
-    Color finalTextColor;
+    final theme = Theme.of(context);
+    Color backgroundColor;
+    Color textColor;
     Color? borderColor;
 
+    // -- تعديل: تحديد الألوان بناءً على الثيم --
     if (customColor != null) {
-      finalBackgroundColor = customColor!;
-      finalTextColor = backgroundColor;
+      backgroundColor = customColor!;
+      textColor =
+          ThemeData.estimateBrightnessForColor(backgroundColor) ==
+                  Brightness.dark
+              ? Colors.white
+              : Colors.black;
       borderColor = null;
     } else if (isPrimary) {
-      finalBackgroundColor = primaryColor;
-      finalTextColor = backgroundColor;
+      backgroundColor = theme.colorScheme.primary;
+      textColor = theme.colorScheme.onPrimary;
       borderColor = null;
     } else {
-      finalBackgroundColor = backgroundColor;
-      finalTextColor = primaryColor;
-      borderColor = primaryColor;
+      backgroundColor = theme.colorScheme.surface;
+      textColor = theme.colorScheme.primary;
+      borderColor = theme.colorScheme.primary;
     }
 
     return SizedBox(
@@ -61,56 +62,59 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: finalBackgroundColor,
-          foregroundColor: finalTextColor,
+          backgroundColor: backgroundColor,
+          foregroundColor: textColor,
           padding: padding,
           elevation: isPrimary ? 4 : 0,
-          shadowColor: isPrimary ? primaryColor.withOpacity(0.3) : Colors.transparent,
+          shadowColor:
+              isPrimary
+                  ? theme.colorScheme.primary.withOpacity(0.3)
+                  : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
-            side: borderColor != null
-                ? BorderSide(color: borderColor, width: 1.5)
-                : BorderSide.none,
+            side:
+                borderColor != null
+                    ? BorderSide(color: borderColor, width: 1.5)
+                    : BorderSide.none,
           ),
-          disabledBackgroundColor: finalBackgroundColor.withOpacity(0.6),
+          disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
-        child: icon != null
-            ? Stack(
-                alignment: Alignment.center,
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: iconSpacing),
-                      child: icon,
-                    ),
-                  ),
-                  Center(
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: fontSize,
-                        fontWeight: fontWeight,
-                        letterSpacing: 0.7,
-                        color: finalTextColor,
+        child:
+            icon != null
+                ? Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: iconSpacing),
+                        child: icon,
                       ),
-                      overflow: TextOverflow.ellipsis,
                     ),
+                    Center(
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: fontWeight,
+                          letterSpacing: 0.7,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+                : Center(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: fontWeight,
+                      letterSpacing: 0.7,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ],
-              )
-            : Center(
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: fontWeight,
-                    letterSpacing: 0.7,
-                    color: finalTextColor,
-                  ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
       ),
     );
   }

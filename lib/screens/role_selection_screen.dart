@@ -23,7 +23,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -55,9 +54,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 value: _selectedRole,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: isDark
-                      ? Colors.grey.shade800
-                      : Colors.grey.shade200,
+                  fillColor: theme.colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -67,10 +64,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     vertical: 12,
                   ),
                 ),
-                hint: Text(
-                  'Choose your role',
-                  style: theme.textTheme.bodyMedium,
-                ),
+                hint: Text('Choose your role', style: TextStyle(color: theme.hintColor)),
                 items: const [
                   DropdownMenuItem(value: 'Customer', child: Text('Customer')),
                   DropdownMenuItem(value: 'Doctor', child: Text('Doctor')),
@@ -85,11 +79,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
-                      text: 'Next',
-                      onPressed: _selectedRole == null ? null : _onNext,
-                      width: double.infinity,
-                      fontSize: 20,
-                    ),
+                    text: 'Next',
+                    onPressed: _selectedRole == null ? null : _onNext,
+                    width: double.infinity,
+                    fontSize: 20,
+                  ),
             ],
           ),
         ),
