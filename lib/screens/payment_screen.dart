@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:petut/Data/card_data.dart';
+import 'package:petut/screens/booking_loading_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'order_success_screen.dart';
 
@@ -142,7 +143,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       ),
       body: Center(
         child: isLoading
-            ? const CircularProgressIndicator()
+            ? const BookingLoadingScreen()
             : const Text("Redirecting to payment..."),
       ),
     );

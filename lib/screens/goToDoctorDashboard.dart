@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/custom_button.dart';
-import '../app_colors.dart';
 
 class GoToWebPage extends StatefulWidget {
   const GoToWebPage({super.key});
@@ -47,14 +46,14 @@ class _GoToWebPageState extends State<GoToWebPage> {
 
       final success = await launchUrl(
         webUrl,
-        mode: LaunchMode.externalApplication, 
+        mode: LaunchMode.externalApplication,
       );
 
       if (!success) {
         _showErrorSnackBar('Failed to open the link');
       }
     } catch (e) {
-      _showErrorSnackBar('Error occurred while launching: $e');
+      _showErrorSnackBar('Error occurred while launching the URL');
     }
   }
 
@@ -66,14 +65,14 @@ class _GoToWebPageState extends State<GoToWebPage> {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = AppColors.getTextColor(context);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Doctor Panel"),
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: textColor,
+        foregroundColor: theme.colorScheme.onBackground,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -86,19 +85,16 @@ class _GoToWebPageState extends State<GoToWebPage> {
                     Text(
                       "Welcome Doctor ${doctorName.isNotEmpty ? doctorName : ''}",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: textColor,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       "To manage your services, go to the web panel",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.getSecondaryTextColor(context),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.secondary,
                       ),
                     ),
                     const SizedBox(height: 32),

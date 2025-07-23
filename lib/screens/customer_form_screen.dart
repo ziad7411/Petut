@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:petut/screens/select_location_screen.dart';
 import 'dart:io';
 import 'dart:convert';
 import '../app_colors.dart';
@@ -34,6 +35,21 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   File? _selectedProfileImage, _selectedPetImage;
   bool _isLoading = false;
   bool _hasPet = false;
+
+  String? governorate;
+  String? city;
+  String? street;
+  String get fullAddress {
+    final parts = [
+      governorate,
+      city,
+      street,
+    ].where((e) => e != null && e!.isNotEmpty).join(', ');
+
+    final extra = _locationController.text.trim();
+
+    return parts + (extra.isNotEmpty ? ' - $extra' : '');
+  }
 
   // Form keys
   final _formKey = GlobalKey<FormState>();
@@ -338,11 +354,30 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 customFillColor: AppColors.fieldColor,
               ),
               CustomTextField(
-                hintText: 'Location',
+                hintText: 'Select Address from Map',
                 controller: _locationController,
                 prefixIcon: Icons.location_on,
+                readOnly: true,
                 validator: _validateLocation,
                 customFillColor: AppColors.fieldColor,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SelectLocationScreen(),
+                    ),
+                  );
+
+                  if (result != null && result is Map<String, String>) {
+                    setState(() {
+                      governorate = result['governorate'];
+                      city = result['city'];
+                      street = result['street'];
+                      _locationController.text =
+                          "$governorate - $city - $street";
+                    });
+                  }
+                },
               ),
 
               const SizedBox(height: 32),

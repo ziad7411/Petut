@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -24,6 +23,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -31,9 +31,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.gold,
+            color: theme.colorScheme.primary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -48,7 +48,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 'Select Your Role',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.gray,
                 ),
               ),
               const SizedBox(height: 32),
@@ -56,7 +55,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                 value: _selectedRole,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.fieldColor,
+                  fillColor: isDark
+                      ? Colors.grey.shade800
+                      : Colors.grey.shade200,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -66,7 +67,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     vertical: 12,
                   ),
                 ),
-                hint: const Text('Choose your role'),
+                hint: Text(
+                  'Choose your role',
+                  style: theme.textTheme.bodyMedium,
+                ),
                 items: const [
                   DropdownMenuItem(value: 'Customer', child: Text('Customer')),
                   DropdownMenuItem(value: 'Doctor', child: Text('Doctor')),
@@ -81,11 +85,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : CustomButton(
-                    text: 'Next',
-                    onPressed: _selectedRole == null ? null : _onNext,
-                    width: double.infinity,
-                    fontSize: 20,
-                  ),
+                      text: 'Next',
+                      onPressed: _selectedRole == null ? null : _onNext,
+                      width: double.infinity,
+                      fontSize: 20,
+                    ),
             ],
           ),
         ),

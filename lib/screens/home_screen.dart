@@ -10,8 +10,7 @@ import 'package:petut/screens/cart_screen.dart';
 import 'package:petut/screens/product_details_screen.dart';
 import 'package:petut/screens/search_screen.dart';
 import 'package:petut/screens/side_draw.dart';
-import 'package:petut/theme/theme_controller.dart';
-import 'package:provider/provider.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
