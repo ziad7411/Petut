@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../app_colors.dart';
 import './main_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
@@ -15,11 +14,13 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   late AnimationController _iconController;
   late Animation<double> _iconAnimation;
   bool showText = false;
+  late Timer _navigationTimer;
 
   @override
   void initState() {
     super.initState();
 
+    // Icon Animation
     _iconController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -30,6 +31,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
     _iconController.forward();
 
+    // Show text after short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
@@ -40,7 +42,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
     // FIX: Navigate to MainScreen and clear all previous routes.
     // This ensures the BottomNavigationBar is always present.
-    Timer(const Duration(seconds: 3), () {
+    _navigationTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -54,17 +56,15 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   @override
   void dispose() {
     _iconController.dispose();
+    _navigationTimer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = AppColors.getBackgroundColor(context);
-    final primaryTextColor = AppColors.getTextPrimaryColor(context);
-    final secondaryTextColor = AppColors.getTextSecondaryColor(context);
-
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -86,7 +86,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: primaryTextColor,
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -97,10 +97,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   duration: const Duration(milliseconds: 800),
                   child: Text(
                     "Your appointment has been booked successfully.\nReturning to home...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: secondaryTextColor,
-                    ),
+                    style: TextStyle(fontSize: 16, color: theme.hintColor),
                     textAlign: TextAlign.center,
                   ),
                 ),

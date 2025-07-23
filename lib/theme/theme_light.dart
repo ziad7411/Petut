@@ -7,34 +7,28 @@ final ThemeData lightTheme = ThemeData(
   appBarTheme: const AppBarTheme(
     backgroundColor: AppColors.lightBackground,
     foregroundColor: AppColors.lightTextPrimary,
-    iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
-    titleTextStyle: TextStyle(
-      color: AppColors.lightTextPrimary,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    ),
+    elevation: 0,
   ),
   textTheme: const TextTheme(
-    bodyLarge: TextStyle(color: AppColors.lightTextPrimary),
-    bodyMedium: TextStyle(color: AppColors.lightTextSecondary),
+    bodyMedium: TextStyle(color: AppColors.lightTextPrimary),
   ),
   iconTheme: const IconThemeData(color: AppColors.lightTextPrimary),
   colorScheme: const ColorScheme.light(
     primary: AppColors.lightPrimary,
     secondary: AppColors.lightSecondary,
+    error: Colors.red,
     background: AppColors.lightBackground,
     surface: AppColors.lightSurface,
-    error: AppColors.lightAccent, // استخدمنا اللون البرتقالي كمثال للـ accent
-    onPrimary: AppColors.lightTextPrimary,
-    onSecondary: AppColors.lightTextPrimary,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
     onBackground: AppColors.lightTextPrimary,
-    onSurface: AppColors.lightTextPrimary,
-    onError: AppColors.lightTextPrimary,
+    onSurface: AppColors.lightTextSecondary,
+    onError: Colors.white,
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.lightAccent,
-      foregroundColor: AppColors.lightTextPrimary,
+      foregroundColor: Colors.white,
     ),
   ),
 );
