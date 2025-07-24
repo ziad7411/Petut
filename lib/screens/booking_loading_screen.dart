@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../app_colors.dart';
 import 'booking_success_screen.dart';
 
 class BookingLoadingScreen extends StatefulWidget {
@@ -25,34 +24,36 @@ class _BookingLoadingScreenState extends State<BookingLoadingScreen> {
   void initState() {
     super.initState();
 
-    // Change messages every second
     Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (msgIndex < messages.length - 1) {
+      if (mounted && msgIndex < messages.length - 1) {
         setState(() {
           msgIndex++;
           loadingText = messages[msgIndex];
         });
+      } else {
+        timer.cancel();
       }
     });
 
-    // After 3 seconds, go to success screen
     Timer(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const BookingSuccessScreen()),
-      );
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const BookingSuccessScreen()),
+        );
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Lottie Animation
             SizedBox(
               height: 180,
               width: 180,
@@ -64,10 +65,10 @@ class _BookingLoadingScreenState extends State<BookingLoadingScreen> {
             const SizedBox(height: 24),
             Text(
               loadingText,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: AppColors.gray,
+                color: theme.textTheme.bodyMedium?.color,
               ),
               textAlign: TextAlign.center,
             ),

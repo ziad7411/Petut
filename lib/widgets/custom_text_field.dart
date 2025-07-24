@@ -13,7 +13,7 @@ class CustomTextField extends StatelessWidget {
   final bool? readOnly;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
-  
+   final int? maxLines;
 
   const CustomTextField({
     super.key,
@@ -28,16 +28,16 @@ class CustomTextField extends StatelessWidget {
     this.maxLength,
     this.readOnly,
     this.onTap,
-    this.onChanged
+    this.onChanged,
+    this.maxLines = 1,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fillColor = customFillColor ??
-        (theme.brightness == Brightness.dark
-            ? Colors.grey.shade800
-            : Colors.grey.shade200);
+    // -- تعديل: استخدام لون السطح من الثيم الحالي --
+    final fillColor = customFillColor ?? theme.colorScheme.surface;
+
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
@@ -50,6 +50,7 @@ class CustomTextField extends StatelessWidget {
         maxLength:  maxLength,
         readOnly:  readOnly ?? false,
         onTap:onTap ,
+        maxLines: maxLines,
         style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: hintText,

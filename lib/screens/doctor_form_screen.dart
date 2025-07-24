@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/screens/select_location_screen.dart';
-import '../app_colors.dart';
+import 'package:intl/intl.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -41,6 +41,17 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
 
+  final List<String> _selectedDays = [];
+  final List<String> _daysOfWeek = [
+    'Saturday',
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+  ];
+
   Future<void> _pickImage(String type) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -63,26 +74,14 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
   }
 
+  // -- تعديل: إزالة الـ builder من منتقي الوقت ليعتمد على ثيم التطبيق --
   Future<void> _selectTime(bool isStartTime) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime:
           isStartTime
-              ? (_startTime ?? TimeOfDay(hour: 9, minute: 0))
-              : (_endTime ?? TimeOfDay(hour: 18, minute: 0)),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.gold,
-              onPrimary: AppColors.background,
-              surface: AppColors.background,
-              onSurface: AppColors.dark,
-            ),
-          ),
-          child: child!,
-        );
-      },
+              ? (_startTime ?? const TimeOfDay(hour: 9, minute: 0))
+              : (_endTime ?? const TimeOfDay(hour: 18, minute: 0)),
     );
 
     if (picked != null) {
@@ -112,68 +111,35 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   }
 
   Future<void> _submit() async {
-    // التحقق من صحة النموذج
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please fill all required fields correctly'),
-          backgroundColor: AppColors.getErrorColor(context),
         ),
       );
       return;
     }
 
-    // التحقق من صورة البروفيل
-    if (_profileImage == null) {
+    if (_selectedDays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please upload your profile photo'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
+        const SnackBar(content: Text('Please select at least one working day')),
       );
       return;
     }
 
-    // التحقق من صورة رخصة الطبيب (الوجه الأمامي)
-    if (_cardFrontImage == null) {
+    if (_profileImage == null ||
+        _cardFrontImage == null ||
+        _cardBackImage == null ||
+        _idImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please upload the front of your medical license'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
+        const SnackBar(content: Text('Please upload all required documents')),
       );
       return;
     }
 
-    // التحقق من صورة رخصة الطبيب (الوجه الخلفي)
-    if (_cardBackImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please upload the back of your medical license'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
-      );
-      return;
-    }
-
-    // التحقق من صورة الهوية
-    if (_idImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please upload your ID card'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
-      );
-      return;
-    }
-
-    // التحقق من تحديد ساعات العمل
     if (_startTime == null || _endTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select your working hours'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
+        const SnackBar(content: Text('Please select your working hours')),
       );
       return;
     }
@@ -187,51 +153,72 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       final cardBackBase64 = await _convertImageToBase64(_cardBackImage);
       final idBase64 = await _convertImageToBase64(_idImage);
 
-      // Prepare social media links
       final socialMedia = <String, String>{};
-      if (_facebookController.text.trim().isNotEmpty) {
+      if (_facebookController.text.trim().isNotEmpty)
         socialMedia['facebook'] = _facebookController.text.trim();
-      }
-      if (_instagramController.text.trim().isNotEmpty) {
+      if (_instagramController.text.trim().isNotEmpty)
         socialMedia['instagram'] = _instagramController.text.trim();
-      }
-      if (_twitterController.text.trim().isNotEmpty) {
+      if (_twitterController.text.trim().isNotEmpty)
         socialMedia['twitter'] = _twitterController.text.trim();
-      }
-      if (_linkedinController.text.trim().isNotEmpty) {
+      if (_linkedinController.text.trim().isNotEmpty)
         socialMedia['linkedin'] = _linkedinController.text.trim();
-      }
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'role': 'Doctor',
-        'doctorName': _doctorNameController.text.trim(),
-        'clinicName': _clinicNameController.text.trim(),
-        'clinicAddress': _clinicAddressController.text.trim(),
-        'clinicPhone': _clinicPhoneController.text.trim(),
+        'name': _doctorNameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'experience': _experienceController.text.trim(),
-        'workingHours': _workingHoursController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        //Gender
+        //email 
+      }, SetOptions(merge: true));
+         await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
+        'role': 'Doctor',
+        'name': _doctorNameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        //Gender
+        //email
+      }, SetOptions(merge: true));
+       await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").add({
+          'experience': _experienceController.text.trim(),
         'description': _descriptionController.text.trim(),
         'socialMedia': socialMedia,
         'profileImage': profileBase64,
         'cardFrontImage': cardFrontBase64,
         'cardBackImage': cardBackBase64,
         'idImage': idBase64,
-        'isVerified': false, // سيتم التحقق من قبل الإدارة
+        'isVerified': false,
         'rating': 0.0,
         'totalReviews': 0,
+       });
+      await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
+        'doctorid': user.uid,
+        'workingHours': _workingHoursController.text.trim(),
+       //object for working hours 
+        'day': _selectedDays,
+        'openTime':
+            _startTime != null
+                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'closeTime':
+            _endTime != null
+                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'clinicName': _clinicNameController.text.trim(),
+        'clinicAddress': _clinicAddressController.text.trim(),
+        'clinicPhone': _clinicPhoneController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
       Navigator.pushReplacementNamed(context, '/goToWebPage');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppColors.getErrorColor(context),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -254,23 +241,26 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // -- تعديل: استخدام متغير الثيم لجميع الألوان في الواجهة --
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: AppColors.getTextColor(context),
+        foregroundColor: theme.appBarTheme.foregroundColor,
         title: Text(
           'Doctor Registration',
           style: TextStyle(
-            color: AppColors.getTextColor(context),
+            color: theme.textTheme.titleLarge?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.getPrimaryColor(context),
+            color: theme.colorScheme.primary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -287,20 +277,15 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.getTextColor(context),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Please provide your professional information',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextStyle(fontSize: 14, color: theme.hintColor),
                 ),
                 const SizedBox(height: 24),
-
-                // Profile Image
                 Center(
                   child: GestureDetector(
                     onTap: () => _pickImage('profile'),
@@ -308,10 +293,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
+                        color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(60),
                         border: Border.all(
-                          color: AppColors.getPrimaryColor(context),
+                          color: theme.colorScheme.primary,
                           width: 3,
                         ),
                       ),
@@ -327,7 +312,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                               : Icon(
                                 Icons.person,
                                 size: 50,
-                                color: AppColors.getSecondaryTextColor(context),
+                                color: theme.hintColor,
                               ),
                     ),
                   ),
@@ -336,46 +321,35 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 Center(
                   child: Text(
                     'Tap to add photo',
-                    style: TextStyle(
-                      color: AppColors.getSecondaryTextColor(context),
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: theme.hintColor, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                // Personal Information Section
                 Text(
                   'Personal Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.getTextColor(context),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 CustomTextField(
                   hintText: 'Doctor Name',
                   controller: _doctorNameController,
                   prefixIcon: Icons.person,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter your full name';
-                    }
-                    if (value.trim().length < 2) {
+                    if (value.trim().length < 2)
                       return 'Name must be at least 2 characters';
-                    }
-                    if (value.trim().length > 50) {
+                    if (value.trim().length > 50)
                       return 'Name must be less than 50 characters';
-                    }
-                    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value.trim())) {
+                    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value.trim()))
                       return 'Name can only contain letters and spaces';
-                    }
                     return null;
                   },
                 ),
-
                 CustomTextField(
                   hintText: 'Personal Phone Number',
                   controller: _phoneController,
@@ -383,55 +357,43 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.phone,
                   maxLength: 11,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter your phone number';
-                    }
-                    // Remove all non-digit characters
                     final digitsOnly = value.trim().replaceAll(
                       RegExp(r'[^\d]'),
                       '',
                     );
-                    if (digitsOnly.length != 11) {
+                    if (digitsOnly.length != 11)
                       return 'Phone number must be exactly 11 digits';
-                    }
-                    if (!digitsOnly.startsWith('01')) {
+                    if (!digitsOnly.startsWith('01'))
                       return 'Phone number must start with 01';
-                    }
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
-                // Professional Information Section
                 Text(
                   'Professional Information',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.getTextColor(context),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 CustomTextField(
                   hintText: 'Clinic Name',
                   controller: _clinicNameController,
                   prefixIcon: Icons.local_hospital,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter clinic name';
-                    }
-                    if (value.trim().length < 2) {
+                    if (value.trim().length < 2)
                       return 'Clinic name must be at least 2 characters';
-                    }
-                    if (value.trim().length > 100) {
+                    if (value.trim().length > 100)
                       return 'Clinic name must be less than 100 characters';
-                    }
                     return null;
                   },
                 ),
-
                 CustomTextField(
                   hintText: 'Clinic Phone Number',
                   controller: _clinicPhoneController,
@@ -439,24 +401,19 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.phone,
                   maxLength: 11,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter clinic phone number';
-                    }
-                    // Remove all non-digit characters
                     final digitsOnly = value.trim().replaceAll(
                       RegExp(r'[^\d]'),
                       '',
                     );
-                    if (digitsOnly.length != 11) {
+                    if (digitsOnly.length != 11)
                       return 'Phone number must be exactly 11 digits';
-                    }
-                    if (!digitsOnly.startsWith('01')) {
+                    if (!digitsOnly.startsWith('01'))
                       return 'Phone number must start with 01';
-                    }
                     return null;
                   },
                 ),
-
                 CustomTextField(
                   hintText: 'Clinic Address',
                   controller: _clinicAddressController,
@@ -469,25 +426,20 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                         builder: (_) => const SelectLocationScreen(),
                       ),
                     );
-
                     if (selectedAddress != null && selectedAddress is String) {
                       _clinicAddressController.text = selectedAddress;
                     }
                   },
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter clinic address';
-                    }
-                    if (value.trim().length < 5) {
+                    if (value.trim().length < 5)
                       return 'Address must be at least 5 characters';
-                    }
-                    if (value.trim().length > 200) {
+                    if (value.trim().length > 200)
                       return 'Address must be less than 200 characters';
-                    }
                     return null;
                   },
                 ),
-
                 CustomTextField(
                   hintText: 'Years of Experience',
                   controller: _experienceController,
@@ -495,32 +447,27 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.number,
                   maxLength: 2,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter years of experience';
-                    }
-                    if (!RegExp(r'^\d+$').hasMatch(value.trim())) {
+                    if (!RegExp(r'^\d+$').hasMatch(value.trim()))
                       return 'Experience must be a number';
-                    }
                     final experience = int.tryParse(value.trim());
-                    if (experience == null ||
-                        experience < 0 ||
-                        experience > 50) {
+                    if (experience == null || experience < 0 || experience > 50)
                       return 'Experience must be between 0 and 50 years';
-                    }
                     return null;
                   },
                 ),
-
-                // Working Hours with Time Picker
-                Text(
-                  'Working Hours',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.getTextColor(context),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                  child: Text(
+                    'Working Hours',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -532,25 +479,20 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
+                            color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.access_time,
-                                color: AppColors.getSecondaryTextColor(context),
-                              ),
+                              Icon(Icons.access_time, color: theme.hintColor),
                               const SizedBox(width: 12),
                               Text(
                                 _startTime?.format(context) ?? 'Start Time',
                                 style: TextStyle(
                                   color:
                                       _startTime != null
-                                          ? AppColors.getTextColor(context)
-                                          : AppColors.getSecondaryTextColor(
-                                            context,
-                                          ),
+                                          ? theme.textTheme.bodyLarge?.color
+                                          : theme.hintColor,
                                   fontSize: 16,
                                 ),
                               ),
@@ -569,25 +511,20 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
+                            color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(25),
                           ),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.access_time,
-                                color: AppColors.getSecondaryTextColor(context),
-                              ),
+                              Icon(Icons.access_time, color: theme.hintColor),
                               const SizedBox(width: 12),
                               Text(
                                 _endTime?.format(context) ?? 'End Time',
                                 style: TextStyle(
                                   color:
                                       _endTime != null
-                                          ? AppColors.getTextColor(context)
-                                          : AppColors.getSecondaryTextColor(
-                                            context,
-                                          ),
+                                          ? theme.textTheme.bodyLarge?.color
+                                          : theme.hintColor,
                                   fontSize: 16,
                                 ),
                               ),
@@ -598,272 +535,143 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24),
+                Text(
+                  'Select your working days:',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ..._daysOfWeek.map((day) {
+                  return CheckboxListTile(
+                    title: Text(
+                      day,
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                    ),
+                    value: _selectedDays.contains(day),
+                    onChanged: (bool? selected) {
+                      setState(() {
+                        if (selected == true) {
+                          _selectedDays.add(day);
+                        } else {
+                          _selectedDays.remove(day);
+                        }
+                      });
+                    },
+                    activeColor: theme.colorScheme.primary,
+                    checkColor: theme.colorScheme.onPrimary,
+                    controlAffinity: ListTileControlAffinity.leading,
+                    tileColor: theme.colorScheme.surface,
+                  );
+                }).toList(),
                 const SizedBox(height: 16),
-
                 CustomTextField(
                   hintText: 'Professional Description',
                   controller: _descriptionController,
                   prefixIcon: Icons.description,
+                  maxLines: 4,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty)
                       return 'Enter professional description';
-                    }
-                    if (value.trim().length < 10) {
+                    if (value.trim().length < 10)
                       return 'Description must be at least 10 characters';
-                    }
-                    if (value.trim().length > 500) {
+                    if (value.trim().length > 500)
                       return 'Description must be less than 500 characters';
-                    }
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
-                // Social Media Section
                 Text(
                   'Social Media Links (Optional)',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.getTextColor(context),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Add your social media profiles to help clients find you',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextStyle(fontSize: 12, color: theme.hintColor),
                 ),
                 const SizedBox(height: 16),
-
                 CustomTextField(
                   hintText: 'Facebook Profile URL',
                   controller: _facebookController,
                   prefixIcon: Icons.facebook,
                 ),
-
                 CustomTextField(
                   hintText: 'Instagram Profile URL',
                   controller: _instagramController,
                   prefixIcon: Icons.camera_alt,
                 ),
-
                 CustomTextField(
                   hintText: 'Twitter Profile URL',
                   controller: _twitterController,
                   prefixIcon: Icons.flutter_dash,
                 ),
-
                 CustomTextField(
                   hintText: 'LinkedIn Profile URL',
                   controller: _linkedinController,
                   prefixIcon: Icons.work,
                 ),
-
                 const SizedBox(height: 24),
-
-                // Documents Section
                 Text(
                   'Required Documents',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.getTextColor(context),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Please upload your professional documents for verification',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.getSecondaryTextColor(context),
-                  ),
+                  style: TextStyle(fontSize: 12, color: theme.hintColor),
                 ),
                 const SizedBox(height: 16),
-
-                // Medical License Card (Front)
-                GestureDetector(
-                  onTap: () => _pickImage('cardFront'),
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.getPrimaryColor(context),
-                        width: 2,
-                      ),
-                    ),
-                    child:
-                        _cardFrontImage != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(
-                                _cardFrontImage!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.upload_file,
-                                    color: AppColors.getSecondaryTextColor(
-                                      context,
-                                    ),
-                                    size: 32,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Upload Medical License (Front)',
-                                    style: TextStyle(
-                                      color: AppColors.getSecondaryTextColor(
-                                        context,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                  ),
+                _buildImagePicker(
+                  'cardFront',
+                  'Upload Medical License (Front)',
                 ),
                 const SizedBox(height: 16),
-
-                // Medical License Card (Back)
-                GestureDetector(
-                  onTap: () => _pickImage('cardBack'),
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.getPrimaryColor(context),
-                        width: 2,
-                      ),
-                    ),
-                    child:
-                        _cardBackImage != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(
-                                _cardBackImage!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.upload_file,
-                                    color: AppColors.getSecondaryTextColor(
-                                      context,
-                                    ),
-                                    size: 32,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Upload Medical License (Back)',
-                                    style: TextStyle(
-                                      color: AppColors.getSecondaryTextColor(
-                                        context,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                  ),
-                ),
+                _buildImagePicker('cardBack', 'Upload Medical License (Back)'),
                 const SizedBox(height: 16),
-
-                // ID Card
-                GestureDetector(
-                  onTap: () => _pickImage('id'),
-                  child: Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.getPrimaryColor(context),
-                        width: 2,
-                      ),
-                    ),
-                    child:
-                        _idImage != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(_idImage!, fit: BoxFit.cover),
-                            )
-                            : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.upload_file,
-                                    color: AppColors.getSecondaryTextColor(
-                                      context,
-                                    ),
-                                    size: 32,
-                                  ),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'Upload ID Card',
-                                    style: TextStyle(
-                                      color: AppColors.getSecondaryTextColor(
-                                        context,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                  ),
-                ),
-
+                _buildImagePicker('id', 'Upload ID Card'),
                 const SizedBox(height: 24),
-
-                // Note about verification
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.getPrimaryColor(context).withOpacity(0.1),
+                    color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.getPrimaryColor(
-                        context,
-                      ).withOpacity(0.3),
+                      color: theme.colorScheme.primary.withOpacity(0.3),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: AppColors.getPrimaryColor(context),
+                        color: theme.colorScheme.primary,
                         size: 20,
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Your information will be reviewed and verified within 24-48 hours. You will be notified once approved.',
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.getTextColor(context),
+                            color: theme.textTheme.bodyMedium?.color,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : CustomButton(
@@ -872,10 +680,55 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       width: double.infinity,
                       fontSize: 20,
                     ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildImagePicker(String type, String label) {
+    final theme = Theme.of(context);
+    File? imageFile;
+    switch (type) {
+      case 'cardFront':
+        imageFile = _cardFrontImage;
+        break;
+      case 'cardBack':
+        imageFile = _cardBackImage;
+        break;
+      case 'id':
+        imageFile = _idImage;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () => _pickImage(type),
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: theme.colorScheme.primary, width: 2),
+        ),
+        child:
+            imageFile != null
+                ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(imageFile, fit: BoxFit.cover),
+                )
+                : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.upload_file, color: theme.hintColor, size: 32),
+                      const SizedBox(height: 8),
+                      Text(label, style: TextStyle(color: theme.hintColor)),
+                    ],
+                  ),
+                ),
       ),
     );
   }

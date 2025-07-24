@@ -106,7 +106,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       if (await canLaunchUrl(Uri.parse(finalUrl))) {
         await launchUrl(Uri.parse(finalUrl), mode: LaunchMode.externalApplication);
 
-        // ✅ بعد ما يفتح المتصفح، روح لشاشة "شكراً"
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -119,7 +118,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         throw 'Could not launch payment URL';
       }
     } catch (e) {
-      print("Payment error: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
@@ -136,9 +134,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Processing Payment..."),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        foregroundColor: theme.appBarTheme.foregroundColor,
+        elevation: 0,
       ),
       body: Center(
         child: isLoading

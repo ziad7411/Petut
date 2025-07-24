@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
-import '../app_colors.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -144,7 +143,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     } catch (e) {
       _showSnackBar(
         'Failed to pick image: $e',
-        AppColors.getErrorColor(context),
+        Theme.of(context).colorScheme.error,
       );
     }
   }
@@ -156,7 +155,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     } catch (e) {
       _showSnackBar(
         'Failed to process image: $e',
-        AppColors.getErrorColor(context),
+        Theme.of(context).colorScheme.error,
       );
       return null;
     }
@@ -212,7 +211,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           petImageBase64 = await _convertImageToBase64(_selectedPetImage!);
         }
 
-        await _firestore.collection('pets').add({
+        await _firestore.collection('users').doc(user.uid).collection('pets').add({
           'ownerId': user.uid,
           'name': _petNameController.text.trim(),
           'type': _petTypeController.text.trim(),
@@ -225,38 +224,54 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       }
 
       _showSnackBar('Profile created successfully!', Colors.green);
-      Navigator.pushReplacementNamed(context, '/main');
+      if(mounted) Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       _showSnackBar(
         'Failed to save profile: $e',
-        AppColors.getErrorColor(context),
+        Theme.of(context).colorScheme.error,
       );
     } finally {
-      setState(() => _isLoading = false);
+      if(mounted) setState(() => _isLoading = false);
     }
   }
 
   void _showSnackBar(String message, Color color) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _locationController.dispose();
+    _petNameController.dispose();
+    _petTypeController.dispose();
+    _petGenderController.dispose();
+    _petAgeController.dispose();
+    _petWeightController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Complete Your Profile',
           style: TextStyle(
-            color: AppColors.getTextColor(context),
+            color: theme.appBarTheme.foregroundColor,
             fontWeight: FontWeight.bold,
           ),
         ),
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        foregroundColor: AppColors.getTextColor(context),
+        foregroundColor: theme.appBarTheme.foregroundColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -273,10 +288,10 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(60),
                       border: Border.all(
-                        color: AppColors.getPrimaryColor(context),
+                        color: theme.colorScheme.primary,
                         width: 3,
                       ),
                     ),
@@ -292,7 +307,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                             : Icon(
                               Icons.person,
                               size: 50,
-                              color: AppColors.getSecondaryTextColor(context),
+                              color: theme.hintColor,
                             ),
                   ),
                 ),
@@ -302,7 +317,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 child: Text(
                   'Tap to add photo',
                   style: TextStyle(
-                    color: AppColors.getSecondaryTextColor(context),
+                    color: theme.hintColor,
                     fontSize: 12,
                   ),
                 ),
@@ -315,7 +330,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.getTextColor(context),
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               const SizedBox(height: 16),
@@ -326,7 +341,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 prefixIcon: Icons.person,
                 keyboardType: TextInputType.name,
                 validator: _validateName,
-                customFillColor: AppColors.fieldColor,
               ),
               CustomTextField(
                 hintText: 'Phone Number',
@@ -335,14 +349,12 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 keyboardType: TextInputType.phone,
                 maxLength: 11,
                 validator: _validatePhone,
-                customFillColor: AppColors.fieldColor,
               ),
               CustomTextField(
                 hintText: 'Location',
                 controller: _locationController,
                 prefixIcon: Icons.location_on,
                 validator: _validateLocation,
-                customFillColor: AppColors.fieldColor,
               ),
 
               const SizedBox(height: 32),
@@ -355,7 +367,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.getTextColor(context),
+                      color: theme.textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -369,7 +381,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                         }
                       });
                     },
-                    activeColor: AppColors.gold,
+                    activeColor: theme.colorScheme.primary,
                   ),
                 ],
               ),
@@ -377,7 +389,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               Text(
                 'Do you have a pet?',
                 style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(context),
+                  color: theme.hintColor,
                   fontSize: 14,
                 ),
               ),
@@ -396,10 +408,10 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
+                              color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(50),
                               border: Border.all(
-                                color: AppColors.getPrimaryColor(context),
+                                color: theme.colorScheme.primary,
                                 width: 2,
                               ),
                             ),
@@ -415,9 +427,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                                     : Icon(
                                       Icons.pets,
                                       size: 40,
-                                      color: AppColors.getSecondaryTextColor(
-                                        context,
-                                      ),
+                                      color: theme.hintColor,
                                     ),
                           ),
                         ),
@@ -429,21 +439,18 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                         controller: _petNameController,
                         prefixIcon: Icons.pets,
                         validator: _validatePetName,
-                        customFillColor: AppColors.fieldColor,
                       ),
                       CustomTextField(
                         hintText: 'Pet Type (Dog, Cat, etc.)',
                         controller: _petTypeController,
                         prefixIcon: Icons.category,
                         validator: _validatePetType,
-                        customFillColor: AppColors.fieldColor,
                       ),
                       CustomTextField(
                         hintText: 'Gender (Male/Female/Unknown)',
                         controller: _petGenderController,
                         prefixIcon: Icons.male,
                         validator: _validatePetGender,
-                        customFillColor: AppColors.fieldColor,
                       ),
                       CustomTextField(
                         hintText: 'Age (years)',
@@ -452,14 +459,13 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                         maxLength: 2,
                         prefixIcon: Icons.cake,
                         validator: _validatePetAge,
-                        customFillColor: AppColors.fieldColor,
                       ),
                       CustomTextField(
                         hintText: 'Weight (kg)',
                         controller: _petWeightController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         prefixIcon: Icons.monitor_weight,
                         validator: _validatePetWeight,
-                        customFillColor: AppColors.fieldColor,
                       ),
                     ],
                   ),
@@ -481,18 +487,5 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _locationController.dispose();
-    _petNameController.dispose();
-    _petTypeController.dispose();
-    _petGenderController.dispose();
-    _petAgeController.dispose();
-    _petWeightController.dispose();
-    super.dispose();
   }
 }

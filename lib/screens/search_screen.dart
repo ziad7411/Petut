@@ -27,10 +27,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Future<void> loadProducts() async {
     final products = await fetchProducts();
-    setState(() {
-      _allProducts = products;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _allProducts = products;
+        _isLoading = false;
+      });
+    }
   }
 
   void _filterProducts(String query) {
@@ -72,6 +74,7 @@ class _SearchScreenState extends State<SearchScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
+        iconTheme: theme.iconTheme,
         title: TextField(
           style: theme.textTheme.bodyLarge,
           decoration: InputDecoration(
@@ -89,7 +92,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _isLoading
               ? Center(
                 child: CircularProgressIndicator(
-                  color: theme.colorScheme.secondary,
+                  color: theme.colorScheme.primary,
                 ),
               )
               : _searchQuery.isEmpty

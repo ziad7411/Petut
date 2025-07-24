@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:petut/app_colors.dart' show AppColors;
 import 'package:petut/widgets/custom_button.dart';
 import 'package:petut/widgets/custom_text_field.dart';
-
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -32,7 +30,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a role'),duration: Durations.medium4,),
+        const SnackBar(
+          content: Text('Please select a role'),
+          duration: Durations.medium4,
+        ),
       );
       return;
     }
@@ -42,20 +43,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       final credential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
       await FirebaseFirestore.instance
           .collection('users')
           .doc(credential.user!.uid)
           .set({
-        'email': emailController.text.trim(),
-        'role': selectedRole,
-        'uid': credential.user!.uid,
-      });
+            'email': emailController.text.trim(),
+            'role': selectedRole,
+            'uid': credential.user!.uid,
+          });
 
-     
       if (selectedRole == 'Customer') {
         Navigator.pushReplacementNamed(context, '/customer_form');
       } else if (selectedRole == 'Doctor') {
@@ -63,9 +62,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       print('Signup error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Signup failed: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Signup failed: $e')));
     } finally {
       setState(() => isLoading = false);
     }
@@ -91,9 +90,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       await FirebaseAuth.instance.signInWithCredential(credential);
       Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google sign-in error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Google sign-in error')));
     } finally {
       setState(() => isLoading = false);
     }
@@ -141,26 +140,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           keyboardType: TextInputType.emailAddress,
                           prefixIcon: Icons.email,
                           controller: emailController,
-                          validator: (value) =>
-                              value == null || value.isEmpty
-                                  ? 'Enter your Email'
-                                  : null,
+                          validator:
+                              (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Enter your Email'
+                                      : null,
                         ),
                         CustomTextField(
                           hintText: 'Password',
                           obscureText: _obscurePassword,
                           controller: passwordController,
                           prefixIcon: Icons.lock,
-                          validator: (value) =>
-                              value != null && value.length >= 6
-                                  ? null
-                                  : 'Enter at least 6 characters',
+                          validator:
+                              (value) =>
+                                  value != null && value.length >= 6
+                                      ? null
+                                      : 'Enter at least 6 characters',
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: Colors.grey,
+                              // -- تعديل: استخدام لون من الثيم --
+                              color: theme.hintColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -174,16 +176,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           prefixIcon: Icons.lock,
                           obscureText: _obscureConfirmPassword,
                           controller: confirmPasswordController,
-                          validator: (value) =>
-                              value == passwordController.text
-                                  ? null
-                                  : 'Passwords do not match',
+                          validator:
+                              (value) =>
+                                  value == passwordController.text
+                                      ? null
+                                      : 'Passwords do not match',
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
                                   ? Icons.visibility_off
                                   : Icons.visibility,
-                              color: Colors.grey,
+                              // -- تعديل: استخدام لون من الثيم --
+                              color: theme.hintColor,
                             ),
                             onPressed: () {
                               setState(() {
@@ -198,7 +202,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           value: selectedRole,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: AppColors.fieldColor,
+                            // -- تعديل: استخدام لون من الثيم --
+                            fillColor: theme.colorScheme.surface,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide.none,
@@ -208,7 +213,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               vertical: 12,
                             ),
                           ),
-                          hint: const Text('Choose your role'),
+                          hint: Text(
+                            'Choose your role',
+                            style: TextStyle(color: theme.hintColor),
+                          ),
                           items: const [
                             DropdownMenuItem(
                               value: 'Customer',
@@ -229,18 +237,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         isLoading
                             ? const CircularProgressIndicator()
                             : CustomButton(
-                                text: 'Sign Up',
-                                onPressed: signup,
-                                width: double.infinity,
-                                fontSize: 20,
-                              ),
+                              text: 'Sign Up',
+                              onPressed: signup,
+                              width: double.infinity,
+                              fontSize: 20,
+                            ),
                         const SizedBox(height: 24),
                         Row(
                           children: [
                             const Expanded(child: Divider()),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                               child: Text(
                                 'or',
                                 style: TextStyle(color: textColor),
@@ -267,8 +276,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               style: TextStyle(color: textColor),
                             ),
                             TextButton(
-                              onPressed: () =>
-                                  Navigator.pushNamed(context, '/login'),
+                              onPressed:
+                                  () => Navigator.pushNamed(context, '/login'),
                               child: Text(
                                 'Log In',
                                 style: TextStyle(
