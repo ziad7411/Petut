@@ -17,18 +17,17 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    
+    const HomeScreen(),
     const MyOrdersScreen(),
     const HealthScreen(),
-    const HomeScreen(),
     const FavoritesScreen(),
     const ProfileScreen(),
   ];
 
   final List<BottomNavigationBarItem> _navBarItems = [
     BottomNavigationBarItem(
-      icon: FaIcon(FontAwesomeIcons.user),
-      label: 'Profile',
+      icon: FaIcon(FontAwesomeIcons.house),
+      label: 'Home',
     ),
     BottomNavigationBarItem(
       icon: FaIcon(FontAwesomeIcons.receipt),
@@ -38,15 +37,14 @@ class _MainScreenState extends State<MainScreen> {
       icon: FaIcon(FontAwesomeIcons.heartPulse),
       label: 'Health',
     ),
-     BottomNavigationBarItem(
-      icon: FaIcon(FontAwesomeIcons.house),
-      label: 'Home',
-    ),
     BottomNavigationBarItem(
       icon: FaIcon(FontAwesomeIcons.solidHeart),
       label: 'Favorite',
     ),
-   
+    BottomNavigationBarItem(
+      icon: FaIcon(FontAwesomeIcons.user),
+      label: 'Profile',
+    ),
   ];
 
   void _onItemTapped(int index) {
@@ -176,5 +174,5 @@ class NavBarClipper extends CustomClipper<Path> {
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(CustomClipper<Path> oldClipper)=>false;
 }
