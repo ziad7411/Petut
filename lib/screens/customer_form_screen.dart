@@ -211,7 +211,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           petImageBase64 = await _convertImageToBase64(_selectedPetImage!);
         }
 
-        await _firestore.collection('pets').add({
+        await _firestore.collection('users').doc(user.uid).collection('pets').add({
           'ownerId': user.uid,
           'name': _petNameController.text.trim(),
           'type': _petTypeController.text.trim(),

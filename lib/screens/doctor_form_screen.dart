@@ -78,9 +78,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   Future<void> _selectTime(bool isStartTime) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: isStartTime
-          ? (_startTime ?? const TimeOfDay(hour: 9, minute: 0))
-          : (_endTime ?? const TimeOfDay(hour: 18, minute: 0)),
+      initialTime:
+          isStartTime
+              ? (_startTime ?? const TimeOfDay(hour: 9, minute: 0))
+              : (_endTime ?? const TimeOfDay(hour: 18, minute: 0)),
     );
 
     if (picked != null) {
@@ -111,22 +112,35 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please fill all required fields correctly')));
-      return;
-    }
-    
-    if (_selectedDays.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least one working day')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all required fields correctly'),
+        ),
+      );
       return;
     }
 
-    if (_profileImage == null || _cardFrontImage == null || _cardBackImage == null || _idImage == null) {
-       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please upload all required documents')));
-       return;
+    if (_selectedDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one working day')),
+      );
+      return;
+    }
+
+    if (_profileImage == null ||
+        _cardFrontImage == null ||
+        _cardBackImage == null ||
+        _idImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload all required documents')),
+      );
+      return;
     }
 
     if (_startTime == null || _endTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select your working hours')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your working hours')),
+      );
       return;
     }
     setState(() => _isLoading = true);
@@ -140,23 +154,33 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       final idBase64 = await _convertImageToBase64(_idImage);
 
       final socialMedia = <String, String>{};
-      if (_facebookController.text.trim().isNotEmpty) socialMedia['facebook'] = _facebookController.text.trim();
-      if (_instagramController.text.trim().isNotEmpty) socialMedia['instagram'] = _instagramController.text.trim();
-      if (_twitterController.text.trim().isNotEmpty) socialMedia['twitter'] = _twitterController.text.trim();
-      if (_linkedinController.text.trim().isNotEmpty) socialMedia['linkedin'] = _linkedinController.text.trim();
-      
+      if (_facebookController.text.trim().isNotEmpty)
+        socialMedia['facebook'] = _facebookController.text.trim();
+      if (_instagramController.text.trim().isNotEmpty)
+        socialMedia['instagram'] = _instagramController.text.trim();
+      if (_twitterController.text.trim().isNotEmpty)
+        socialMedia['twitter'] = _twitterController.text.trim();
+      if (_linkedinController.text.trim().isNotEmpty)
+        socialMedia['linkedin'] = _linkedinController.text.trim();
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'role': 'Doctor',
-        'doctorName': _doctorNameController.text.trim(),
-        'clinicName': _clinicNameController.text.trim(),
-        'clinicAddress': _clinicAddressController.text.trim(),
-        'clinicPhone': _clinicPhoneController.text.trim(),
+        'name': _doctorNameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'experience': _experienceController.text.trim(),
-        'workingHours': _workingHoursController.text.trim(),
-        'workingDays': _selectedDays,
-        'startTime': _startTime != null ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}' : null,
-        'endTime': _endTime != null ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}' : null,
+        'updatedAt': FieldValue.serverTimestamp(),
+        //Gender
+        //email 
+      }, SetOptions(merge: true));
+         await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
+        'role': 'Doctor',
+        'name': _doctorNameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        //Gender
+        //email
+      }, SetOptions(merge: true));
+       await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").add({
+          'experience': _experienceController.text.trim(),
         'description': _descriptionController.text.trim(),
         'socialMedia': socialMedia,
         'profileImage': profileBase64,
@@ -166,13 +190,33 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'isVerified': false,
         'rating': 0.0,
         'totalReviews': 0,
+       });
+      await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
+        'doctorid': user.uid,
+        'workingHours': _workingHoursController.text.trim(),
+       //object for working hours 
+        'day': _selectedDays,
+        'openTime':
+            _startTime != null
+                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'closeTime':
+            _endTime != null
+                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'clinicName': _clinicNameController.text.trim(),
+        'clinicAddress': _clinicAddressController.text.trim(),
+        'clinicPhone': _clinicPhoneController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
+
       Navigator.pushReplacementNamed(context, '/goToWebPage');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      if(mounted) {
+      if (mounted) {
         setState(() => _isLoading = false);
       }
     }
@@ -239,10 +283,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Please provide your professional information',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: theme.hintColor,
-                  ),
+                  style: TextStyle(fontSize: 14, color: theme.hintColor),
                 ),
                 const SizedBox(height: 24),
                 Center(
@@ -259,16 +300,20 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                           width: 3,
                         ),
                       ),
-                      child: _profileImage != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: Image.file(_profileImage!, fit: BoxFit.cover),
-                            )
-                          : Icon(
-                              Icons.person,
-                              size: 50,
-                              color: theme.hintColor,
-                            ),
+                      child:
+                          _profileImage != null
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(60),
+                                child: Image.file(
+                                  _profileImage!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : Icon(
+                                Icons.person,
+                                size: 50,
+                                color: theme.hintColor,
+                              ),
                     ),
                   ),
                 ),
@@ -276,10 +321,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 Center(
                   child: Text(
                     'Tap to add photo',
-                    style: TextStyle(
-                      color: theme.hintColor,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: theme.hintColor, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -297,10 +339,14 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   controller: _doctorNameController,
                   prefixIcon: Icons.person,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter your full name';
-                    if (value.trim().length < 2) return 'Name must be at least 2 characters';
-                    if (value.trim().length > 50) return 'Name must be less than 50 characters';
-                    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value.trim())) return 'Name can only contain letters and spaces';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter your full name';
+                    if (value.trim().length < 2)
+                      return 'Name must be at least 2 characters';
+                    if (value.trim().length > 50)
+                      return 'Name must be less than 50 characters';
+                    if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value.trim()))
+                      return 'Name can only contain letters and spaces';
                     return null;
                   },
                 ),
@@ -311,10 +357,16 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.phone,
                   maxLength: 11,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter your phone number';
-                    final digitsOnly = value.trim().replaceAll(RegExp(r'[^\d]'),'');
-                    if (digitsOnly.length != 11) return 'Phone number must be exactly 11 digits';
-                    if (!digitsOnly.startsWith('01')) return 'Phone number must start with 01';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter your phone number';
+                    final digitsOnly = value.trim().replaceAll(
+                      RegExp(r'[^\d]'),
+                      '',
+                    );
+                    if (digitsOnly.length != 11)
+                      return 'Phone number must be exactly 11 digits';
+                    if (!digitsOnly.startsWith('01'))
+                      return 'Phone number must start with 01';
                     return null;
                   },
                 ),
@@ -333,9 +385,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   controller: _clinicNameController,
                   prefixIcon: Icons.local_hospital,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter clinic name';
-                    if (value.trim().length < 2) return 'Clinic name must be at least 2 characters';
-                    if (value.trim().length > 100) return 'Clinic name must be less than 100 characters';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter clinic name';
+                    if (value.trim().length < 2)
+                      return 'Clinic name must be at least 2 characters';
+                    if (value.trim().length > 100)
+                      return 'Clinic name must be less than 100 characters';
                     return null;
                   },
                 ),
@@ -346,10 +401,16 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.phone,
                   maxLength: 11,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter clinic phone number';
-                    final digitsOnly = value.trim().replaceAll(RegExp(r'[^\d]'),'');
-                    if (digitsOnly.length != 11) return 'Phone number must be exactly 11 digits';
-                    if (!digitsOnly.startsWith('01')) return 'Phone number must start with 01';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter clinic phone number';
+                    final digitsOnly = value.trim().replaceAll(
+                      RegExp(r'[^\d]'),
+                      '',
+                    );
+                    if (digitsOnly.length != 11)
+                      return 'Phone number must be exactly 11 digits';
+                    if (!digitsOnly.startsWith('01'))
+                      return 'Phone number must start with 01';
                     return null;
                   },
                 ),
@@ -361,16 +422,21 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   onTap: () async {
                     final selectedAddress = await Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const SelectLocationScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const SelectLocationScreen(),
+                      ),
                     );
                     if (selectedAddress != null && selectedAddress is String) {
                       _clinicAddressController.text = selectedAddress;
                     }
                   },
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter clinic address';
-                    if (value.trim().length < 5) return 'Address must be at least 5 characters';
-                    if (value.trim().length > 200) return 'Address must be less than 200 characters';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter clinic address';
+                    if (value.trim().length < 5)
+                      return 'Address must be at least 5 characters';
+                    if (value.trim().length > 200)
+                      return 'Address must be less than 200 characters';
                     return null;
                   },
                 ),
@@ -381,10 +447,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   keyboardType: TextInputType.number,
                   maxLength: 2,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter years of experience';
-                    if (!RegExp(r'^\d+$').hasMatch(value.trim())) return 'Experience must be a number';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter years of experience';
+                    if (!RegExp(r'^\d+$').hasMatch(value.trim()))
+                      return 'Experience must be a number';
                     final experience = int.tryParse(value.trim());
-                    if (experience == null || experience < 0 || experience > 50) return 'Experience must be between 0 and 50 years';
+                    if (experience == null || experience < 0 || experience > 50)
+                      return 'Experience must be between 0 and 50 years';
                     return null;
                   },
                 ),
@@ -405,7 +474,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       child: GestureDetector(
                         onTap: () => _selectTime(true),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 15,
+                            horizontal: 20,
+                          ),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(25),
@@ -417,9 +489,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                               Text(
                                 _startTime?.format(context) ?? 'Start Time',
                                 style: TextStyle(
-                                  color: _startTime != null
-                                      ? theme.textTheme.bodyLarge?.color
-                                      : theme.hintColor,
+                                  color:
+                                      _startTime != null
+                                          ? theme.textTheme.bodyLarge?.color
+                                          : theme.hintColor,
                                   fontSize: 16,
                                 ),
                               ),
@@ -433,7 +506,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       child: GestureDetector(
                         onTap: () => _selectTime(false),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 15,
+                            horizontal: 20,
+                          ),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(25),
@@ -445,9 +521,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                               Text(
                                 _endTime?.format(context) ?? 'End Time',
                                 style: TextStyle(
-                                  color: _endTime != null
-                                      ? theme.textTheme.bodyLarge?.color
-                                      : theme.hintColor,
+                                  color:
+                                      _endTime != null
+                                          ? theme.textTheme.bodyLarge?.color
+                                          : theme.hintColor,
                                   fontSize: 16,
                                 ),
                               ),
@@ -470,7 +547,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 const SizedBox(height: 8),
                 ..._daysOfWeek.map((day) {
                   return CheckboxListTile(
-                    title: Text(day, style: TextStyle(color: theme.textTheme.bodyLarge?.color)),
+                    title: Text(
+                      day,
+                      style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                    ),
                     value: _selectedDays.contains(day),
                     onChanged: (bool? selected) {
                       setState(() {
@@ -494,9 +574,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   prefixIcon: Icons.description,
                   maxLines: 4,
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Enter professional description';
-                    if (value.trim().length < 10) return 'Description must be at least 10 characters';
-                    if (value.trim().length > 500) return 'Description must be less than 500 characters';
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter professional description';
+                    if (value.trim().length < 10)
+                      return 'Description must be at least 10 characters';
+                    if (value.trim().length > 500)
+                      return 'Description must be less than 500 characters';
                     return null;
                   },
                 ),
@@ -512,16 +595,29 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Add your social media profiles to help clients find you',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.hintColor,
-                  ),
+                  style: TextStyle(fontSize: 12, color: theme.hintColor),
                 ),
                 const SizedBox(height: 16),
-                CustomTextField(hintText: 'Facebook Profile URL', controller: _facebookController, prefixIcon: Icons.facebook),
-                CustomTextField(hintText: 'Instagram Profile URL', controller: _instagramController, prefixIcon: Icons.camera_alt),
-                CustomTextField(hintText: 'Twitter Profile URL', controller: _twitterController, prefixIcon: Icons.flutter_dash),
-                CustomTextField(hintText: 'LinkedIn Profile URL', controller: _linkedinController, prefixIcon: Icons.work),
+                CustomTextField(
+                  hintText: 'Facebook Profile URL',
+                  controller: _facebookController,
+                  prefixIcon: Icons.facebook,
+                ),
+                CustomTextField(
+                  hintText: 'Instagram Profile URL',
+                  controller: _instagramController,
+                  prefixIcon: Icons.camera_alt,
+                ),
+                CustomTextField(
+                  hintText: 'Twitter Profile URL',
+                  controller: _twitterController,
+                  prefixIcon: Icons.flutter_dash,
+                ),
+                CustomTextField(
+                  hintText: 'LinkedIn Profile URL',
+                  controller: _linkedinController,
+                  prefixIcon: Icons.work,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Required Documents',
@@ -534,13 +630,13 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 const SizedBox(height: 8),
                 Text(
                   'Please upload your professional documents for verification',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.hintColor,
-                  ),
+                  style: TextStyle(fontSize: 12, color: theme.hintColor),
                 ),
                 const SizedBox(height: 16),
-                _buildImagePicker('cardFront', 'Upload Medical License (Front)'),
+                _buildImagePicker(
+                  'cardFront',
+                  'Upload Medical License (Front)',
+                ),
                 const SizedBox(height: 16),
                 _buildImagePicker('cardBack', 'Upload Medical License (Back)'),
                 const SizedBox(height: 16),
@@ -551,16 +647,25 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: theme.colorScheme.primary, size: 20),
+                      Icon(
+                        Icons.info_outline,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Your information will be reviewed and verified within 24-48 hours. You will be notified once approved.',
-                          style: TextStyle(fontSize: 12, color: theme.textTheme.bodyMedium?.color),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.textTheme.bodyMedium?.color,
+                          ),
                         ),
                       ),
                     ],
@@ -570,11 +675,11 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : CustomButton(
-                        text: 'Submit Application',
-                        onPressed: _submit,
-                        width: double.infinity,
-                        fontSize: 20,
-                      ),
+                      text: 'Submit Application',
+                      onPressed: _submit,
+                      width: double.infinity,
+                      fontSize: 20,
+                    ),
                 const SizedBox(height: 24),
               ],
             ),
@@ -608,21 +713,22 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: theme.colorScheme.primary, width: 2),
         ),
-        child: imageFile != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.file(imageFile, fit: BoxFit.cover),
-              )
-            : Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.upload_file, color: theme.hintColor, size: 32),
-                    const SizedBox(height: 8),
-                    Text(label, style: TextStyle(color: theme.hintColor)),
-                  ],
+        child:
+            imageFile != null
+                ? ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.file(imageFile, fit: BoxFit.cover),
+                )
+                : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.upload_file, color: theme.hintColor, size: 32),
+                      const SizedBox(height: 8),
+                      Text(label, style: TextStyle(color: theme.hintColor)),
+                    ],
+                  ),
                 ),
-              ),
       ),
     );
   }
