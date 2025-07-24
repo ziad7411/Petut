@@ -34,41 +34,50 @@ class PaymentMethodScreen extends StatefulWidget {
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   int? selectedIntegrationId;
 
-  Future<void> saveOrderToFirestore(String paymentMethod) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+ Future<void> saveOrderToFirestore(String paymentMethod) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
 
-    final orderData = {
-      'deliveryInfo': {
-        'name': widget.name,
-        'phone': widget.phone,
-        'address': widget.address,
-        'deliveryTime': DateFormat('yyyy-MM-dd HH:mm').format(widget.deliveryTime),
-      },
-      'paymentInfo': {
-        'subtotal': widget.subtotal,
-        'deliveryFee': widget.deliveryFee,
-        'total': widget.total,
-        'paymentMethod': paymentMethod,
-      },
-      'products': globalCartItems.map((item) => {
-        'name': item.title,
-        'price': item.price,
-        'quantity': item.quantity,
-      }).toList(),
-      'timestamp': FieldValue.serverTimestamp(),
-      'status': 'pending',
-    };
+  final firestore = FirebaseFirestore.instance;
+  final orderId = firestore.collection('orders').doc().id;
 
-    final orderId = FirebaseFirestore.instance.collection('orders').doc().id;
+  final orderData = {
+    'orderId': orderId,
+    'userId': user.uid,
+    'deliveryInfo': {
+      'name': widget.name,
+      'phone': widget.phone,
+      'address': widget.address,
+      'deliveryTime': DateFormat('yyyy-MM-dd HH:mm').format(widget.deliveryTime),
+    },
+    'paymentInfo': {
+      'subtotal': widget.subtotal,
+      'deliveryFee': widget.deliveryFee,
+      'total': widget.total,
+      'paymentMethod': paymentMethod,
+    },
+    'products': globalCartItems.map((item) => {
+      'name': item.title,
+      'price': item.price,
+      'quantity': item.quantity,
+    }).toList(),
+    'timestamp': FieldValue.serverTimestamp(),
+    'status': 'pending',
+  };
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('orders')
-        .doc(orderId)
-        .set(orderData);
-  }
+  WriteBatch batch = firestore.batch();
+
+  // اكتب في /orders/{orderId}
+  final globalOrderRef = firestore.collection('orders').doc(orderId);
+  batch.set(globalOrderRef, orderData);
+
+  // اكتب في /users/{uid}/orders/{orderId}
+  final userOrderRef = firestore.collection('users').doc(user.uid).collection('orders').doc(orderId);
+  batch.set(userOrderRef, orderData);
+
+  await batch.commit();
+}
+
 
   void _goToPayment() async {
     if (selectedIntegrationId == null) {
