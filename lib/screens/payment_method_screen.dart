@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/payment_screen.dart';
@@ -34,50 +33,77 @@ class PaymentMethodScreen extends StatefulWidget {
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   int? selectedIntegrationId;
 
- Future<void> saveOrderToFirestore(String paymentMethod) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+  Future<void> saveOrderToFirestore(String paymentMethod) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  final firestore = FirebaseFirestore.instance;
-  final orderId = firestore.collection('orders').doc().id;
+    final firestore = FirebaseFirestore.instance;
+    final orderId = firestore.collection('orders').doc().id;
 
-  final orderData = {
-    'orderId': orderId,
-    'userId': user.uid,
-    'deliveryInfo': {
-      'name': widget.name,
-      'phone': widget.phone,
-      'address': widget.address,
-      'deliveryTime': DateFormat('yyyy-MM-dd HH:mm').format(widget.deliveryTime),
-    },
-    'paymentInfo': {
-      'subtotal': widget.subtotal,
-      'deliveryFee': widget.deliveryFee,
-      'total': widget.total,
-      'paymentMethod': paymentMethod,
-    },
-    'products': globalCartItems.map((item) => {
-      'name': item.title,
-      'price': item.price,
-      'quantity': item.quantity,
-    }).toList(),
-    'timestamp': FieldValue.serverTimestamp(),
-    'status': 'pending',
-  };
+    final orderData = {
+      'orderId': orderId,
+      'userId': user.uid,
+      'cart': {
+        'items':
+            globalCartItems
+                .map(
+                  (item) => {
+                    'id': item.id,
+                    'productName': item.title,
+                    'description': item.description,
+                    'category': item.category,
+                    'imageURL': item.image,
+                    'price': item.price,
+                    'quantity': item.quantity,
+                    'totalPrice': item.price * item.quantity,
+                    'rate': item.rate.toString(),
+                    'createdAt':
+                        DateTime.now()
+                            .toIso8601String(), // أو استخدم FieldValue لاحقًا
+                  },
+                )
+                .toList(),
+        'totalAmount': widget.total,
+        'totalQuantity': globalCartItems.fold<int>(
+          0,
+          (sum, item) => sum + item.quantity,
+        ),
+      },
+      'deliveryInfo': {
+        'fullName': widget.name,
+        'phone': widget.phone,
+        'email': user.email ?? '',
+        'address': widget.address,
+        'city': 'Alex', // ← عدل بناءً على اختيار المستخدم
+        'postalCode': '22626', // ← عدل إذا متاح
+        'deliveryMethod': 'standard', // ← اجعلها ديناميكية إذا في اختيارات
+        'deliveryTime':
+            'anytime', // ← أو استخدم widget.deliveryTime.toIso8601String()
+      },
+      'paymentInfo': {
+        'paymentMethod': paymentMethod,
+        'cardHolder': '', // ← يمكنك ملؤه لاحقًا إذا مستخدم دفع بالبطاقة
+        'status': 'pending',
+      },
+      'createdAt': FieldValue.serverTimestamp(),
+    };
 
-  WriteBatch batch = firestore.batch();
+    WriteBatch batch = firestore.batch();
 
-  // اكتب في /orders/{orderId}
-  final globalOrderRef = firestore.collection('orders').doc(orderId);
-  batch.set(globalOrderRef, orderData);
+    // اكتب في /orders/{orderId}
+    final globalOrderRef = firestore.collection('orders').doc(orderId);
+    batch.set(globalOrderRef, orderData);
 
-  // اكتب في /users/{uid}/orders/{orderId}
-  final userOrderRef = firestore.collection('users').doc(user.uid).collection('orders').doc(orderId);
-  batch.set(userOrderRef, orderData);
+    // اكتب في /users/{uid}/orders/{orderId}
+    final userOrderRef = firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('orders')
+        .doc(orderId);
+    batch.set(userOrderRef, orderData);
 
-  await batch.commit();
-}
-
+    await batch.commit();
+  }
 
   void _goToPayment() async {
     if (selectedIntegrationId == null) {
@@ -106,19 +132,20 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          amount: (widget.total * 100).toInt(),
-          name: widget.name,
-          phone: widget.phone,
-          email: 'example@email.com',
-          integrationId: selectedIntegrationId!,
-          address: widget.address,
-          paymentMethod: method,
-          subtotal: widget.subtotal,
-          deliveryFee: widget.deliveryFee,
-          total: widget.total,
-          products: globalCartItems,
-        ),
+        builder:
+            (_) => PaymentScreen(
+              amount: (widget.total * 100).toInt(),
+              name: widget.name,
+              phone: widget.phone,
+              email: 'example@email.com',
+              integrationId: selectedIntegrationId!,
+              address: widget.address,
+              paymentMethod: method,
+              subtotal: widget.subtotal,
+              deliveryFee: widget.deliveryFee,
+              total: widget.total,
+              products: globalCartItems,
+            ),
       ),
     );
   }
@@ -139,13 +166,17 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Choose your payment method", style: theme.textTheme.titleLarge),
+            Text(
+              "Choose your payment method",
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
             Card(
               child: RadioListTile<int>(
                 value: 5189805,
                 groupValue: selectedIntegrationId,
-                onChanged: (value) => setState(() => selectedIntegrationId = value),
+                onChanged:
+                    (value) => setState(() => selectedIntegrationId = value),
                 title: const Text("💵 Cash on Delivery"),
               ),
             ),
@@ -153,7 +184,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               child: RadioListTile<int>(
                 value: 5189728,
                 groupValue: selectedIntegrationId,
-                onChanged: (value) => setState(() => selectedIntegrationId = value),
+                onChanged:
+                    (value) => setState(() => selectedIntegrationId = value),
                 title: const Text("💳 Visa / Mastercard"),
               ),
             ),

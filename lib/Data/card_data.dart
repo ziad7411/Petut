@@ -8,10 +8,11 @@ class CardData {
   final int price;
   bool isFavorite;
   int quantity;
+  final String category;
 
   CardData({
     required this.id,
-    required this.rate,
+     this.rate = 0,
     required this.image,
     required this.title,
     required this.description,
@@ -19,6 +20,7 @@ class CardData {
     required this.price,
     this.isFavorite = false,
     this.quantity = 1,
+    this.category = "",
   });
 }
 
