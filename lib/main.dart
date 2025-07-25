@@ -4,6 +4,7 @@ import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
+import 'package:petut/screens/cart_screen.dart';
 import 'package:petut/screens/favorites_screen.dart';
 import 'package:petut/screens/goToDoctorDashboard.dart';
 import 'package:petut/screens/my_order_screen.dart';
@@ -60,7 +61,8 @@ class MainApp extends StatelessWidget {
         '/goToWebPage': (context) => const GoToWebPage(),
         '/myOrders': (context) => const MyOrdersScreen(),
         '/favourites': (context) => const FavoritesScreen(),
-        '/settings':(context)=> const SettingsScreen()
+        '/settings':(context)=> const SettingsScreen(),
+        '/cart': (context) => const CartScreen(),
        },
     );
   }

@@ -22,7 +22,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   // Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
   final _petNameController = TextEditingController();
   final _petTypeController = TextEditingController();
   final _petGenderController = TextEditingController();
@@ -197,7 +196,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       await _firestore.collection('users').doc(user.uid).set({
         'name': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'location': _locationController.text.trim(),
         'profileImage': profileImageBase64,
         'role': 'Customer',
         'createdAt': FieldValue.serverTimestamp(),
@@ -211,27 +209,31 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
           petImageBase64 = await _convertImageToBase64(_selectedPetImage!);
         }
 
-        await _firestore.collection('users').doc(user.uid).collection('pets').add({
-          'ownerId': user.uid,
-          'name': _petNameController.text.trim(),
-          'type': _petTypeController.text.trim(),
-          'gender': _petGenderController.text.trim(),
-          'age': _petAgeController.text.trim(),
-          'weight': _petWeightController.text.trim(),
-          'picture': petImageBase64,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('pets')
+            .add({
+              'ownerId': user.uid,
+              'name': _petNameController.text.trim(),
+              'type': _petTypeController.text.trim(),
+              'gender': _petGenderController.text.trim(),
+              'age': int.tryParse(_petAgeController.text.trim()),
+              'weight': double.tryParse(_petWeightController.text.trim()),
+              'picture': petImageBase64,
+              'createdAt': FieldValue.serverTimestamp(),
+            });
       }
 
       _showSnackBar('Profile created successfully!', Colors.green);
-      if(mounted) Navigator.pushReplacementNamed(context, '/main');
+      if (mounted) Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
       _showSnackBar(
         'Failed to save profile: $e',
         Theme.of(context).colorScheme.error,
       );
     } finally {
-      if(mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -247,7 +249,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
     _petNameController.dispose();
     _petTypeController.dispose();
     _petGenderController.dispose();
@@ -316,10 +317,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               Center(
                 child: Text(
                   'Tap to add photo',
-                  style: TextStyle(
-                    color: theme.hintColor,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: theme.hintColor, fontSize: 12),
                 ),
               ),
               const SizedBox(height: 32),
@@ -349,12 +347,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                 keyboardType: TextInputType.phone,
                 maxLength: 11,
                 validator: _validatePhone,
-              ),
-              CustomTextField(
-                hintText: 'Location',
-                controller: _locationController,
-                prefixIcon: Icons.location_on,
-                validator: _validateLocation,
               ),
 
               const SizedBox(height: 32),
@@ -388,10 +380,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
               const SizedBox(height: 8),
               Text(
                 'Do you have a pet?',
-                style: TextStyle(
-                  color: theme.hintColor,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: theme.hintColor, fontSize: 14),
               ),
 
               if (_hasPet) ...[
@@ -463,7 +452,9 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                       CustomTextField(
                         hintText: 'Weight (kg)',
                         controller: _petWeightController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         prefixIcon: Icons.monitor_weight,
                         validator: _validatePetWeight,
                       ),

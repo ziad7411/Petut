@@ -84,13 +84,14 @@ class CustomButton extends StatelessWidget {
                 ? Stack(
                   alignment: Alignment.center,
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: iconSpacing),
-                        child: icon,
-                      ),
+                   
+                    Positioned(
+                      left: iconSpacing,
+                      width:MediaQuery.of(context).size.width*0.4 ,
+                      height: 24,
+                      child: icon!,
                     ),
+                    
                     Center(
                       child: Text(
                         text,
