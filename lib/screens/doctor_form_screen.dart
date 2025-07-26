@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/screens/select_location_screen.dart';
+import 'package:petut/screens/avatar_selection_screen.dart';
+import 'package:petut/utils/avatar_helper.dart';
 import 'package:intl/intl.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
@@ -30,13 +32,34 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   final _instagramController = TextEditingController();
   final _twitterController = TextEditingController();
   final _linkedinController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  String? _selectedSpecialty;
+  String? _selectedGender;
+  
+  final List<String> _specialties = [
+    'General Veterinarian',
+    'Small Animal Medicine',
+    'Large Animal Medicine', 
+    'Exotic Animal Medicine',
+    'Veterinary Surgery',
+    'Veterinary Dentistry',
+    'Emergency Medicine',
+    'Internal Medicine'
+  ];
+  
+  final List<String> _genders = ['Male', 'Female'];
 
   File? _profileImage;
+  String? _selectedAvatar;
   File? _cardFrontImage;
   File? _cardBackImage;
   File? _idImage;
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
+  
+  double? _selectedLat;
+  double? _selectedLng;
 
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
@@ -53,24 +76,82 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   ];
 
   Future<void> _pickImage(String type) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        switch (type) {
-          case 'profile':
-            _profileImage = File(image.path);
-            break;
-          case 'cardFront':
-            _cardFrontImage = File(image.path);
-            break;
-          case 'cardBack':
-            _cardBackImage = File(image.path);
-            break;
-          case 'id':
-            _idImage = File(image.path);
-            break;
+    if (type == 'profile') {
+      // Show options: Avatar, Gallery, or Camera
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Choose Profile Picture'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.face),
+                title: const Text('Choose Avatar'),
+                onTap: () => Navigator.pop(context, 'avatar'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Upload from Gallery'),
+                onTap: () => Navigator.pop(context, 'gallery'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () => Navigator.pop(context, 'camera'),
+              ),
+            ],
+          ),
+        ),
+      );
+      
+      if (choice == 'avatar') {
+        final selectedAvatar = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AvatarSelectionScreen(),
+          ),
+        );
+        if (selectedAvatar != null) {
+          setState(() {
+            _selectedAvatar = selectedAvatar;
+            _profileImage = null;
+          });
         }
-      });
+      } else if (choice == 'gallery') {
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        if (image != null) {
+          setState(() {
+            _profileImage = File(image.path);
+            _selectedAvatar = null;
+          });
+        }
+      } else if (choice == 'camera') {
+        final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+        if (image != null) {
+          setState(() {
+            _profileImage = File(image.path);
+            _selectedAvatar = null;
+          });
+        }
+      }
+    } else {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          switch (type) {
+            case 'cardFront':
+              _cardFrontImage = File(image.path);
+              break;
+            case 'cardBack':
+              _cardBackImage = File(image.path);
+              break;
+            case 'id':
+              _idImage = File(image.path);
+              break;
+          }
+        });
+      }
     }
   }
 
@@ -127,12 +208,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       return;
     }
 
-    if (_profileImage == null ||
-        _cardFrontImage == null ||
+    // Validate required ID documents (profile image is optional)
+    if (_cardFrontImage == null ||
         _cardBackImage == null ||
         _idImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload all required documents')),
+        const SnackBar(content: Text('Please upload all required ID documents')),
       );
       return;
     }
@@ -148,7 +229,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not logged in');
 
-      final profileBase64 = await _convertImageToBase64(_profileImage);
+      String? profileBase64;
+      if (_selectedAvatar != null) {
+        profileBase64 = _selectedAvatar; // Store avatar path
+      } else if (_profileImage != null) {
+        profileBase64 = await _convertImageToBase64(_profileImage);
+      }
       final cardFrontBase64 = await _convertImageToBase64(_cardFrontImage);
       final cardBackBase64 = await _convertImageToBase64(_cardBackImage);
       final idBase64 = await _convertImageToBase64(_idImage);
@@ -163,50 +249,64 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (_linkedinController.text.trim().isNotEmpty)
         socialMedia['linkedin'] = _linkedinController.text.trim();
 
+      // Store all doctor data in users collection
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'role': 'Doctor',
-        'name': _doctorNameController.text.trim(),
+        'doctorName': _doctorNameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        //Gender
-        //email 
-      }, SetOptions(merge: true));
-         await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
-        'role': 'Doctor',
-        'name': _doctorNameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        //Gender
-        //email
-      }, SetOptions(merge: true));
-       await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").add({
-          'experience': _experienceController.text.trim(),
+        'email': user.email,
+        'clinicName': _clinicNameController.text.trim(),
+        'clinicAddress': _clinicAddressController.text.trim(),
+        'clinicPhone': _clinicPhoneController.text.trim(),
+        'specialty': _selectedSpecialty ?? 'General Veterinarian',
+        'gender': _selectedGender ?? 'Male',
+        'experience': int.tryParse(_experienceController.text.trim()) ?? 0,
         'description': _descriptionController.text.trim(),
         'socialMedia': socialMedia,
         'profileImage': profileBase64,
         'cardFrontImage': cardFrontBase64,
         'cardBackImage': cardBackBase64,
         'idImage': idBase64,
+        'workingDays': _selectedDays,
+        'startTime': _startTime != null
+            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'endTime': _endTime != null
+            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'workingHours': _workingHoursController.text.trim(),
         'isVerified': false,
         'rating': 0.0,
         'totalReviews': 0,
-       });
+        'price': double.tryParse(_priceController.text.trim()) ?? 100.0,
+        'isOpen': true,
+        // Use selected coordinates or default to Cairo
+        'lat': _selectedLat ?? 30.0444,
+        'lng': _selectedLng ?? 31.2357,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      // Also save clinic data separately for admin dashboard
       await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
-        'doctorid': user.uid,
-        'workingHours': _workingHoursController.text.trim(),
-       //object for working hours 
-        'day': _selectedDays,
-        'openTime':
-            _startTime != null
-                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
-                : null,
-        'closeTime':
-            _endTime != null
-                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-                : null,
+        'doctorId': user.uid,
+        'doctorName': _doctorNameController.text.trim(),
         'clinicName': _clinicNameController.text.trim(),
         'clinicAddress': _clinicAddressController.text.trim(),
         'clinicPhone': _clinicPhoneController.text.trim(),
+        'workingDays': _selectedDays,
+        'startTime': _startTime != null
+            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'endTime': _endTime != null
+            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'workingHours': _workingHoursController.text.trim(),
+        'price': double.tryParse(_priceController.text.trim()) ?? 100.0,
+        'isOpen': true,
+        'isVerified': false,
+        // Use selected coordinates or default to Cairo
+        'lat': _selectedLat ?? 30.0444,
+        'lng': _selectedLng ?? 31.2357,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
@@ -236,6 +336,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     _instagramController.dispose();
     _twitterController.dispose();
     _linkedinController.dispose();
+    _priceController.dispose();
     super.dispose();
   }
 
@@ -300,27 +401,28 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                           width: 3,
                         ),
                       ),
-                      child:
-                          _profileImage != null
+                      child: _selectedAvatar != null
+                          ? AvatarHelper.buildAvatar(_selectedAvatar, size: 120)
+                          : _profileImage != null
                               ? ClipRRect(
-                                borderRadius: BorderRadius.circular(60),
-                                child: Image.file(
-                                  _profileImage!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
+                                  borderRadius: BorderRadius.circular(60),
+                                  child: Image.file(
+                                    _profileImage!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
                               : Icon(
-                                Icons.person,
-                                size: 50,
-                                color: theme.hintColor,
-                              ),
+                                  Icons.person,
+                                  size: 50,
+                                  color: theme.hintColor,
+                                ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Tap to add photo',
+                    'Tap to choose avatar',
                     style: TextStyle(color: theme.hintColor, fontSize: 12),
                   ),
                 ),
@@ -370,6 +472,41 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
+                
+                // Gender Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    prefixIcon: Icon(Icons.person_outline, color: theme.hintColor),
+                  ),
+                  hint: Text('Select Gender', style: TextStyle(color: theme.hintColor)),
+                  items: _genders.map((gender) {
+                    return DropdownMenuItem(
+                      value: gender,
+                      child: Text(gender),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedGender = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) return 'Please select your gender';
+                    return null;
+                  },
+                ),
+                
                 const SizedBox(height: 24),
                 Text(
                   'Professional Information',
@@ -420,14 +557,18 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   prefixIcon: Icons.location_on,
                   readOnly: true,
                   onTap: () async {
-                    final selectedAddress = await Navigator.push(
+                    final result = await Navigator.push<Map<String, dynamic>>(
                       context,
                       MaterialPageRoute(
                         builder: (_) => const SelectLocationScreen(),
                       ),
                     );
-                    if (selectedAddress != null && selectedAddress is String) {
-                      _clinicAddressController.text = selectedAddress;
+                    if (result != null) {
+                      setState(() {
+                        _clinicAddressController.text = result['address'] ?? '';
+                        _selectedLat = result['lat'];
+                        _selectedLng = result['lng'];
+                      });
                     }
                   },
                   validator: (value) {
@@ -457,6 +598,56 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
+                
+                // Specialty Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedSpecialty,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    prefixIcon: Icon(Icons.medical_services, color: theme.hintColor),
+                  ),
+                  hint: Text('Select Specialty', style: TextStyle(color: theme.hintColor)),
+                  items: _specialties.map((specialty) {
+                    return DropdownMenuItem(
+                      value: specialty,
+                      child: Text(specialty, style: const TextStyle(fontSize: 14)),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSpecialty = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) return 'Please select your specialty';
+                    return null;
+                  },
+                ),
+                
+                CustomTextField(
+                  hintText: 'Consultation Fee (EGP)',
+                  controller: _priceController,
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty)
+                      return 'Enter consultation fee';
+                    final price = double.tryParse(value.trim());
+                    if (price == null || price < 50 || price > 1000)
+                      return 'Fee must be between 50 and 1000 EGP';
+                    return null;
+                  },
+                ),
+                
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                   child: Text(

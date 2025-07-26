@@ -53,7 +53,7 @@ class Clinic {
 
     return Clinic(
       id: doc.id,
-      name: data['doctorName']?.toString() ?? 'Unnamed',
+      name: data['clinicName']?.toString() ?? 'Unnamed Clinic',
       location: data['clinicAddress']?.toString() ?? '',
       phoneNumber: data['clinicPhone']?.toString() ?? '',
       price: parsedPrice,

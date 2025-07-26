@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'avatar_selection_screen.dart';
+import '../utils/avatar_helper.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -30,6 +32,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
   // State
   File? _selectedProfileImage, _selectedPetImage;
+  String? _selectedAvatar;
   bool _isLoading = false;
   bool _hasPet = false;
 
@@ -128,22 +131,93 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   }
 
   Future<void> _pickImage({required bool isProfile}) async {
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          if (isProfile) {
-            _selectedProfileImage = File(image.path);
-          } else {
-            _selectedPetImage = File(image.path);
-          }
-        });
-      }
-    } catch (e) {
-      _showSnackBar(
-        'Failed to pick image: $e',
-        Theme.of(context).colorScheme.error,
+    if (isProfile) {
+      // Show options: Avatar or Camera
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Choose Profile Picture'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.face),
+                title: const Text('Choose Avatar'),
+                onTap: () => Navigator.pop(context, 'avatar'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Upload from Gallery'),
+                onTap: () => Navigator.pop(context, 'gallery'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () => Navigator.pop(context, 'camera'),
+              ),
+            ],
+          ),
+        ),
       );
+      
+      if (choice == 'avatar') {
+        final selectedAvatar = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AvatarSelectionScreen(),
+          ),
+        );
+        if (selectedAvatar != null) {
+          setState(() {
+            _selectedAvatar = selectedAvatar;
+            _selectedProfileImage = null;
+          });
+        }
+      } else if (choice == 'gallery') {
+        try {
+          final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+          if (image != null) {
+            setState(() {
+              _selectedProfileImage = File(image.path);
+              _selectedAvatar = null;
+            });
+          }
+        } catch (e) {
+          _showSnackBar(
+            'Failed to pick image: $e',
+            Theme.of(context).colorScheme.error,
+          );
+        }
+      } else if (choice == 'camera') {
+        try {
+          final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+          if (image != null) {
+            setState(() {
+              _selectedProfileImage = File(image.path);
+              _selectedAvatar = null;
+            });
+          }
+        } catch (e) {
+          _showSnackBar(
+            'Failed to pick image: $e',
+            Theme.of(context).colorScheme.error,
+          );
+        }
+      }
+    } else {
+      try {
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        if (image != null) {
+          setState(() {
+            _selectedPetImage = File(image.path);
+          });
+        }
+      } catch (e) {
+        _showSnackBar(
+          'Failed to pick image: $e',
+          Theme.of(context).colorScheme.error,
+        );
+      }
     }
   }
 
@@ -184,9 +258,11 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      // Convert profile image
+      // Convert profile image or use avatar
       String? profileImageBase64;
-      if (_selectedProfileImage != null) {
+      if (_selectedAvatar != null) {
+        profileImageBase64 = _selectedAvatar; // Store avatar path
+      } else if (_selectedProfileImage != null) {
         profileImageBase64 = await _convertImageToBase64(
           _selectedProfileImage!,
         );
@@ -245,6 +321,31 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     }
   }
 
+  Widget _buildTextAvatar(String userName, double size, ThemeData theme) {
+    final initials = userName.isNotEmpty 
+        ? userName.trim().split(' ').map((name) => name.isNotEmpty ? name[0].toUpperCase() : '').take(2).join()
+        : 'U';
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size / 2),
+        color: theme.colorScheme.primary,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontSize: size * 0.4,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -296,20 +397,17 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
                         width: 3,
                       ),
                     ),
-                    child:
-                        _selectedProfileImage != null
+                    child: _selectedAvatar != null
+                        ? AvatarHelper.buildAvatar(_selectedAvatar, size: 120)
+                        : _selectedProfileImage != null
                             ? ClipRRect(
-                              borderRadius: BorderRadius.circular(60),
-                              child: Image.file(
-                                _selectedProfileImage!,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            : Icon(
-                              Icons.person,
-                              size: 50,
-                              color: theme.hintColor,
-                            ),
+                                borderRadius: BorderRadius.circular(60),
+                                child: Image.file(
+                                  _selectedProfileImage!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : _buildTextAvatar(_nameController.text, 120, theme),
                   ),
                 ),
               ),
