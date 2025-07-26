@@ -71,6 +71,7 @@ Future<void> _navigateBasedOnRole(String uid) async {
 
 Future<void> _signInWithGoogle() async {
   setState(() => isLoading = true);
+
   try {
     final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) {
@@ -85,8 +86,24 @@ Future<void> _signInWithGoogle() async {
     );
 
     final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+    final uid = userCredential.user!.uid;
 
-    await _navigateBasedOnRole(userCredential.user!.uid);
+    // ✅ Get user document from Firestore
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (userDoc.exists) {
+      final role = userDoc.data()?['role'];
+
+      if (role == 'doctor') {
+        Navigator.pushReplacementNamed(context, '/goToWebPage');
+      } else if (role == 'Customer') {
+        Navigator.pushReplacementNamed(context, '/main');
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User data not found. Please complete signup.')),
+      );
+    }
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Google sign-in error')),
@@ -95,6 +112,7 @@ Future<void> _signInWithGoogle() async {
     setState(() => isLoading = false);
   }
 }
+
 
 
   void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
