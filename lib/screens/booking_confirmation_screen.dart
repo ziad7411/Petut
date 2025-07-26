@@ -123,7 +123,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         // Save the selected payment method's display text
         'paymentMethod': _selectedPaymentMethodText,
         'createdAt': FieldValue.serverTimestamp(),
-        'status': 'Confirmed',
+        'status': 'booked',
       });
 
     } catch (e) {

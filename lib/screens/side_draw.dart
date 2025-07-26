@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:petut/theme/theme_controller.dart';
+import 'package:petut/utils/avatar_helper.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 
@@ -42,21 +43,53 @@ class _SideDrawState extends State<SideDraw> {
   }
 
   Widget _buildProfileImage(ThemeData theme) {
-    if (imageData == null || imageData!.isEmpty) {
-      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
+    if (imageData != null && imageData!.isNotEmpty) {
+      // Check if it's an avatar ID
+      if (AvatarHelper.avatarData.containsKey(imageData)) {
+        return AvatarHelper.buildAvatar(imageData, size: 60);
+      }
+      // Check if it's base64 image
+      try {
+        final imageBytes = base64Decode(imageData!);
+        return Image.memory(
+          imageBytes,
+          fit: BoxFit.cover,
+          width: 60,
+          height: 60,
+        );
+      } catch (e) {
+        // Fallback to text avatar
+        return _buildTextAvatar(name ?? 'User', 60, theme);
+      }
     }
+    
+    // Default text avatar
+    return _buildTextAvatar(name ?? 'User', 60, theme);
+  }
 
-    try {
-      final imageBytes = base64Decode(imageData!);
-      return Image.memory(
-        imageBytes,
-        fit: BoxFit.cover,
-        width: 60,
-        height: 60,
-      );
-    } catch (e) {
-      return Icon(Icons.person, color: theme.colorScheme.primary, size: 40);
-    }
+  Widget _buildTextAvatar(String userName, double size, ThemeData theme) {
+    final initials = userName.isNotEmpty 
+        ? userName.trim().split(' ').map((name) => name.isNotEmpty ? name[0].toUpperCase() : '').take(2).join()
+        : 'U';
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size / 2),
+        color: theme.colorScheme.primary,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            color: theme.colorScheme.onPrimary,
+            fontSize: size * 0.4,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   @override

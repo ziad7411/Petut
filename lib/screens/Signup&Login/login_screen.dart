@@ -63,7 +63,7 @@ Future<void> _navigateBasedOnRole(String uid) async {
     } else if (e.code == 'wrong-password') {
       message = 'Incorrect password';
     }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${message} ${e.message}")));
   } finally {
     setState(() => isLoading = false);
   }
