@@ -41,44 +41,70 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
         final place = placemarks.first;
 
         setState(() {
-          governorate = place.administrativeArea;
-          city = place.locality ?? place.subAdministrativeArea;
-          street = "${place.street}, ${place.subLocality}";
+          governorate = place.administrativeArea ?? 'Cairo';
+          city = place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
+          street = place.street?.isNotEmpty == true 
+              ? "${place.street}, ${place.subLocality ?? ''}" 
+              : 'Selected Location';
           
           // Update text controllers as well
-          governorateController.text = governorate ?? '';
-          cityController.text = city ?? '';
-          streetController.text = street ?? '';
+          governorateController.text = governorate ?? 'Cairo';
+          cityController.text = city ?? 'Unknown City';
+          streetController.text = street ?? 'Selected Location';
+        });
+      } else {
+        // Fallback if no placemarks found
+        setState(() {
+          governorate = 'Cairo';
+          city = 'Selected Area';
+          street = 'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
+          
+          governorateController.text = governorate!;
+          cityController.text = city!;
+          streetController.text = street!;
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching address: $e')),
-      );
+      print('Geocoding error: $e');
+      // Fallback address when geocoding fails
+      setState(() {
+        governorate = 'Cairo';
+        city = 'Selected Area';
+        street = 'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
+        
+        governorateController.text = governorate!;
+        cityController.text = city!;
+        streetController.text = street!;
+      });
     }
   }
 
   void _submit() {
+    // Ensure we have some data
+    final gov = governorateController.text.trim().isNotEmpty
+        ? governorateController.text.trim()
+        : (governorate ?? 'Cairo');
+    final cityName = cityController.text.trim().isNotEmpty
+        ? cityController.text.trim()
+        : (city ?? 'Selected Area');
+    final streetName = streetController.text.trim().isNotEmpty
+        ? streetController.text.trim()
+        : (street ?? 'Selected Location');
+
     final selectedData = {
-      "governorate": governorateController.text.trim().isNotEmpty
-          ? governorateController.text.trim()
-          : governorate ?? '',
-      "city": cityController.text.trim().isNotEmpty
-          ? cityController.text.trim()
-          : city ?? '',
-      "street": streetController.text.trim().isNotEmpty
-          ? streetController.text.trim()
-          : street ?? '',
+      "governorate": gov,
+      "city": cityName,
+      "street": streetName,
     };
 
-    if (selectedData.values.any((element) => element.isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill all fields")),
-      );
-      return;
-    }
+    // Return both address and coordinates
+    final result = {
+      'address': selectedData.values.join(', '),
+      'lat': selectedLocation.latitude,
+      'lng': selectedLocation.longitude,
+    };
 
-    Navigator.pop(context, selectedData.values.join(', '));
+    Navigator.pop(context, result);
   }
 
   @override

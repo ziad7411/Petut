@@ -4,6 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'avatar_selection_screen.dart';
+import '../utils/avatar_helper.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 
@@ -31,11 +34,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // State
   String? _profileImageBase64;
+  String? _selectedAvatar;
   File? _selectedProfileImage, _selectedPetImage;
   bool _isLoading = false;
   List<Map<String, dynamic>> _pets = [];
   String _originalName = '', _originalPhone = '', _originalLocation = '';
   String? _originalProfileImage;
+  bool _isDoctor = false;
 
   // Form keys
   final _profileFormKey = GlobalKey<FormState>();
@@ -69,6 +74,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _originalPhone = data['phone'] ?? '';
             _originalLocation = data['location'] ?? '';
             _originalProfileImage = data['profileImage'];
+            _isDoctor = data['role'] == 'Doctor';
           });
         }
       }
@@ -103,22 +109,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
       return;
     }
 
-    try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() {
-          if (isProfile) {
-            _selectedProfileImage = File(image.path);
-          } else {
-            _selectedPetImage = File(image.path);
+    if (isProfile) {
+      // Show options for profile image
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Change Profile Picture'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.face),
+                title: const Text('Choose Avatar'),
+                onTap: () => Navigator.pop(context, 'avatar'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Upload from Gallery'),
+                onTap: () => Navigator.pop(context, 'gallery'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take Photo'),
+                onTap: () => Navigator.pop(context, 'camera'),
+              ),
+              if (_profileImageBase64 != null || _selectedAvatar != null || _selectedProfileImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text('Remove Picture', style: TextStyle(color: Colors.red)),
+                  onTap: () => Navigator.pop(context, 'delete'),
+                ),
+            ],
+          ),
+        ),
+      );
+      
+      if (choice == 'avatar') {
+        final selectedAvatar = await Navigator.push<String>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AvatarSelectionScreen(),
+          ),
+        );
+        if (selectedAvatar != null) {
+          setState(() {
+            _selectedAvatar = selectedAvatar;
+            _selectedProfileImage = null;
+          });
+        }
+      } else if (choice == 'gallery') {
+        try {
+          final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+          if (image != null) {
+            setState(() {
+              _selectedProfileImage = File(image.path);
+              _selectedAvatar = null;
+            });
           }
+        } catch (e) {
+          _showSnackBar('Failed to pick image: $e', Theme.of(context).colorScheme.error);
+        }
+      } else if (choice == 'camera') {
+        try {
+          final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+          if (image != null) {
+            setState(() {
+              _selectedProfileImage = File(image.path);
+              _selectedAvatar = null;
+            });
+          }
+        } catch (e) {
+          _showSnackBar('Failed to pick image: $e', Theme.of(context).colorScheme.error);
+        }
+      } else if (choice == 'delete') {
+        setState(() {
+          _selectedProfileImage = null;
+          _selectedAvatar = null;
+          _profileImageBase64 = null;
         });
       }
-    } catch (e) {
-      _showSnackBar(
-        'Failed to pick image: $e',
-        Theme.of(context).colorScheme.error,
-      );
+    } else {
+      // Pet image picker (unchanged)
+      try {
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        if (image != null) {
+          setState(() {
+            _selectedPetImage = File(image.path);
+          });
+        }
+      } catch (e) {
+        _showSnackBar('Failed to pick image: $e', Theme.of(context).colorScheme.error);
+      }
     }
   }
 
@@ -158,6 +239,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: Theme.of(context).colorScheme.secondary,
       );
     }
+  }
+
+  Widget _buildProfileAvatar(String? profileImage, String userName, double size) {
+    if (profileImage != null && profileImage.isNotEmpty) {
+      // Check if it's an avatar ID
+      if (AvatarHelper.avatarData.containsKey(profileImage)) {
+        return AvatarHelper.buildAvatar(profileImage, size: size);
+      }
+      // Check if it's base64 image
+      try {
+        final bytes = base64Decode(profileImage);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(size / 2),
+          child: Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            width: size,
+            height: size,
+          ),
+        );
+      } catch (e) {
+        // Fallback to text avatar
+        return _buildTextAvatar(userName, size);
+      }
+    }
+    
+    // Default text avatar
+    return _buildTextAvatar(userName, size);
+  }
+
+  Widget _buildTextAvatar(String userName, double size) {
+    final initials = userName.isNotEmpty 
+        ? userName.trim().split(' ').map((name) => name.isNotEmpty ? name[0].toUpperCase() : '').take(2).join()
+        : 'U';
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size / 2),
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onPrimary,
+            fontSize: size * 0.4,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
   }
 
   // Validation methods
@@ -238,7 +372,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return currentName != _originalName ||
         currentPhone != _originalPhone ||
         currentLocation != _originalLocation ||
-        _selectedProfileImage != null;
+        _selectedProfileImage != null ||
+        _selectedAvatar != null;
   }
 
   Future<void> _updateProfile() async {
@@ -264,7 +399,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (user == null) return;
 
       String? imageBase64 = _profileImageBase64;
-      if (_selectedProfileImage != null) {
+      if (_selectedAvatar != null) {
+        imageBase64 = _selectedAvatar; // Store avatar ID
+      } else if (_selectedProfileImage != null) {
         imageBase64 = await _convertImageToBase64(_selectedProfileImage!);
       }
 
@@ -280,6 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _profileImageBase64 = imageBase64;
           _selectedProfileImage = null;
+          _selectedAvatar = null;
           _originalName = _nameController.text.trim();
           _originalPhone = _phoneController.text.trim();
           _originalLocation = _locationController.text.trim();
@@ -517,6 +655,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         foregroundColor: theme.textTheme.bodyLarge!.color,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: theme.iconTheme.color),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, '/main');
+            }
+          },
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -563,9 +711,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: _selectedProfileImage != null
                         ? ClipRRect(borderRadius: BorderRadius.circular(60), child: Image.file(_selectedProfileImage!, fit: BoxFit.cover))
-                        : _profileImageBase64 != null
-                            ? _buildImageFromBase64(_profileImageBase64!, size: 120, borderRadius: 60)
-                            : Icon(Icons.person, size: 50, color: theme.colorScheme.secondary),
+                        : _selectedAvatar != null
+                            ? AvatarHelper.buildAvatar(_selectedAvatar, size: 120)
+                            : _buildProfileAvatar(_profileImageBase64, _nameController.text, 120),
                   ),
                 ),
               ),
