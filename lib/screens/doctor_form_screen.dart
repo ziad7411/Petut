@@ -52,6 +52,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     'Friday',
   ];
 
+  bool _hasClinic = false;
+
   Future<void> _pickImage(String type) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -169,9 +171,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'phone': _phoneController.text.trim(),
         'updatedAt': FieldValue.serverTimestamp(),
         //Gender
-        //email 
+        //email
       }, SetOptions(merge: true));
-         await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
+      await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
         'role': 'Doctor',
         'name': _doctorNameController.text.trim(),
         'phone': _phoneController.text.trim(),
@@ -179,37 +181,42 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         //Gender
         //email
       }, SetOptions(merge: true));
-       await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").add({
-          'experience': _experienceController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'socialMedia': socialMedia,
-        'profileImage': profileBase64,
-        'cardFrontImage': cardFrontBase64,
-        'cardBackImage': cardBackBase64,
-        'idImage': idBase64,
-        'isVerified': false,
-        'rating': 0.0,
-        'totalReviews': 0,
-       });
-      await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
-        'doctorid': user.uid,
-        'workingHours': _workingHoursController.text.trim(),
-       //object for working hours 
-        'day': _selectedDays,
-        'openTime':
-            _startTime != null
-                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
-                : null,
-        'closeTime':
-            _endTime != null
-                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-                : null,
-        'clinicName': _clinicNameController.text.trim(),
-        'clinicAddress': _clinicAddressController.text.trim(),
-        'clinicPhone': _clinicPhoneController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection("doctorsDetails")
+          .add({
+            'experience': _experienceController.text.trim(),
+            'description': _descriptionController.text.trim(),
+            'socialMedia': socialMedia,
+            'profileImage': profileBase64,
+            'cardFrontImage': cardFrontBase64,
+            'cardBackImage': cardBackBase64,
+            'idImage': idBase64,
+            'isVerified': false,
+            'rating': 0.0,
+            'totalReviews': 0,
+          });
+      if (_hasClinic) {
+        await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
+          'doctorid': user.uid,
+          'workingHours': _workingHoursController.text.trim(),
+          //object for working hours
+          'day': _selectedDays,
+          'openTime':
+              _startTime != null
+                  ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                  : null,
+          'closeTime':
+              _endTime != null
+                  ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                  : null,
+          'clinicName': _clinicNameController.text.trim(),
+          'clinicAddress': _clinicAddressController.text.trim(),
+          'clinicPhone': _clinicPhoneController.text.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
       Navigator.pushReplacementNamed(context, '/goToWebPage');
     } catch (e) {
       ScaffoldMessenger.of(
@@ -380,66 +387,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                CustomTextField(
-                  hintText: 'Clinic Name',
-                  controller: _clinicNameController,
-                  prefixIcon: Icons.local_hospital,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty)
-                      return 'Enter clinic name';
-                    if (value.trim().length < 2)
-                      return 'Clinic name must be at least 2 characters';
-                    if (value.trim().length > 100)
-                      return 'Clinic name must be less than 100 characters';
-                    return null;
-                  },
-                ),
-                CustomTextField(
-                  hintText: 'Clinic Phone Number',
-                  controller: _clinicPhoneController,
-                  prefixIcon: Icons.phone,
-                  keyboardType: TextInputType.phone,
-                  maxLength: 11,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty)
-                      return 'Enter clinic phone number';
-                    final digitsOnly = value.trim().replaceAll(
-                      RegExp(r'[^\d]'),
-                      '',
-                    );
-                    if (digitsOnly.length != 11)
-                      return 'Phone number must be exactly 11 digits';
-                    if (!digitsOnly.startsWith('01'))
-                      return 'Phone number must start with 01';
-                    return null;
-                  },
-                ),
-                CustomTextField(
-                  hintText: 'Clinic Address',
-                  controller: _clinicAddressController,
-                  prefixIcon: Icons.location_on,
-                  readOnly: true,
-                  onTap: () async {
-                    final selectedAddress = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const SelectLocationScreen(),
-                      ),
-                    );
-                    if (selectedAddress != null && selectedAddress is String) {
-                      _clinicAddressController.text = selectedAddress;
-                    }
-                  },
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty)
-                      return 'Enter clinic address';
-                    if (value.trim().length < 5)
-                      return 'Address must be at least 5 characters';
-                    if (value.trim().length > 200)
-                      return 'Address must be less than 200 characters';
-                    return null;
-                  },
-                ),
                 CustomTextField(
                   hintText: 'Years of Experience',
                   controller: _experienceController,
@@ -671,6 +618,107 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 24),
+                // --- Clinic Section Switch ---
+                Row(
+                  children: [
+                    Text(
+                      'Clinic Information',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Switch(
+                      value: _hasClinic,
+                      onChanged: (value) {
+                        setState(() {
+                          _hasClinic = value;
+                          if (!value) {
+                            _clinicNameController.clear();
+                            _clinicAddressController.clear();
+                            _clinicPhoneController.clear();
+                          }
+                        });
+                      },
+                      activeColor: theme.colorScheme.primary,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Do you have a clinic?',
+                  style: TextStyle(color: theme.hintColor, fontSize: 14),
+                ),
+                if (_hasClinic) ...[
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    hintText: 'Clinic Name',
+                    controller: _clinicNameController,
+                    prefixIcon: Icons.local_hospital,
+                    validator: (value) {
+                      if (!_hasClinic) return null;
+                      if (value == null || value.trim().isEmpty)
+                        return 'Enter clinic name';
+                      if (value.trim().length < 2)
+                        return 'Clinic name must be at least 2 characters';
+                      if (value.trim().length > 100)
+                        return 'Clinic name must be less than 100 characters';
+                      return null;
+                    },
+                  ),
+                  CustomTextField(
+                    hintText: 'Clinic Phone Number',
+                    controller: _clinicPhoneController,
+                    prefixIcon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 11,
+                    validator: (value) {
+                      if (!_hasClinic) return null;
+                      if (value == null || value.trim().isEmpty)
+                        return 'Enter clinic phone number';
+                      final digitsOnly = value.trim().replaceAll(
+                        RegExp(r'[^\d]'),
+                        '',
+                      );
+                      if (digitsOnly.length != 11)
+                        return 'Phone number must be exactly 11 digits';
+                      if (!digitsOnly.startsWith('01'))
+                        return 'Phone number must start with 01';
+                      return null;
+                    },
+                  ),
+                  CustomTextField(
+                    hintText: 'Clinic Address',
+                    controller: _clinicAddressController,
+                    prefixIcon: Icons.location_on,
+                    readOnly: true,
+                    onTap: () async {
+                      final selectedAddress = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SelectLocationScreen(),
+                        ),
+                      );
+                      if (selectedAddress != null &&
+                          selectedAddress is String) {
+                        _clinicAddressController.text = selectedAddress;
+                      }
+                    },
+                    validator: (value) {
+                      if (!_hasClinic) return null;
+                      if (value == null || value.trim().isEmpty)
+                        return 'Enter clinic address';
+                      if (value.trim().length < 5)
+                        return 'Address must be at least 5 characters';
+                      if (value.trim().length > 200)
+                        return 'Address must be less than 200 characters';
+                      return null;
+                    },
+                  ),
+                ],
                 const SizedBox(height: 24),
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
