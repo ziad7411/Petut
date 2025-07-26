@@ -70,33 +70,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => isLoading = false);
-        return;
-      }
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      await FirebaseAuth.instance.signInWithCredential(credential);
-      Navigator.pushReplacementNamed(context, '/main');
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Google sign-in error')));
-    } finally {
+Future<void> _signInWithGoogle() async {
+  setState(() => isLoading = true);
+  try {
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    if (googleUser == null) {
       setState(() => isLoading = false);
+      return;
     }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+    final uid = userCredential.user!.uid;
+
+    // نجيب الداتا من Firestore
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+    if (userDoc.exists && userDoc.data()?['role'] != null) {
+      final role = userDoc.data()!['role'];
+
+      if (role == 'doctor') {
+        Navigator.pushReplacementNamed(context, '/goToWebPage');
+      } else if (role == 'Customer') {
+        Navigator.pushReplacementNamed(context, '/main');
+      }else {
+        // دور غير معروف، رجعه يختار
+        Navigator.pushReplacementNamed(context, '/role_selection');
+      }
+    } else {
+      // مستخدم جديد أو بدون role
+      Navigator.pushReplacementNamed(context, '/role_selection');
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+  SnackBar(content: Text('Error: ${e.toString()}')),
+);
+
+  } finally {
+    setState(() => isLoading = false);
   }
+}
+
 
   void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
 
