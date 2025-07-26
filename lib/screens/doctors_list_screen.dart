@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 import './clinic_details_screen.dart';
 import '../models/Clinic.dart';
 
@@ -25,28 +26,57 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   void initState() {
     super.initState();
     _getUserLocation();
+    // Set default sort to distance
+    _sortBy = 'distance';
   }
 
   Future<void> _getUserLocation() async {
     try {
-      LocationPermission permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        // Lida com o caso de o usuário negar a permissão
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
         return;
       }
 
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        desiredAccuracy: LocationAccuracy.medium,
       );
 
       if (mounted) {
         setState(() {
           userLocation = LatLng(position.latitude, position.longitude);
+          // Automatically set to distance sorting when location is available
+          if (_sortBy != 'distance') {
+            _sortBy = 'distance';
+          }
         });
       }
     } catch(e) {
-      // Lida com erros em potencial, por exemplo, serviços de localização desativados.
+      // Handle location errors silently
+      print('Location error: $e');
+    }
+  }
+
+  // Helper method to handle base64 image conversion
+  ImageProvider? _getImageProvider(String imageBase64) {
+    try {
+      final bytes = base64Decode(imageBase64);
+      return MemoryImage(bytes);
+    } catch (e) {
+      // If base64 decode fails, return null to show default icon
+      return null;
     }
   }
 
@@ -68,7 +98,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
         backgroundColor: theme.scaffoldBackgroundColor,
         foregroundColor: theme.appBarTheme.foregroundColor,
         title: const Text(
-          'Encontre um Veterinário',
+          'Find a Veterinarian',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -76,18 +106,22 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
               builder: (context, snapshot) {
-                String? imageUrl;
+                String? imageBase64;
                 if (snapshot.hasData && snapshot.data!.exists) {
                   final data = snapshot.data!.data() as Map<String, dynamic>;
-                  imageUrl = data['profileImage'];
+                  imageBase64 = data['profileImage'];
                 }
                 return Padding(
                   padding: const EdgeInsets.only(right: 12),
                   child: CircleAvatar(
                     radius: 18,
-                    backgroundImage: imageUrl != null && imageUrl.isNotEmpty
-                        ? NetworkImage(imageUrl)
-                        : const AssetImage('assets/doctor.jpg') as ImageProvider,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    backgroundImage: imageBase64 != null && imageBase64.isNotEmpty 
+                        ? _getImageProvider(imageBase64!) 
+                        : null,
+                    child: imageBase64 == null || imageBase64.isEmpty
+                        ? Icon(Icons.person, size: 20, color: theme.colorScheme.primary)
+                        : null,
                   ),
                 );
               },
@@ -124,10 +158,25 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                           markers: [
                             Marker(
                               point: userLocation!,
-                              child: const Icon(
-                                Icons.person_pin_circle,
-                                size: 40,
-                                color: Colors.blue,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Location pin background
+                                  Icon(
+                                    Icons.location_on,
+                                    size: 40,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  // Pet icon inside
+                                  Positioned(
+                                    top: 6,
+                                    child: Icon(
+                                      Icons.pets,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -135,35 +184,43 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     ],
                   ),
                   Positioned(
-                    left: 16,
-                    bottom: 16,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.primary,
-                        foregroundColor: theme.colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    left: 8,
+                    right: 8,
+                    bottom: 8,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.access_time, size: 16),
+                            label: const Text('After Hours', style: TextStyle(fontSize: 12)),
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.access_time),
-                      label: const Text('Cuidados fora do horário'),
-                      onPressed: () {},
-                    ),
-                  ),
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: theme.colorScheme.primary,
-                        side: BorderSide(color: theme.colorScheme.primary),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.primary,
+                              side: BorderSide(color: theme.colorScheme.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.local_hospital, size: 16),
+                            label: const Text('Emergency', style: TextStyle(fontSize: 12)),
+                            onPressed: () {},
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.local_hospital),
-                      label: const Text('Serviços de Emergência'),
-                      onPressed: () {},
+                      ],
                     ),
                   ),
                 ],
@@ -185,7 +242,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                         });
                       },
                       decoration: InputDecoration(
-                        hintText: 'Pesquisar nome da clínica ou do médico',
+                        hintText: 'Search clinic or doctor name',
                         prefixIcon: const Icon(Icons.search),
                         filled: true,
                         fillColor: theme.colorScheme.surface,
@@ -215,9 +272,9 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Ordenar por:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Sort by:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               ListTile(
-                                title: const Text('Mais Próximo'),
+                                title: const Text('Nearest'),
                                 leading: Radio<String>(
                                   value: 'distance',
                                   groupValue: _sortBy,
@@ -228,7 +285,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               ListTile(
-                                title: const Text('Preço (Menor para Maior)'),
+                                title: const Text('Price (Low to High)'),
                                 leading: Radio<String>(
                                   value: 'price_asc',
                                   groupValue: _sortBy,
@@ -239,7 +296,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               ListTile(
-                                title: const Text('Preço (Maior para Menor)'),
+                                title: const Text('Price (High to Low)'),
                                 leading: Radio<String>(
                                   value: 'price_desc',
                                   groupValue: _sortBy,
@@ -250,7 +307,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text('Avaliação Mínima:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              const Text('Minimum Rating:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                               StatefulBuilder(
                                 builder: (context, setModalState) {
                                   return Row(
@@ -286,12 +343,13 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('role', isEqualTo: 'Doctor')
-                .where('isVerified', isEqualTo: true)
+                // Temporarily removed isVerified filter
+                // .where('isVerified', isEqualTo: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return const SliverFillRemaining(
-                  child: Center(child: Text('Ocorreu um erro ao carregar')),
+                  child: Center(child: Text('An error occurred while loading')),
                 );
               }
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -311,21 +369,39 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     rating >= _minRating;
               }).toList();
 
-              // Lógica de ordenação...
-              if (_sortBy == 'distance' && userLocation != null) {
+              // Sort logic - Always sort by distance first if user location is available
+              if (userLocation != null) {
+                if (_sortBy == 'distance') {
                   docs.sort((a, b) {
                     final aData = a.data() as Map<String, dynamic>;
                     final bData = b.data() as Map<String, dynamic>;
-                    // Supondo que você armazene lat/lng no Firestore
-                    final aLat = (aData['lat'] ?? 0.0).toDouble();
-                    final aLng = (aData['lng'] ?? 0.0).toDouble();
-                    final bLat = (bData['lat'] ?? 0.0).toDouble();
-                    final bLng = (bData['lng'] ?? 0.0).toDouble();
+                    
+                    // Use default Cairo coordinates if no location data
+                    final aLat = (aData['lat'] ?? 30.0444).toDouble();
+                    final aLng = (aData['lng'] ?? 31.2357).toDouble();
+                    final bLat = (bData['lat'] ?? 30.0444).toDouble();
+                    final bLng = (bData['lng'] ?? 31.2357).toDouble();
 
-                    final aDist = Geolocator.distanceBetween(userLocation!.latitude, userLocation!.longitude, aLat, aLng);
-                    final bDist = Geolocator.distanceBetween(userLocation!.latitude, userLocation!.longitude, bLat, bLng);
-                    return aDist.compareTo(bDist);
+                    final aDist = Geolocator.distanceBetween(
+                      userLocation!.latitude, 
+                      userLocation!.longitude, 
+                      aLat, 
+                      aLng
+                    );
+                    final bDist = Geolocator.distanceBetween(
+                      userLocation!.latitude, 
+                      userLocation!.longitude, 
+                      bLat, 
+                      bLng
+                    );
+                    
+                    // Debug: Print distances to verify sorting
+                    print('Clinic A: ${aData['clinicName']} - Distance: ${aDist.toStringAsFixed(0)}m');
+                    print('Clinic B: ${bData['clinicName']} - Distance: ${bDist.toStringAsFixed(0)}m');
+                    
+                    return aDist.compareTo(bDist); // Ascending order (nearest first)
                   });
+                }
               } else if (_sortBy == 'price_asc' || _sortBy == 'price_desc') {
                   docs.sort((a, b) {
                     final aPrice = ((a.data() as Map<String, dynamic>)['price'] ?? 0.0).toDouble();
@@ -343,7 +419,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       children: [
                         Image.asset('assets/images/4939569d-6a3c-4878-8960-803e5521f119.jpg', width: 200),
                         const SizedBox(height: 16),
-                        Text('Ainda não há dados', style: TextStyle(fontSize: 18, color: theme.hintColor)),
+                        Text('No clinics available yet', style: TextStyle(fontSize: 18, color: theme.hintColor)),
                       ],
                     ),
                   ),
@@ -353,7 +429,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               // REESTRUTURAÇÃO: Substituí ListView por SliverList
               return SliverList.separated(
                 itemCount: docs.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, i) {
                   // CORREÇÃO: Usa o modelo Clinic atualizado que agora inclui o ID do documento
                   final clinic = Clinic.fromFirestore(docs[i]);
@@ -366,33 +442,22 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                       shadowColor: Colors.black.withOpacity(0.1),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: (clinic.image.isNotEmpty)
-                              ? Image.network(
-                                  clinic.image,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                        width: 50, height: 50, color: theme.colorScheme.surface,
-                                        child: Icon(Icons.local_hospital, color: theme.colorScheme.primary)
-                                    ),
-                                )
-                              : Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(Icons.local_hospital, color: theme.colorScheme.primary, size: 28),
-                                ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        leading: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.local_hospital, 
+                            color: theme.colorScheme.primary, 
+                            size: 28
+                          ),
                         ),
                         title: Text(
-                          clinic.name,
+                          clinic.name, // Now shows clinic name correctly
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         subtitle: Column(
@@ -410,11 +475,28 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                             ),
                             const SizedBox(height: 4),
                             Row(
-                              children: List.generate(5, (index) => Icon(
-                                index < rating ? Icons.star : Icons.star_border,
-                                color: theme.colorScheme.primary,
-                                size: 16,
-                              )),
+                              children: [
+                                ...List.generate(5, (index) => Icon(
+                                  index < rating ? Icons.star : Icons.star_border,
+                                  color: theme.colorScheme.primary,
+                                  size: 16,
+                                )),
+                                const SizedBox(width: 8),
+                                if (userLocation != null)
+                                  Icon(Icons.location_on, size: 12, color: theme.hintColor),
+                                if (userLocation != null)
+                                  const SizedBox(width: 2),
+                                if (userLocation != null)
+                                  Text(
+                                    '${(Geolocator.distanceBetween(
+                                      userLocation!.latitude,
+                                      userLocation!.longitude,
+                                      (docs[i].data() as Map<String, dynamic>)['lat'] ?? 30.0444,
+                                      (docs[i].data() as Map<String, dynamic>)['lng'] ?? 31.2357,
+                                    ) / 1000).toStringAsFixed(1)}km',
+                                    style: TextStyle(fontSize: 10, color: theme.hintColor),
+                                  ),
+                              ],
                             ),
                           ],
                         ),
@@ -437,6 +519,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
           ),
         ],
       ),
+      // Add bottom padding to prevent last card cutoff
+      bottomNavigationBar: const SizedBox(height: 80),
     );
   }
 }
