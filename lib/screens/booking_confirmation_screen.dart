@@ -110,20 +110,41 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         throw Exception("You must be logged in to book.");
       }
 
+      // Get customer data
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      final userData = userDoc.data() ?? {};
+      final customerName = userData['name'] ?? 'Unknown Customer';
+      final customerPhone = userData['phone'] ?? '';
+      final customerEmail = user.email ?? '';
+
       final formattedDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
 
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'doctorId': widget.clinic.id,
+      // Create booking document and get the ID
+      DocumentReference bookingRef = await FirebaseFirestore.instance.collection('bookings').add({
         'userId': user.uid,
+        'username': customerName,
+        'clinicId': widget.clinic.id,
+        'doctorId': widget.clinic.id,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        'customerEmail': customerEmail,
         'date': formattedDate,
         'time': widget.selectedTime,
         'clinicName': widget.clinic.name,
         'doctorName': widget.clinic.name,
         'price': widget.clinic.price,
-        // Save the selected payment method's display text
         'paymentMethod': _selectedPaymentMethodText,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'booked',
+      });
+
+      // Update the document with its own ID
+      await bookingRef.update({
+        'bookingId': bookingRef.id,
       });
 
     } catch (e) {

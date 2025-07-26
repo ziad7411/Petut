@@ -36,18 +36,18 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   String? _selectedSpecialty;
   String? _selectedGender;
-  
+
   final List<String> _specialties = [
     'General Veterinarian',
     'Small Animal Medicine',
-    'Large Animal Medicine', 
+    'Large Animal Medicine',
     'Exotic Animal Medicine',
     'Veterinary Surgery',
     'Veterinary Dentistry',
     'Emergency Medicine',
-    'Internal Medicine'
+    'Internal Medicine',
   ];
-  
+
   final List<String> _genders = ['Male', 'Female'];
 
   File? _profileImage;
@@ -57,7 +57,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   File? _idImage;
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
-  
+
   double? _selectedLat;
   double? _selectedLng;
 
@@ -80,37 +80,36 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       // Show options: Avatar, Gallery, or Camera
       final choice = await showDialog<String>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Choose Profile Picture'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.face),
-                title: const Text('Choose Avatar'),
-                onTap: () => Navigator.pop(context, 'avatar'),
+        builder:
+            (context) => AlertDialog(
+              title: const Text('Choose Profile Picture'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.face),
+                    title: const Text('Choose Avatar'),
+                    onTap: () => Navigator.pop(context, 'avatar'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_library),
+                    title: const Text('Upload from Gallery'),
+                    onTap: () => Navigator.pop(context, 'gallery'),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.camera_alt),
+                    title: const Text('Take Photo'),
+                    onTap: () => Navigator.pop(context, 'camera'),
+                  ),
+                ],
               ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Upload from Gallery'),
-                onTap: () => Navigator.pop(context, 'gallery'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take Photo'),
-                onTap: () => Navigator.pop(context, 'camera'),
-              ),
-            ],
-          ),
-        ),
+            ),
       );
-      
+
       if (choice == 'avatar') {
         final selectedAvatar = await Navigator.push<String>(
           context,
-          MaterialPageRoute(
-            builder: (_) => const AvatarSelectionScreen(),
-          ),
+          MaterialPageRoute(builder: (_) => const AvatarSelectionScreen()),
         );
         if (selectedAvatar != null) {
           setState(() {
@@ -119,7 +118,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           });
         }
       } else if (choice == 'gallery') {
-        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.gallery,
+        );
         if (image != null) {
           setState(() {
             _profileImage = File(image.path);
@@ -127,7 +128,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           });
         }
       } else if (choice == 'camera') {
-        final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.camera,
+        );
         if (image != null) {
           setState(() {
             _profileImage = File(image.path);
@@ -209,11 +212,11 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
 
     // Validate required ID documents (profile image is optional)
-    if (_cardFrontImage == null ||
-        _cardBackImage == null ||
-        _idImage == null) {
+    if (_cardFrontImage == null || _cardBackImage == null || _idImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload all required ID documents')),
+        const SnackBar(
+          content: Text('Please upload all required ID documents'),
+        ),
       );
       return;
     }
@@ -268,12 +271,14 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'cardBackImage': cardBackBase64,
         'idImage': idBase64,
         'workingDays': _selectedDays,
-        'startTime': _startTime != null
-            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
-            : null,
-        'endTime': _endTime != null
-            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-            : null,
+        'startTime':
+            _startTime != null
+                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'endTime':
+            _endTime != null
+                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                : null,
         'workingHours': _workingHoursController.text.trim(),
         'isVerified': false,
         'rating': 0.0,
@@ -285,21 +290,24 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'lng': _selectedLng ?? 31.2357,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
-      
+
       // Also save clinic data separately for admin dashboard
       await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
         'doctorId': user.uid,
+        'clinicId': user.uid,
         'doctorName': _doctorNameController.text.trim(),
         'clinicName': _clinicNameController.text.trim(),
         'clinicAddress': _clinicAddressController.text.trim(),
         'clinicPhone': _clinicPhoneController.text.trim(),
         'workingDays': _selectedDays,
-        'startTime': _startTime != null
-            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
-            : null,
-        'endTime': _endTime != null
-            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-            : null,
+        'startTime':
+            _startTime != null
+                ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                : null,
+        'endTime':
+            _endTime != null
+                ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                : null,
         'workingHours': _workingHoursController.text.trim(),
         'price': double.tryParse(_priceController.text.trim()) ?? 100.0,
         'isOpen': true,
@@ -310,7 +318,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      Navigator.pushReplacementNamed(context, '/goToWebPage');
+      Navigator.pushReplacementNamed(context, '/doctorStatus');
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -401,21 +409,25 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                           width: 3,
                         ),
                       ),
-                      child: _selectedAvatar != null
-                          ? AvatarHelper.buildAvatar(_selectedAvatar, size: 120)
-                          : _profileImage != null
+                      child:
+                          _selectedAvatar != null
+                              ? AvatarHelper.buildAvatar(
+                                _selectedAvatar,
+                                size: 120,
+                              )
+                              : _profileImage != null
                               ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(60),
-                                  child: Image.file(
-                                    _profileImage!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.person,
-                                  size: 50,
-                                  color: theme.hintColor,
+                                borderRadius: BorderRadius.circular(60),
+                                child: Image.file(
+                                  _profileImage!,
+                                  fit: BoxFit.cover,
                                 ),
+                              )
+                              : Icon(
+                                Icons.person,
+                                size: 50,
+                                color: theme.hintColor,
+                              ),
                     ),
                   ),
                 ),
@@ -472,7 +484,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
-                
+
                 // Gender Dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedGender,
@@ -487,15 +499,22 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       horizontal: 20,
                       vertical: 16,
                     ),
-                    prefixIcon: Icon(Icons.person_outline, color: theme.hintColor),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: theme.hintColor,
+                    ),
                   ),
-                  hint: Text('Select Gender', style: TextStyle(color: theme.hintColor)),
-                  items: _genders.map((gender) {
-                    return DropdownMenuItem(
-                      value: gender,
-                      child: Text(gender),
-                    );
-                  }).toList(),
+                  hint: Text(
+                    'Select Gender',
+                    style: TextStyle(color: theme.hintColor),
+                  ),
+                  items:
+                      _genders.map((gender) {
+                        return DropdownMenuItem(
+                          value: gender,
+                          child: Text(gender),
+                        );
+                      }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _selectedGender = value;
@@ -506,7 +525,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
-                
+
                 const SizedBox(height: 24),
                 Text(
                   'Professional Information',
@@ -598,7 +617,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
-                
+
                 // Specialty Dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedSpecialty,
@@ -613,15 +632,25 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                       horizontal: 20,
                       vertical: 16,
                     ),
-                    prefixIcon: Icon(Icons.medical_services, color: theme.hintColor),
+                    prefixIcon: Icon(
+                      Icons.medical_services,
+                      color: theme.hintColor,
+                    ),
                   ),
-                  hint: Text('Select Specialty', style: TextStyle(color: theme.hintColor)),
-                  items: _specialties.map((specialty) {
-                    return DropdownMenuItem(
-                      value: specialty,
-                      child: Text(specialty, style: const TextStyle(fontSize: 14)),
-                    );
-                  }).toList(),
+                  hint: Text(
+                    'Select Specialty',
+                    style: TextStyle(color: theme.hintColor),
+                  ),
+                  items:
+                      _specialties.map((specialty) {
+                        return DropdownMenuItem(
+                          value: specialty,
+                          child: Text(
+                            specialty,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
                   onChanged: (value) {
                     setState(() {
                       _selectedSpecialty = value;
@@ -632,7 +661,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
-                
+
                 CustomTextField(
                   hintText: 'Consultation Fee (EGP)',
                   controller: _priceController,
@@ -647,7 +676,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                     return null;
                   },
                 ),
-                
+
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                   child: Text(

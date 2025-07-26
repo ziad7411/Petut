@@ -343,8 +343,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             stream: FirebaseFirestore.instance
                 .collection('users')
                 .where('role', isEqualTo: 'Doctor')
-                // Temporarily removed isVerified filter
-                // .where('isVerified', isEqualTo: true)
+                .where('isVerified', isEqualTo: true)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
