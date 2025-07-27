@@ -1,3 +1,4 @@
+import 'dart:convert'; // <-- إضافة مهمة لعرض الصورة
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -27,6 +28,23 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     return DateFormat('EEEE').format(date);
   }
 
+  // ================== التعديل رقم 1: إضافة هذه الدالة ==================
+  // دالة مساعدة لتحويل النص (base64) إلى صورة
+  ImageProvider? _getImageProvider(String? imageBase64) {
+    if (imageBase64 == null || imageBase64.isEmpty) {
+      // يمكنك إرجاع صورة افتراضية هنا إذا أردت
+      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود هذه الصورة
+    }
+    try {
+      final bytes = base64Decode(imageBase64);
+      return MemoryImage(bytes);
+    } catch (e) {
+      print("Error decoding image: $e");
+      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود هذه الصورة
+    }
+  }
+  // =================================================================
+
   Future<void> _fetchAvailableTimes() async {
     if (selectedDate == null) return;
 
@@ -38,14 +56,15 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     });
 
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(widget.clinic.id).get();
-      final data = doc.data() as Map<String, dynamic>;
-      final startTimeStr = data['startTime'] as String?;
-      final endTimeStr = data['endTime'] as String?;
+      final selectedDayName = getDayName(selectedDate!);
+      final daySchedule = widget.clinic.workingHours[selectedDayName];
 
-      if (startTimeStr == null || endTimeStr == null) {
-        throw Exception("Doctor's working hours are not set.");
+      if (daySchedule == null || daySchedule['openTime'] == null || daySchedule['closeTime'] == null) {
+        throw Exception("Doctor is not available on $selectedDayName.");
       }
+
+      final startTimeStr = daySchedule['openTime']!;
+      final endTimeStr = daySchedule['closeTime']!;
 
       final List<String> allTimeSlots = [];
       final startParts = startTimeStr.split(':').map(int.parse).toList();
@@ -77,7 +96,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorLoadingTimes = 'Failed to load times. Please try again.';
+          _errorLoadingTimes = e.toString();
         });
       }
     } finally {
@@ -144,7 +163,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(clinic.image),
+                    // ================== التعديل رقم 2: استخدام الدالة الجديدة ==================
+                    backgroundImage: _getImageProvider(clinic.image),
+                    // ======================================================================
                     onBackgroundImageError: (exception, stackTrace) {},
                   ),
                   const SizedBox(width: 16),
@@ -156,16 +177,18 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                         const SizedBox(height: 4),
                         Text("Specialty: ${clinic.specialty ?? 'Unknown'}"),
                         Text("${clinic.rating} ★ | ${clinic.phoneNumber}"),
-                        Text("Experience: ${clinic.experience ?? 'N/A'} years"),
+                        Text("Experience: ${clinic.experience} years"),
                       ],
                     ),
                   )
                 ],
               ),
               const SizedBox(height: 20),
-              _infoRow(Icons.location_on, clinic.location),
+              // ================== التعديل رقم 3: استخدام العنوان النصي ==================
+              _infoRow(Icons.location_on, clinic.address),
+              // ====================================================================
               _infoRow(Icons.attach_money, "${clinic.price} EGP"),
-              _infoRow(Icons.timer, clinic.isOpen ? "Open Now" : "Closed"),
+              _infoRow(Icons.timer, "Check available times"),
               const SizedBox(height: 24),
               const Text("Choose Appointment Day", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),

@@ -1,71 +1,60 @@
+// models/Clinic.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Clinic {
-  final String id;
-  final String name;
-  final String location;
-  final String phoneNumber;
-  final double price;
+  final String id; // This will be the doctor's UID
+  final String name; // Clinic name
+  final String doctorName;
+  final String address; // The text address
   final String image;
   final double rating;
-  final bool isOpen;
+  final double price;
+  final String experience;
   final String? specialty;
-  final int? experience;
+  final String phoneNumber; // Clinic phone number
   final List<String> workingDays;
-  final String? startTime;
-  final String? endTime;
+  final Map<String, dynamic> workingHours;
+  final GeoPoint location; // The GeoPoint for coordinates
 
   Clinic({
     required this.id,
     required this.name,
-    required this.location,
-    required this.phoneNumber,
-    required this.price,
+    required this.doctorName,
+    required this.address,
     required this.image,
     required this.rating,
-    required this.isOpen,
-    required this.workingDays,
+    required this.price,
+    required this.experience,
     this.specialty,
-    this.experience,
-    this.startTime,
-    this.endTime,
+    required this.phoneNumber,
+    required this.workingDays,
+    required this.workingHours,
+    required this.location,
   });
 
-  factory Clinic.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-
-    // FIX: Add robust parsing to handle different data types from Firestore.
-    // This prevents crashes if the data is not in the expected format.
-
-    double parsedPrice = 0.0;
-    if (data['price'] is String) {
-      parsedPrice = double.tryParse(data['price']) ?? 0.0;
-    } else if (data['price'] is num) {
-      parsedPrice = (data['price'] as num).toDouble();
-    }
-
-    int? parsedExperience;
-    if (data['experience'] is String) {
-      parsedExperience = int.tryParse(data['experience']);
-    } else if (data['experience'] is num) {
-      parsedExperience = (data['experience'] as num).toInt();
+  // This factory helps create a Clinic object from different Firestore documents
+  factory Clinic.fromCombinedData(Map<String, dynamic> combinedData) {
+    // Safely extract working hours and convert to the correct type
+    Map<String, dynamic> hours = {};
+    if (combinedData['workingHours'] is Map) {
+      hours = Map<String, dynamic>.from(combinedData['workingHours']);
     }
 
     return Clinic(
-      id: doc.id,
-      name: data['clinicName']?.toString() ?? 'Unnamed Clinic',
-      location: data['clinicAddress']?.toString() ?? '',
-      phoneNumber: data['clinicPhone']?.toString() ?? '',
-      price: parsedPrice,
-      image: data['profileImage']?.toString() ?? '',
-      rating: (data['rating'] as num?)?.toDouble() ?? 0.0,
-      isOpen: data['isOpen'] as bool? ?? false,
-      specialty: data['specialty']?.toString(),
-      experience: parsedExperience,
-      // Use ?.toList() for safety, though List.from is usually fine.
-      workingDays: List<String>.from(data['workingDays'] ?? []),
-      startTime: data['startTime']?.toString(),
-      endTime: data['endTime']?.toString(),
+      id: combinedData['doctorId'] ?? '',
+      name: combinedData['name'] ?? 'No Name',
+      doctorName: combinedData['fullName'] ?? 'Unknown Doctor',
+      address: combinedData['address'] ?? 'No Location', // <-- هذا هو العنوان النصي
+      image: combinedData['profileImage'] ?? '',
+      rating: (combinedData['rating'] ?? 0.0).toDouble(),
+      price: (combinedData['price'] ?? 0.0).toDouble(),
+      experience: combinedData['experience'] ?? 'N/A',
+      specialty: combinedData['specialization'], // Can be null
+      phoneNumber: combinedData['phone'] ?? '',
+      workingDays: hours.keys.toList(),
+      workingHours: hours,
+      location: combinedData['location'] ?? const GeoPoint(0, 0), // <-- وهذا هو حقل الإحداثيات
     );
   }
 }
