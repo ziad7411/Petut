@@ -217,15 +217,15 @@ class MyOrdersScreen extends StatelessWidget {
                                     price: (product['price'] ?? 0).toInt(),
                                     quantity: product['quantity'] ?? 1,
                                     weight: () {
-                                      final rawWeight =
-                                          product['weight']; // ← من نفس item اللي جاي من order
+                                      final rawWeight = product['weight'];
                                       if (rawWeight == null ||
-                                          rawWeight.toString().trim().isEmpty)
-                                        return 0.0;
-                                      return double.tryParse(
-                                            rawWeight.toString(),
-                                          ) ??
-                                          0.0;
+                                          rawWeight.toString().trim().isEmpty) {
+                                        return "";
+                                      }
+                                      return rawWeight
+                                          .toString()
+                                          .replaceAll("g", "")
+                                          .trim();
                                     }(),
                                   ),
                                 );

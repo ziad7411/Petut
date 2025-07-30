@@ -56,12 +56,10 @@ class _SearchScreenState extends State<SearchScreen> {
       title: product.name,
       description: product.details,
       image: product.image,
-      price: product.price.toInt(),
+      price: product.price,
       rate: product.rate,
       weight:
-          double.tryParse(product.weight.replaceAll("g", "")) != null
-              ? double.parse(product.weight.replaceAll("g", "")) / 1000
-              : 0,
+          product.weight.replaceAll("g", "")
     );
   }
 

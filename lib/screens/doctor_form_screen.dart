@@ -257,17 +257,63 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       final cardBackBase64 = await _convertImageToBase64(_cardBackImage);
       final idBase64 = await _convertImageToBase64(_idImage);
       final socialMedia = <String, String>{};
-      if (_facebookController.text.trim().isNotEmpty) socialMedia['facebook'] = _facebookController.text.trim();
-      if (_instagramController.text.trim().isNotEmpty) socialMedia['instagram'] = _instagramController.text.trim();
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").doc("details").set({
-        'experience': _experienceController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'socialMedia': socialMedia,
-        'cardFrontImage': cardFrontBase64,
-        'cardBackImage': cardBackBase64,
-        'idImage': idBase64,
+      if (_facebookController.text.trim().isNotEmpty)
+        socialMedia['facebook'] = _facebookController.text.trim();
+      if (_instagramController.text.trim().isNotEmpty)
+        socialMedia['instagram'] = _instagramController.text.trim();
+      if (_twitterController.text.trim().isNotEmpty)
+        socialMedia['twitter'] = _twitterController.text.trim();
+      if (_linkedinController.text.trim().isNotEmpty)
+        socialMedia['linkedin'] = _linkedinController.text.trim();
+
+      // Store all doctor data in users collection
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'role': 'Doctor',
+        'fullName': _doctorNameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'pending',
+        'uid': user.uid,
+        'gender': _selectedGender,
       }, SetOptions(merge: true));
+     
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection("doctorsDetails")
+          .add({
+            'experience': _experienceController.text.trim(),
+            'description': _descriptionController.text.trim(),
+            'socialMedia': socialMedia,
+            'profileImage': profileBase64,
+            'cardFrontImage': cardFrontBase64,
+            'cardBackImage': cardBackBase64,
+            'idImage': idBase64,
+            'isVerified': false,
+            'rating': 0.0,
+            'totalReviews': 0,
+          });
+      if (_hasClinic) {
+        await FirebaseFirestore.instance.collection('clinics').doc(user.uid).set({
+          'doctorid': user.uid,
+           'clinicId': user.uid,
+          'workingHours': _workingHoursController.text.trim(),
+          'day': _selectedDays,
+          'openTime':
+              _startTime != null
+                  ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+                  : null,
+          'closeTime':
+              _endTime != null
+                  ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+                  : null,
+          'clinicName': _clinicNameController.text.trim(),
+          'clinicAddress': _clinicAddressController.text.trim(),
+          'clinicPhone': _clinicPhoneController.text.trim(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
 
       Navigator.pushReplacement(
         context,
