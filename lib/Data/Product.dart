@@ -1,37 +1,35 @@
 class Product {
   final String id;
   final String name;
-  final double price;
-  final double rate;
-  final String weight;
   final String details;
-  final String category;
-  final String brand;
   final String image;
+  final double rate;
+  final double price;
+  final String category;
+  final String weight;
 
   Product({
     required this.id,
     required this.name,
-    required this.price,
-    required this.rate,
-    required this.weight,
     required this.details,
-    required this.category,
-    required this.brand,
     required this.image,
+    required this.rate,
+    required this.price,
+    required this.category,
+    required this.weight
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) {
+  factory Product.fromFirebase(Map<String, dynamic> json, String id) {
     return Product(
-      id: json['id']?.toString() ?? '',
-      name: json['name'],
-      price: json['price'] * 1.0,
-      rate: json['rate'] * 1.0,
-      weight: json['weight'],
-      details: json['details'],
-      category: json['category'],
-      brand: json['brand'],
-      image: json['image'],
+      id: id,
+      name: json['productName'] ?? '',
+      details: json['description'] ?? '',
+      image: json['imageURL'] ?? '',
+      rate: double.tryParse(json['rate'].toString()) ?? 0.0,
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      category: json['category'] ?? '',
+      weight: json['weight'] ?? '',
+
     );
   }
 }

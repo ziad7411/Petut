@@ -28,6 +28,9 @@ dependencies:
   geocoding: ^2.1.0
   table_calendar: ^3.0.9
   font_awesome_flutter: ^10.8.0
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^19.4.0
+  onesignal_flutter: ^5.3.4
   
 
 dependency_overrides:

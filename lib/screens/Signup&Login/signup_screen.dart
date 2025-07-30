@@ -125,204 +125,207 @@ Future<void> _signInWithGoogle() async {
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: theme.iconTheme.color,
-          onPressed: () => Navigator.pop(context),
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: theme.iconTheme.color,
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-          child: Column(
-            children: [
-              Text(
-                'Sign Up',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: Column(
+              children: [
+                Text(
+                  'Sign Up',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        CustomTextField(
-                          hintText: 'Email',
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.email,
-                          controller: emailController,
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Enter your Email'
-                                      : null,
-                        ),
-                        CustomTextField(
-                          hintText: 'Password',
-                          obscureText: _obscurePassword,
-                          controller: passwordController,
-                          prefixIcon: Icons.lock,
-                          validator:
-                              (value) =>
-                                  value != null && value.length >= 6
-                                      ? null
-                                      : 'Enter at least 6 characters',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              // -- تعديل: استخدام لون من الثيم --
-                              color: theme.hintColor,
+                const SizedBox(height: 24),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          CustomTextField(
+                            hintText: 'Email',
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email,
+                            controller: emailController,
+                            validator:
+                                (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'Enter your Email'
+                                        : null,
+                          ),
+                          CustomTextField(
+                            hintText: 'Password',
+                            obscureText: _obscurePassword,
+                            controller: passwordController,
+                            prefixIcon: Icons.lock,
+                            validator:
+                                (value) =>
+                                    value != null && value.length >= 6
+                                        ? null
+                                        : 'Enter at least 6 characters',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                // -- تعديل: استخدام لون من الثيم --
+                                color: theme.hintColor,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                             ),
-                            onPressed: () {
+                          ),
+                          CustomTextField(
+                            hintText: 'Confirm Password',
+                            prefixIcon: Icons.lock,
+                            obscureText: _obscureConfirmPassword,
+                            controller: confirmPasswordController,
+                            validator:
+                                (value) =>
+                                    value == passwordController.text
+                                        ? null
+                                        : 'Passwords do not match',
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                // -- تعديل: استخدام لون من الثيم --
+                                color: theme.hintColor,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: selectedRole,
+                            decoration: InputDecoration(
+                              filled: true,
+                              // -- تعديل: استخدام لون من الثيم --
+                              fillColor: theme.colorScheme.surface,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            hint: Text(
+                              'Choose your role',
+                              style: TextStyle(color: theme.hintColor),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Customer',
+                                child: Text('Customer'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Doctor',
+                                child: Text('Doctor'),
+                              ),
+                            ],
+                            onChanged: (value) {
                               setState(() {
-                                _obscurePassword = !_obscurePassword;
+                                selectedRole = value;
                               });
                             },
                           ),
-                        ),
-                        CustomTextField(
-                          hintText: 'Confirm Password',
-                          prefixIcon: Icons.lock,
-                          obscureText: _obscureConfirmPassword,
-                          controller: confirmPasswordController,
-                          validator:
-                              (value) =>
-                                  value == passwordController.text
-                                      ? null
-                                      : 'Passwords do not match',
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscureConfirmPassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              // -- تعديل: استخدام لون من الثيم --
-                              color: theme.hintColor,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureConfirmPassword =
-                                    !_obscureConfirmPassword;
-                              });
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          value: selectedRole,
-                          decoration: InputDecoration(
-                            filled: true,
-                            // -- تعديل: استخدام لون من الثيم --
-                            fillColor: theme.colorScheme.surface,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          hint: Text(
-                            'Choose your role',
-                            style: TextStyle(color: theme.hintColor),
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Customer',
-                              child: Text('Customer'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Doctor',
-                              child: Text('Doctor'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            setState(() {
-                              selectedRole = value;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        isLoading
-                            ? const CircularProgressIndicator()
-                            : CustomButton(
-                              text: 'Sign Up',
-                              onPressed: signup,
-                              width: double.infinity,
-                              fontSize: 20,
-                            ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            const Expanded(child: Divider()),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                          const SizedBox(height: 24),
+                          isLoading
+                              ? const CircularProgressIndicator()
+                              : CustomButton(
+                                text: 'Sign Up',
+                                onPressed: signup,
+                                width: double.infinity,
+                                fontSize: 20,
                               ),
-                              child: Text(
-                                'or',
-                                style: TextStyle(color: textColor),
-                              ),
-                            ),
-                            const Expanded(child: Divider()),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                        CustomButton(
-                          text: 'Google',
-                          icon: SvgPicture.asset('assets/images/google.svg'),
-                          isPrimary: false,
-                          width: double.infinity,
-                          onPressed: _signInWithGoogle,
-                          fontSize: 20,
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Already have an account?',
-                              style: TextStyle(color: textColor),
-                            ),
-                            TextButton(
-                              onPressed:
-                                  () => Navigator.pushNamed(context, '/login'),
-                              child: Text(
-                                'Log In',
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
+                          const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Text(
+                                  'or',
+                                  style: TextStyle(color: textColor),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.05,
-                        ),
-                        TextButton(
-                          onPressed: _skipLogin,
-                          child: Text(
-                            'Skip',
-                            style: TextStyle(fontSize: 16, color: textColor),
+                              const Expanded(child: Divider()),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 24),
+                          CustomButton(
+                            text: 'Google',
+                            icon: SvgPicture.asset('assets/images/google.svg'),
+                            isPrimary: false,
+                            width: double.infinity,
+                            onPressed: _signInWithGoogle,
+                            fontSize: 20,
+                          ),
+                          const SizedBox(height: 24),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Already have an account?',
+                                style: TextStyle(color: textColor),
+                              ),
+                              TextButton(
+                                onPressed:
+                                    () => Navigator.pushNamed(context, '/login'),
+                                child: Text(
+                                  'Log In',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.05,
+                          ),
+                          TextButton(
+                            onPressed: _skipLogin,
+                            child: Text(
+                              'Skip',
+                              style: TextStyle(fontSize: 16, color: textColor),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

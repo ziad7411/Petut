@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -33,9 +33,17 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 6), () {
+
+    Timer(const Duration(seconds: 5), () {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/start');
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          // لو المستخدم مسجّل، روح للصفحة الرئيسية (Main)
+          Navigator.pushReplacementNamed(context, '/main');
+        } else {
+          // ولو مش مسجّل، روح لصفحة البدء (Start)
+          Navigator.pushReplacementNamed(context, '/start');
+        }
       }
     });
   }
@@ -82,7 +90,6 @@ class _SplashScreenState extends State<SplashScreen>
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 1.1,
                         ),
                       ),
                       const SizedBox(height: 24),

@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
@@ -20,12 +22,19 @@ import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
 import 'package:provider/provider.dart';
 
-
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('🔔 رسالة في الخلفية: ${message.messageId}');
+}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  OneSignal.initialize("0f5304b0-aea7-4f4a-8eb3-0e715915a563");
+  OneSignal.Notifications.requestPermission(false);
 
   runApp(
     ChangeNotifierProvider(
