@@ -270,7 +270,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
       // Save user profile
       await _firestore.collection('users').doc(user.uid).set({
-        'name': _nameController.text.trim(),
+        'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'profileImage': profileImageBase64,
         'role': 'Customer',
