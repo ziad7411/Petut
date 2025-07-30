@@ -1,4 +1,4 @@
-import 'dart:convert'; // <-- إضافة مهمة لعرض الصورة
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,23 +28,19 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     return DateFormat('EEEE').format(date);
   }
 
-  // ================== التعديل رقم 1: إضافة هذه الدالة ==================
-  // دالة مساعدة لتحويل النص (base64) إلى صورة
-  ImageProvider? _getImageProvider(String? imageBase64) {
+  ImageProvider _getImageProvider(String? imageBase64) {
     if (imageBase64 == null || imageBase64.isEmpty) {
-      // يمكنك إرجاع صورة افتراضية هنا إذا أردت
-      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود هذه الصورة
+      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود صورة افتراضية
     }
     try {
       final bytes = base64Decode(imageBase64);
       return MemoryImage(bytes);
     } catch (e) {
       print("Error decoding image: $e");
-      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود هذه الصورة
+      return const AssetImage('assets/images/default_avatar.png');
     }
   }
-  // =================================================================
-
+  
   Future<void> _fetchAvailableTimes() async {
     if (selectedDate == null) return;
 
@@ -57,7 +53,14 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
     try {
       final selectedDayName = getDayName(selectedDate!);
-      final daySchedule = widget.clinic.workingHours[selectedDayName];
+      
+      // ================== هذا هو الإصلاح الرئيسي ==================
+      // نبحث عن اليوم المطابق داخل القائمة بدلاً من التعامل معها كخريطة
+      final daySchedule = widget.clinic.workingHours.firstWhere(
+        (schedule) => schedule['day'] == selectedDayName,
+        orElse: () => null, // In case the day is not found
+      );
+      // =========================================================
 
       if (daySchedule == null || daySchedule['openTime'] == null || daySchedule['closeTime'] == null) {
         throw Exception("Doctor is not available on $selectedDayName.");

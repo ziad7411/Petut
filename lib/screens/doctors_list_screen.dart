@@ -18,6 +18,43 @@ class ClinicWithDistance {
   ClinicWithDistance({required this.clinic, this.distance});
 }
 
+// كلاس لجعل الخريطة قابلة للطي عند السكرول
+class _MapHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double minHeight;
+  final double maxHeight;
+  final Widget child;
+
+  _MapHeaderDelegate({
+    required this.minHeight,
+    required this.maxHeight,
+    required this.child,
+  });
+
+  @override
+  double get minExtent => minHeight;
+
+  @override
+  double get maxExtent => maxHeight;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final progress = shrinkOffset / maxExtent;
+    final opacity = (1.0 - progress).clamp(0.0, 1.0);
+    
+    return Opacity(
+      opacity: opacity,
+      child: child,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_MapHeaderDelegate oldDelegate) {
+    return maxHeight != oldDelegate.maxHeight ||
+           minHeight != oldDelegate.minHeight ||
+           child != oldDelegate.child;
+  }
+}
+
 class ClinicsScreen extends StatefulWidget {
   const ClinicsScreen({super.key});
 
@@ -29,7 +66,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   LatLng? userLocation;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _sortBy = 'distance'; // الترتيب الافتراضي
+  String _sortBy = 'distance_asc'; // الترتيب الافتراضي من الأقرب للأبعد
   double _minRating = 0.0;
 
   @override
@@ -39,7 +76,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   }
 
   Future<void> _getUserLocation() async {
-    // ... (هذه الدالة صحيحة ولا تحتاج لتعديل)
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return;
@@ -65,7 +101,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   }
 
   ImageProvider? _getImageProvider(String? imageBase64) {
-    // ... (هذه الدالة صحيحة ولا تحتاج لتعديل)
     if (imageBase64 == null || imageBase64.isEmpty) return null;
     try {
       final bytes = base64Decode(imageBase64);
@@ -95,13 +130,16 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       // هنا نستخدم الموديل الآمن لتحويل البيانات
       final clinic = Clinic.fromCombinedData(combinedData);
       
-      // هنا نحسب المسافة بالشكل الصحيح باستخدام GeoPoint
+      // حساب المسافة باستخدام lat/lng المحفوظة في البيانات
+      final clinicLat = (combinedData['lat'] ?? 30.0444).toDouble();
+      final clinicLng = (combinedData['lng'] ?? 31.2357).toDouble();
+      
       final distance = userLocation != null
           ? Geolocator.distanceBetween(
               userLocation!.latitude,
               userLocation!.longitude,
-              clinic.location.latitude,
-              clinic.location.longitude,
+              clinicLat,
+              clinicLng,
             ) / 1000 // to KM
           : null;
 
@@ -135,7 +173,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
               builder: (context, snapshot) {
-                // ... (كود عرض الصورة الشخصية للمستخدم كما هو)
                 return CircleAvatar(); // Placeholder
               },
             ),
@@ -143,34 +180,48 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          // الجزء الأول: الخريطة (كما هو)
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              height: 200,
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: theme.colorScheme.surface),
-              clipBehavior: Clip.hardEdge,
-              child: FlutterMap(
-                options: MapOptions(center: userLocation ?? LatLng(30.0444, 31.2357), zoom: 13),
-                children: [
-                  TileLayer(
-                    urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    userAgentPackageName: 'com.example.petut',
-                  ),
-                  if (userLocation != null)
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: userLocation!,
-                          child: Icon(Icons.location_on, size: 40, color: theme.colorScheme.primary),
-                        ),
-                      ],
+          // الجزء الأول: الخريطة القابلة للطي
+          SliverPersistentHeader(
+            pinned: false,
+            floating: false,
+            delegate: _MapHeaderDelegate(
+              minHeight: 0,
+              maxHeight: 200,
+              child: Container(
+                margin: const EdgeInsets.all(16),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: theme.colorScheme.surface),
+                clipBehavior: Clip.hardEdge,
+                child: FlutterMap(
+                  options: MapOptions(center: userLocation ?? LatLng(30.0444, 31.2357), zoom: 13),
+                  children: [
+                    TileLayer(
+                      urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      userAgentPackageName: 'com.example.petut',
                     ),
-                ],
+                    if (userLocation != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: userLocation!,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Icon(Icons.location_on, size: 40, color: theme.colorScheme.primary),
+                                Positioned(
+                                  top: 6,
+                                  child: Icon(Icons.pets, size: 16, color: Colors.white),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
-          // الجزء الثاني: مربع البحث والفلترة (كما هو)
+          // الجزء الثاني: مربع البحث والفلترة
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -196,7 +247,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               ),
             ),
           ),
-          // الجزء الثالث: قائمة العيادات بالطريقة الصحيحة والفعالة
+          // الجزء الثالث: قائمة العيادات
           StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('clinics').where('status', isEqualTo: 'active').snapshots(),
             builder: (context, clinicSnapshot) {
@@ -208,7 +259,6 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
               final clinicDocs = clinicSnapshot.data!.docs;
 
-              // نستخدم FutureBuilder لانتظار تحميل بيانات كل العيادات مرة واحدة
               return FutureBuilder<List<ClinicWithDistance?>>(
                 future: Future.wait(clinicDocs.map((doc) => _fetchClinicData(doc)).toList()),
                 builder: (context, snapshot) {
@@ -232,9 +282,34 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                     return passesSearch && passesRating;
                   }).toList();
 
-                  // 3. ترتيب القائمة النهائية حسب المسافة
-                  if (_sortBy == 'distance' && userLocation != null) {
-                    clinicsWithDistances.sort((a, b) => a.distance!.compareTo(b.distance!));
+                  // 3. ترتيب القائمة حسب الخيار المحدد
+                  if (userLocation != null) {
+                    switch (_sortBy) {
+                      case 'distance_asc':
+                        clinicsWithDistances.sort((a, b) => (a.distance ?? double.infinity).compareTo(b.distance ?? double.infinity));
+                        break;
+                      case 'distance_desc':
+                        clinicsWithDistances.sort((a, b) => (b.distance ?? 0).compareTo(a.distance ?? 0));
+                        break;
+                      case 'price_asc':
+                        clinicsWithDistances.sort((a, b) => a.clinic.price.compareTo(b.clinic.price));
+                        break;
+                      case 'price_desc':
+                        clinicsWithDistances.sort((a, b) => b.clinic.price.compareTo(a.clinic.price));
+                        break;
+                      default:
+                        clinicsWithDistances.sort((a, b) => (a.distance ?? double.infinity).compareTo(b.distance ?? double.infinity));
+                    }
+                  } else {
+                    // إذا لم يكن هناك موقع، رتب حسب السعر
+                    switch (_sortBy) {
+                      case 'price_asc':
+                        clinicsWithDistances.sort((a, b) => a.clinic.price.compareTo(b.clinic.price));
+                        break;
+                      case 'price_desc':
+                        clinicsWithDistances.sort((a, b) => b.clinic.price.compareTo(a.clinic.price));
+                        break;
+                    }
                   }
                   
                   if (clinicsWithDistances.isEmpty) {
@@ -242,33 +317,71 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
                   }
 
                   // 4. عرض القائمة المرتبة والمفلترة
-                  return SliverList.builder(
+                  return SliverList.separated(
                     itemCount: clinicsWithDistances.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 8),
                     itemBuilder: (context, i) {
                       final item = clinicsWithDistances[i];
-                      final clinic = item.clinic; // <-- نستخدم الكائن الآمن
+                      final clinic = item.clinic;
                       final distance = item.distance;
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Card(
+                          elevation: 4,
+                          shadowColor: Colors.black.withOpacity(0.1),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: _getImageProvider(clinic.image),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(Icons.local_hospital, color: theme.colorScheme.primary, size: 28),
+                              ),
                             ),
-                            title: Text(clinic.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            title: Text(clinic.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                const SizedBox(height: 4),
                                 Text(clinic.address, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                Text('Dr. ${clinic.doctorName}'),
-                                if (distance != null)
-                                  Text('${distance.toStringAsFixed(1)} km away'),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
+                                    const SizedBox(width: 4),
+                                    Text('Dr. ${clinic.doctorName}'),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    ...List.generate(5, (index) => Icon(
+                                      index < clinic.rating ? Icons.star : Icons.star_border,
+                                      color: theme.colorScheme.primary,
+                                      size: 16,
+                                    )),
+                                    if (distance != null) ...[
+                                      const SizedBox(width: 8),
+                                      Icon(Icons.location_on, size: 12, color: theme.hintColor),
+                                      const SizedBox(width: 2),
+                                      Text(
+                                        '${distance.toStringAsFixed(1)}km',
+                                        style: TextStyle(fontSize: 10, color: theme.hintColor),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ],
                             ),
+                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                             onTap: () {
-                              // نمرر الكائن الجاهز مباشرة
                               Navigator.push(context, MaterialPageRoute(builder: (_) => ClinicDetailsScreen(clinic: clinic)));
                             },
                           ),
@@ -282,10 +395,10 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
           ),
         ],
       ),
+      // Add bottom padding to prevent last card cutoff
+      bottomNavigationBar: const SizedBox(height: 80),
     );
   }
-
- 
 
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
@@ -301,16 +414,40 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               children: [
                 const Text('Sort by:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 RadioListTile<String>(
-                  title: const Text('Nearest (Not implemented)'),
-                  value: 'distance',
+                  title: const Text('Nearest to Farthest'),
+                  value: 'distance_asc',
                   groupValue: _sortBy,
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    if (value != null) setState(() => _sortBy = value);
+                    Navigator.pop(context);
+                  },
                 ),
                 RadioListTile<String>(
-                  title: const Text('Price (Not implemented)'),
+                  title: const Text('Farthest to Nearest'),
+                  value: 'distance_desc',
+                  groupValue: _sortBy,
+                  onChanged: (value) {
+                    if (value != null) setState(() => _sortBy = value);
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Price (Low to High)'),
                   value: 'price_asc',
                   groupValue: _sortBy,
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    if (value != null) setState(() => _sortBy = value);
+                    Navigator.pop(context);
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Price (High to Low)'),
+                  value: 'price_desc',
+                  groupValue: _sortBy,
+                  onChanged: (value) {
+                    if (value != null) setState(() => _sortBy = value);
+                    Navigator.pop(context);
+                  },
                 ),
                 const SizedBox(height: 12),
                 const Text('Minimum Rating:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),

@@ -3,19 +3,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Clinic {
-  final String id; // This will be the doctor's UID
-  final String name; // Clinic name
+  final String id;
+  final String name;
   final String doctorName;
-  final String address; // The text address
+  final String address;
   final String image;
   final double rating;
   final double price;
   final String experience;
   final String? specialty;
-  final String phoneNumber; // Clinic phone number
+  final String phoneNumber; // اسمه phoneNumber ليكون أوضح
+  final List<dynamic> workingHours; // <-- تم تغييره إلى List
   final List<String> workingDays;
-  final Map<String, dynamic> workingHours;
-  final GeoPoint location; // The GeoPoint for coordinates
+  final GeoPoint location;
 
   Clinic({
     required this.id,
@@ -28,33 +28,32 @@ class Clinic {
     required this.experience,
     this.specialty,
     required this.phoneNumber,
-    required this.workingDays,
     required this.workingHours,
+    required this.workingDays,
     required this.location,
   });
 
-  // This factory helps create a Clinic object from different Firestore documents
   factory Clinic.fromCombinedData(Map<String, dynamic> combinedData) {
-    // Safely extract working hours and convert to the correct type
-    Map<String, dynamic> hours = {};
-    if (combinedData['workingHours'] is Map) {
-      hours = Map<String, dynamic>.from(combinedData['workingHours']);
-    }
+    
+    final List<dynamic> hoursList = combinedData['workingHours'] as List<dynamic>? ?? [];
+   
+    final List<String> days = hoursList.map<String>((e) => e['day'] as String).toList();
+    // -------------------------
 
     return Clinic(
       id: combinedData['doctorId'] ?? '',
       name: combinedData['name'] ?? 'No Name',
       doctorName: combinedData['fullName'] ?? 'Unknown Doctor',
-      address: combinedData['address'] ?? 'No Location', // <-- هذا هو العنوان النصي
+      address: combinedData['address'] ?? 'No Location',
       image: combinedData['profileImage'] ?? '',
       rating: (combinedData['rating'] ?? 0.0).toDouble(),
       price: (combinedData['price'] ?? 0.0).toDouble(),
       experience: combinedData['experience'] ?? 'N/A',
-      specialty: combinedData['specialization'], // Can be null
+      specialty: combinedData['specialization'],
       phoneNumber: combinedData['phone'] ?? '',
-      workingDays: hours.keys.toList(),
-      workingHours: hours,
-      location: combinedData['location'] ?? const GeoPoint(0, 0), // <-- وهذا هو حقل الإحداثيات
+      workingHours: hoursList, 
+      workingDays: days,       
+      location: combinedData['location'] ?? const GeoPoint(0, 0),
     );
   }
 }

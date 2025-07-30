@@ -1,3 +1,4 @@
+// الكود الكامل بعد تعديل workingHours إلى array of objects
 
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -5,7 +6,6 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:petut/screens/avatar_selection_screen.dart';
 import 'package:petut/utils/avatar_helper.dart';
 import 'package:intl/intl.dart';
@@ -46,19 +46,22 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
 
+  final List<Map<String, dynamic>> _workingSchedule = [];
+  final List<String> _daysOfWeek = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
 
-
-  final Map<String, Map<String, TimeOfDay?>> _workingSchedule = {};
-
-  final List<String> _daysOfWeek = [
-    'Saturday',
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Initialize working schedule as array of objects
+    for (String day in _daysOfWeek) {
+      _workingSchedule.add({
+        'day': day,
+        'isSelected': false,
+        'startTime': null,
+        'endTime': null,
+      });
+    }
+  }
 
   bool _hasClinic = false;
 
@@ -90,7 +93,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           ),
         ),
       );
-
       if (choice == 'avatar') {
         final selectedAvatar = await Navigator.push<String>(
           context,
@@ -140,9 +142,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   }
 
   Future<void> _selectTime(String day, bool isStartTime) async {
+    final dayIndex = _workingSchedule.indexWhere((item) => item['day'] == day);
+    if (dayIndex == -1) return;
+
     final initialTime = isStartTime
-        ? (_workingSchedule[day]!['startTime'] ?? const TimeOfDay(hour: 9, minute: 0))
-        : (_workingSchedule[day]!['endTime'] ?? const TimeOfDay(hour: 18, minute: 0));
+        ? (_workingSchedule[dayIndex]['startTime'] ?? const TimeOfDay(hour: 9, minute: 0))
+        : (_workingSchedule[dayIndex]['endTime'] ?? const TimeOfDay(hour: 18, minute: 0));
 
     final TimeOfDay? picked = await showTimePicker(
       context: context,
@@ -152,9 +157,9 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     if (picked != null) {
       setState(() {
         if (isStartTime) {
-          _workingSchedule[day]!['startTime'] = picked;
+          _workingSchedule[dayIndex]['startTime'] = picked;
         } else {
-          _workingSchedule[day]!['endTime'] = picked;
+          _workingSchedule[dayIndex]['endTime'] = picked;
         }
       });
     }
@@ -175,16 +180,17 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
 
     if (_hasClinic) {
-      if (_workingSchedule.isEmpty) {
+      final selectedDays = _workingSchedule.where((item) => item['isSelected'] == true).toList();
+      if (selectedDays.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select at least one working day for the clinic')),
         );
         return;
       }
-      for (var day in _workingSchedule.keys) {
-        if (_workingSchedule[day]?['startTime'] == null || _workingSchedule[day]?['endTime'] == null) {
+      for (var dayItem in selectedDays) {
+        if (dayItem['startTime'] == null || dayItem['endTime'] == null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please set start and end times for $day')),
+            SnackBar(content: Text('Please set start and end times for ${dayItem['day']}')),
           );
           return;
         }
@@ -198,7 +204,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (user == null) throw Exception('User not logged in');
 
       String? profileBase64 = _selectedAvatar ?? (await _convertImageToBase64(_profileImage));
-      
+
       final Map<String, dynamic> doctorData = {
         'uid': user.uid,
         'fullName': _doctorNameController.text.trim(),
@@ -212,22 +218,25 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'price': double.tryParse(_priceController.text.trim()) ?? 0.0,
         'experience': _experienceController.text.trim(),
         'rating': 0.0,
-        'specialization': 'Veterinarian', 
+        'specialization': 'Veterinarian',
       };
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(doctorData, SetOptions(merge: true));
 
       if (_hasClinic) {
-        final Map<String, Map<String, String>> formattedWorkingHours = {};
-        _workingSchedule.forEach((day, times) {
-          final startTime = times['startTime'];
-          final endTime = times['endTime'];
-          if (startTime != null && endTime != null) {
-            formattedWorkingHours[day] = {
-              'openTime': '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}',
-              'closeTime': '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}',
-            };
+        final List<Map<String, String>> formattedWorkingHours = [];
+        for (var dayItem in _workingSchedule) {
+          if (dayItem['isSelected'] == true) {
+            final startTime = dayItem['startTime'] as TimeOfDay?;
+            final endTime = dayItem['endTime'] as TimeOfDay?;
+            if (startTime != null && endTime != null) {
+              formattedWorkingHours.add({
+                'day': dayItem['day'],
+                'openTime': '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}',
+                'closeTime': '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}',
+              });
+            }
           }
-        });
+        }
 
         final Map<String, dynamic> clinicData = {
           'doctorId': user.uid,
@@ -235,7 +244,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           'name': _clinicNameController.text.trim(),
           'phone': _clinicPhoneController.text.trim(),
           'address': _clinicAddressController.text.trim(),
-
           'status': 'active',
           'createdAt': FieldValue.serverTimestamp(),
           'workingHours': formattedWorkingHours,
@@ -244,7 +252,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         DocumentReference clinicRef = await FirebaseFirestore.instance.collection('clinics').add(clinicData);
         await clinicRef.update({'clinicId': clinicRef.id});
       }
-      
+
       final cardFrontBase64 = await _convertImageToBase64(_cardFrontImage);
       final cardBackBase64 = await _convertImageToBase64(_cardBackImage);
       final idBase64 = await _convertImageToBase64(_idImage);
@@ -253,12 +261,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (_instagramController.text.trim().isNotEmpty) socialMedia['instagram'] = _instagramController.text.trim();
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).collection("doctorsDetails").doc("details").set({
-            'experience': _experienceController.text.trim(),
-            'description': _descriptionController.text.trim(),
-            'socialMedia': socialMedia,
-            'cardFrontImage': cardFrontBase64,
-            'cardBackImage': cardBackBase64,
-            'idImage': idBase64,
+        'experience': _experienceController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'socialMedia': socialMedia,
+        'cardFrontImage': cardFrontBase64,
+        'cardBackImage': cardBackBase64,
+        'idImage': idBase64,
       }, SetOptions(merge: true));
 
       Navigator.pushReplacement(
@@ -267,7 +275,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       );
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -291,6 +299,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     _priceController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -521,7 +530,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   Widget _buildDayTimePicker(String day) {
     final theme = Theme.of(context);
-    final isSelected = _workingSchedule.containsKey(day);
+    final dayIndex = _workingSchedule.indexWhere((item) => item['day'] == day);
+    final isSelected = dayIndex != -1 ? _workingSchedule[dayIndex]['isSelected'] : false;
 
     return Column(
       children: [
@@ -530,10 +540,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           value: isSelected,
           onChanged: (bool? selected) {
             setState(() {
-              if (selected == true) {
-                _workingSchedule[day] = {'startTime': null, 'endTime': null};
-              } else {
-                _workingSchedule.remove(day);
+              if (dayIndex != -1) {
+                _workingSchedule[dayIndex]['isSelected'] = selected ?? false;
+                if (!selected!) {
+                  _workingSchedule[dayIndex]['startTime'] = null;
+                  _workingSchedule[dayIndex]['endTime'] = null;
+                }
               }
             });
           },
@@ -559,7 +571,10 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
   Widget _buildTimePickerButton(String day, bool isStart) {
     final theme = Theme.of(context);
-    final time = isStart ? _workingSchedule[day]!['startTime'] : _workingSchedule[day]!['endTime'];
+    final dayIndex = _workingSchedule.indexWhere((item) => item['day'] == day);
+    final time = dayIndex != -1 
+        ? (isStart ? _workingSchedule[dayIndex]['startTime'] : _workingSchedule[dayIndex]['endTime'])
+        : null;
     final label = isStart ? 'Start Time' : 'End Time';
 
     return ElevatedButton.icon(
