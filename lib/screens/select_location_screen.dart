@@ -42,11 +42,13 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
 
         setState(() {
           governorate = place.administrativeArea ?? 'Cairo';
-          city = place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
-          street = place.street?.isNotEmpty == true 
-              ? "${place.street}, ${place.subLocality ?? ''}" 
-              : 'Selected Location';
-          
+          city =
+              place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
+          street =
+              place.street?.isNotEmpty == true
+                  ? "${place.street}, ${place.subLocality ?? ''}"
+                  : 'Selected Location';
+
           // Update text controllers as well
           governorateController.text = governorate ?? 'Cairo';
           cityController.text = city ?? 'Unknown City';
@@ -57,8 +59,9 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
         setState(() {
           governorate = 'Cairo';
           city = 'Selected Area';
-          street = 'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
-          
+          street =
+              'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
+
           governorateController.text = governorate!;
           cityController.text = city!;
           streetController.text = street!;
@@ -70,8 +73,9 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
       setState(() {
         governorate = 'Cairo';
         city = 'Selected Area';
-        street = 'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
-        
+        street =
+            'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
+
         governorateController.text = governorate!;
         cityController.text = city!;
         streetController.text = street!;
@@ -81,15 +85,18 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
 
   void _submit() {
     // Ensure we have some data
-    final gov = governorateController.text.trim().isNotEmpty
-        ? governorateController.text.trim()
-        : (governorate ?? 'Cairo');
-    final cityName = cityController.text.trim().isNotEmpty
-        ? cityController.text.trim()
-        : (city ?? 'Selected Area');
-    final streetName = streetController.text.trim().isNotEmpty
-        ? streetController.text.trim()
-        : (street ?? 'Selected Location');
+    final gov =
+        governorateController.text.trim().isNotEmpty
+            ? governorateController.text.trim()
+            : (governorate ?? 'Cairo');
+    final cityName =
+        cityController.text.trim().isNotEmpty
+            ? cityController.text.trim()
+            : (city ?? 'Selected Area');
+    final streetName =
+        streetController.text.trim().isNotEmpty
+            ? streetController.text.trim()
+            : (street ?? 'Selected Location');
 
     final selectedData = {
       "governorate": gov,
@@ -100,6 +107,9 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
     // Return both address and coordinates
     final result = {
       'address': selectedData.values.join(', '),
+      'governorate': gov,
+      'city': cityName,
+      'street': streetName,
       'lat': selectedLocation.latitude,
       'lng': selectedLocation.longitude,
     };
@@ -151,9 +161,12 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                         point: selectedLocation,
                         width: 50,
                         height: 50,
-                        child: Icon(Icons.location_on,
-                            size: 40, color: theme.colorScheme.error),
-                      )
+                        child: Icon(
+                          Icons.location_on,
+                          size: 40,
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
                     ],
                   ),
                 ],
