@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:petut/screens/Signup&Login/auth_helper.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:petut/widgets/custom_text_field.dart';
 
@@ -21,101 +22,94 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isLoading = false;
   bool _obscurePassword = true;
 
-Future<void> _navigateBasedOnRole(String uid) async {
-  try {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-    if (!doc.exists || doc.data()?['role'] == null) {
-      throw Exception('User role not found');
-    }
-
-    final role = doc.data()!['role'];
-
-    if (role == 'Doctor') {
-      Navigator.pushReplacementNamed(context, '/goToWebPage');
-    } else if (role == 'Customer') {
-      Navigator.pushReplacementNamed(context, '/main');
-    } else {
-      throw Exception('Unknown role: $role');
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
-  }
-}
-
   Future<void> _login() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() => isLoading = true);
-  try {
-    final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    setState(() => isLoading = true);
 
-    await _navigateBasedOnRole(credential.user!.uid);
-  } on FirebaseAuthException catch (e) {
-    String message = 'An error occurred';
-    if (e.code == 'user-not-found') {
-      message = 'No user found with this email';
-    } else if (e.code == 'wrong-password') {
-      message = 'Incorrect password';
-    }
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${message} ${e.message}")));
-  } finally {
-    setState(() => isLoading = false);
-  }
-}
-
-Future<void> _signInWithGoogle() async {
-  setState(() => isLoading = true);
-
-  try {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      setState(() => isLoading = false);
-      return;
-    }
-
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-    final uid = userCredential.user!.uid;
-
-    // ✅ Get user document from Firestore
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-
-    if (userDoc.exists) {
-      final role = userDoc.data()?['role'];
-
-      if (role == 'doctor') {
-        Navigator.pushReplacementNamed(context, '/goToWebPage');
-      } else if (role == 'Customer') {
-        Navigator.pushReplacementNamed(context, '/main');
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User data not found. Please complete signup.')),
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
+
+      await _navigateBasedOnUserState();
+    } on FirebaseAuthException catch (e) {
+      String message = 'An error occurred';
+      if (e.code == 'user-not-found') {
+        message = 'No user found with this email';
+      } else if (e.code == 'wrong-password') {
+        message = 'Incorrect password';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("$message ${e.message}")),
+      );
+    } finally {
+      setState(() => isLoading = false);
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google sign-in error')),
-    );
-  } finally {
-    setState(() => isLoading = false);
   }
-}
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => isLoading = true);
 
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      await _navigateBasedOnUserState();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google sign-in error')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _navigateBasedOnUserState() async {
+    final status = await AuthHelper.checkUserState();
+
+    switch (status) {
+      case 'incomplete_form_doctor':
+        Navigator.pushReplacementNamed(context, '/doctor_form');
+        break;
+      case 'incomplete_form_customer':
+        Navigator.pushReplacementNamed(context, '/customer_form');
+        break;
+      case 'doctor_home':
+        Navigator.pushReplacementNamed(context, '/goToWebPage');
+        break;
+      case 'user_home':
+        Navigator.pushReplacementNamed(context, '/main');
+        break;
+      default:
+        Navigator.pushReplacementNamed(context, '/start');
+        break;
+    }
+  }
 
   void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+
 
   @override
   Widget build(BuildContext context) {

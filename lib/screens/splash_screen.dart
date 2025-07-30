@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:petut/screens/Signup&Login/auth_helper.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -17,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-
+    navigateUser();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -46,6 +47,30 @@ class _SplashScreenState extends State<SplashScreen>
         }
       }
     });
+  }
+
+   void navigateUser() async {
+    String status = await AuthHelper.checkUserState();
+
+    switch (status) {
+      case 'not_logged_in':
+        Navigator.pushReplacementNamed(context, '/start');
+        break;
+      case 'incomplete_form_doctor':
+        Navigator.pushReplacementNamed(context, '/doctor_form');
+        break;
+      case 'incomplete_form_customer':
+        Navigator.pushReplacementNamed(context, '/customer_form');
+        break;
+      case 'doctor_home':
+        Navigator.pushReplacementNamed(context, '/goToWebPage');
+        break;
+      case 'user_home':
+        Navigator.pushReplacementNamed(context, '/main');
+        break;
+      default:
+        Navigator.pushReplacementNamed(context, '/start');
+    }
   }
 
   @override
