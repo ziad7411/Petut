@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/Data/globelCartItem.dart';
 import 'package:petut/screens/main_screen.dart';
+import 'package:petut/screens/order_success_screen.dart';
 import 'package:petut/screens/payment_screen.dart';
 import 'package:petut/widgets/custom_button.dart';
 
@@ -123,7 +124,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       );
       globalCartItems.clear();
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainScreen()),
+        MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
         (route) => false,
       );
       return;

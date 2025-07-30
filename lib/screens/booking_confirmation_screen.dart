@@ -1,3 +1,4 @@
+import 'dart:convert'; // <-- إضافة مهمة لعرض الصورة
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,8 +6,8 @@ import 'package:intl/intl.dart';
 import 'package:petut/screens/booking_loading_screen.dart';
 import '../models/Clinic.dart';
 import '../widgets/custom_button.dart';
+import './Signup&Login/login_screen.dart';
 
-// Enum to manage payment method state
 enum PaymentMethodType { card, cash }
 
 class BookingConfirmationScreen extends StatefulWidget {
@@ -24,14 +25,28 @@ class BookingConfirmationScreen extends StatefulWidget {
   });
 
   @override
-  State<BookingConfirmationScreen> createState() => _BookingConfirmationScreenState();
+  State<BookingConfirmationScreen> createState() =>
+      _BookingConfirmationScreenState();
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
-  // Use the enum for state, default to card payment
   PaymentMethodType _selectedPaymentMethod = PaymentMethodType.card;
 
-  // Helper getter to display the correct text for the selected payment method
+  // ============= التعديل رقم 1: إضافة هذه الدالة المساعدة =============
+  ImageProvider? _getImageProvider(String? imageBase64) {
+    if (imageBase64 == null || imageBase64.isEmpty) {
+      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود صورة افتراضية
+    }
+    try {
+      final bytes = base64Decode(imageBase64);
+      return MemoryImage(bytes);
+    } catch (e) {
+      print("Error decoding image: $e");
+      return const AssetImage('assets/images/default_avatar.png');
+    }
+  }
+  // =================================================================
+
   String get _selectedPaymentMethodText {
     switch (_selectedPaymentMethod) {
       case PaymentMethodType.card:
@@ -41,7 +56,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
   }
 
-  // REFACTORED: This function now shows a bottom sheet with radio buttons for payment selection.
   void _changePaymentMethod() {
     showModalBottomSheet(
       context: context,
@@ -49,7 +63,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        // Use StatefulBuilder to manage the state within the modal sheet
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
             return Padding(
@@ -58,7 +71,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Select payment method", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text("Select payment method",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 12),
                   RadioListTile<PaymentMethodType>(
                     title: const Text("💳 Visa / Mastercard"),
@@ -66,11 +81,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     groupValue: _selectedPaymentMethod,
                     onChanged: (value) {
                       if (value != null) {
-                        // Update the state on the main screen
-                        setState(() {
-                          _selectedPaymentMethod = value;
-                        });
-                        // Close the modal
+                        setState(() => _selectedPaymentMethod = value);
                         Navigator.pop(context);
                       }
                     },
@@ -81,9 +92,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     groupValue: _selectedPaymentMethod,
                     onChanged: (value) {
                       if (value != null) {
-                        setState(() {
-                          _selectedPaymentMethod = value;
-                        });
+                        setState(() => _selectedPaymentMethod = value);
                         Navigator.pop(context);
                       }
                     },
@@ -98,37 +107,56 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   Future<void> _confirmBooking() async {
-    // Navigate to your custom loading screen
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const BookingLoadingScreen()),
     );
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception("You must be logged in to book.");
-      }
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
+      final userData = userDoc.data() ?? {};
+      final customerName = userData['fullName'] ?? 'Unknown Customer';
+      final customerPhone = userData['phone'] ?? '';
+      final customerEmail = user.email ?? '';
 
       final formattedDate = DateFormat('yyyy-MM-dd').format(widget.selectedDate);
 
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'doctorId': widget.clinic.id,
+      DocumentReference bookingRef =
+          await FirebaseFirestore.instance.collection('bookings').add({
         'userId': user.uid,
+        'username': customerName,
+        'clinicId': widget.clinic.id,
+        'doctorId': widget.clinic.id,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+        'customerEmail': customerEmail,
         'date': formattedDate,
         'time': widget.selectedTime,
         'clinicName': widget.clinic.name,
-        'doctorName': widget.clinic.name,
+        'doctorName': widget.clinic.doctorName,
         'price': widget.clinic.price,
-        // Save the selected payment method's display text
         'paymentMethod': _selectedPaymentMethodText,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'booked',
       });
 
+      await bookingRef.update({
+        'bookingId': bookingRef.id,
+      });
     } catch (e) {
       if (mounted) {
-        // Pop the loading screen to show the error on the confirmation screen
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Booking failed: ${e.toString()}")),
@@ -145,7 +173,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text('Confirm appointment', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Confirm appointment',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         foregroundColor: theme.appBarTheme.foregroundColor,
       ),
@@ -156,7 +185,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             Expanded(
               child: Text(
                 "${widget.clinic.price} EGP",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
             Expanded(
@@ -178,7 +208,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: NetworkImage(widget.clinic.image),
+                    // ============= التعديل رقم 2: استخدام الدالة الجديدة =============
+                    backgroundImage: _getImageProvider(widget.clinic.image),
                     onBackgroundImageError: (exception, stackTrace) {},
                   ),
                   const SizedBox(width: 16),
@@ -188,13 +219,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       children: [
                         Text(
                           widget.clinic.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        Text(widget.clinic.location),
+                        // ============= التعديل رقم 3: استخدام العنوان النصي =============
+                        Text(widget.clinic.address),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.star, color: theme.colorScheme.primary, size: 18),
+                            Icon(Icons.star,
+                                color: theme.colorScheme.primary, size: 18),
                             const SizedBox(width: 4),
                             Text("${widget.clinic.rating}/5"),
                           ],
@@ -231,26 +265,28 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text("Billing details", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Billing details",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               _infoRow("Consultation fee", "${widget.clinic.price} EGP"),
               _infoRow("Service fee & tax", "FREE"),
-              _infoRow("Total payable", "${widget.clinic.price} EGP", isBold: true),
+              _infoRow("Total payable", "${widget.clinic.price} EGP",
+                  isBold: true),
               const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text("Payment method", style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text("Payment method",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   TextButton(
-                      onPressed: _changePaymentMethod,
-                      child: const Text("CHANGE"),
-                      style: TextButton.styleFrom(
-                        foregroundColor: theme.colorScheme.primary,
-                      ),
+                    onPressed: _changePaymentMethod,
+                    child: const Text("CHANGE"),
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
+                    ),
                   ),
                 ],
               ),
-              // Display the text of the selected payment method
               Text(_selectedPaymentMethodText),
               const SizedBox(height: 20),
             ],
@@ -267,7 +303,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
-          Text(value, style: TextStyle(fontWeight: isBold ? FontWeight.bold : FontWeight.normal))
+          Text(value,
+              style: TextStyle(
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal))
         ],
       ),
     );
