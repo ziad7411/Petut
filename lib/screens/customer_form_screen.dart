@@ -565,7 +565,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
 
               // Save Button
               CustomButton(
-                text: _isLoading ? 'Saving...' : 'Complete Profile',
+                text: _isLoading ? 'Saving..' : 'Complete Profile',
                 onPressed: _isLoading ? null : _saveCustomerData,
                 isPrimary: true,
                 width: double.infinity,
