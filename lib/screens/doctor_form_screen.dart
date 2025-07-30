@@ -257,21 +257,14 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       // Store all doctor data in users collection
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
         'role': 'Doctor',
-
-        'name': _doctorNameController.text.trim(),
+        'fullName': _doctorNameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        //Gender
-        //email
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'pending',
+        'uid': user.uid,
+        'gender': _selectedGender,
       }, SetOptions(merge: true));
-      await FirebaseFirestore.instance.collection('doctors').doc(user.uid).set({
-        'role': 'Doctor',
-        'name': _doctorNameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        //Gender
-        //email
-      }, SetOptions(merge: true));
+     
       await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
@@ -293,7 +286,6 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
           'doctorid': user.uid,
            'clinicId': user.uid,
           'workingHours': _workingHoursController.text.trim(),
-          //object for working hours
           'day': _selectedDays,
           'openTime':
               _startTime != null

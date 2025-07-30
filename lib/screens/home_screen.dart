@@ -23,7 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedCategory = 'All';
   Set<String> favoriteIds = {};
 
-  final List<String> categories = ["All", "Cats", "Dogs", "Birds"];
+final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
+
 
   @override
   void initState() {
@@ -52,13 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Product> filterByCategory(List<Product> products, String category) {
     if (category == "All") return products;
-    return products.where((p) {
-      final lowerName = p.name.toLowerCase();
-      if (category == "Cats") return lowerName.contains("cat");
-      if (category == "Dogs") return lowerName.contains("dog");
-      if (category == "Birds") return lowerName.contains("bird");
-      return false;
-    }).toList();
+    return products.where((p) => p.category == category).toList();
   }
 
   CardData convertProductToCard(Product product) {
@@ -67,12 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
       title: product.name,
       description: product.details,
       image: product.image,
-      price: product.price.toInt(),
+      price: product.price,
       rate: product.rate,
-      weight:
-          double.tryParse(product.weight.replaceAll("g", "")) != null
-              ? double.parse(product.weight.replaceAll("g", "")) / 1000
-              : 0,
+      weight: product.weight.replaceAll("g", ""),
+
       isFavorite: favoriteIds.contains(product.id.toString()),
     );
   }
@@ -90,15 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
         title: Row(
           children: [
             Builder(
-              builder: (context) => IconButton(
-                icon: Icon(
-                  Icons.menu,
-                  color: theme.iconTheme.color,
-                ),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
+              builder:
+                  (context) => IconButton(
+                    icon: Icon(Icons.menu, color: theme.iconTheme.color),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
             ),
             const SizedBox(width: 8),
             Text(
@@ -146,40 +137,42 @@ class _HomeScreenState extends State<HomeScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(
-              children: categories.map((category) {
-                final isSelected = category == selectedCategory;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surface,
-                      foregroundColor: isSelected
-                          ? theme.colorScheme.onPrimary
-                          : theme.textTheme.bodyLarge!.color,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+              children:
+                  categories.map((category) {
+                    final isSelected = category == selectedCategory;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isSelected
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.surface,
+                          foregroundColor:
+                              isSelected
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.textTheme.bodyLarge!.color,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            selectedCategory = category;
+                          });
+                        },
+
+                        child: Text(
+                            category[0].toUpperCase() + category.substring(1),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                    },
-                    child: Text(
-                      category,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+                    );
+                  }).toList(),
             ),
           ),
           Expanded(
@@ -206,9 +199,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   builder: (context, constraints) {
                     final screenWidth = constraints.maxWidth;
                     const itemWidth = 180;
-                    final crossAxisCount = (screenWidth / itemWidth).floor().clamp(1, 2);
+                    final crossAxisCount = (screenWidth / itemWidth)
+                        .floor()
+                        .clamp(1, 2);
 
                     return GridView.builder(
+                      key: ValueKey(selectedCategory),
                       padding: const EdgeInsets.all(12),
                       itemCount: filtered.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -231,8 +227,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    ProductDetailsScreen(data: cardData),
+                                builder:
+                                    (context) =>
+                                        ProductDetailsScreen(data: cardData),
                               ),
                             );
                           },
@@ -310,7 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               child: Text(
                 '$badgeCount',
-                style: TextStyle(color: theme.colorScheme.onError, fontSize: 10),
+                style: TextStyle(
+                  color: theme.colorScheme.onError,
+                  fontSize: 10,
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
