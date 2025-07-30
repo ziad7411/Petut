@@ -131,8 +131,8 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
       final clinic = Clinic.fromCombinedData(combinedData);
       
       // حساب المسافة باستخدام lat/lng المحفوظة في البيانات
-      final clinicLat = (combinedData['lat'] ?? 30.0444).toDouble();
-      final clinicLng = (combinedData['lng'] ?? 31.2357).toDouble();
+      final clinicLat = (combinedData['latitude'] ?? 30.0444).toDouble();
+      final clinicLng = (combinedData['longitude'] ?? 31.2357).toDouble();
       
       final distance = userLocation != null
           ? Geolocator.distanceBetween(
