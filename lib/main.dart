@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:petut/firebase_options.dart';
+import 'package:petut/services/notification_service.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
@@ -30,7 +31,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  
+  // Initialize chat notifications safely
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    print('Failed to initialize notifications: $e');
+  }
 
   OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
   OneSignal.initialize("0f5304b0-aea7-4f4a-8eb3-0e715915a563");
