@@ -28,39 +28,39 @@ class AuthHelper {
     }
 
     // لو دكتور → تأكد من وجود بيانات تفصيلية كافية
-    if (role == 'doctor') {
-      final detailsSnap = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('doctorsDetails')
-          .limit(1)
-          .get();
+  if (role == 'doctor') {
+  final docSnapshot = await _firestore
+      .collection('users')
+      .doc(user.uid)
+      .get();
 
-      if (detailsSnap.docs.isEmpty) {
-        return 'incomplete_form_doctor';
-      }
+  if (!docSnapshot.exists) {
+    return 'incomplete_form_doctor';
+  }
 
-      final details = detailsSnap.docs.first.data();
-      final experience = details['experience'];
-      final description = details['description'];
-      final socialMedia = details['socialMedia'];
-      final profileImage = details['profileImage'];
-      final cardFrontImage = details['cardFrontImage'];
-      final cardBackImage = details['cardBackImage'];
-      final idImage = details['idImage'];
+  final data = docSnapshot.data();
+  final doctorDetails = data?['doctorDetails'] as Map<String, dynamic>?;
 
-      if (experience == null || experience.isEmpty ||
-          description == null || description.isEmpty ||
-          socialMedia == null ||
-          profileImage == null || profileImage.isEmpty ||
-          cardFrontImage == null || cardFrontImage.isEmpty ||
-          cardBackImage == null || cardBackImage.isEmpty ||
-          idImage == null || idImage.isEmpty) {
-        return 'incomplete_form_doctor';
-      }
+  final experience = data?['experience'] ?? doctorDetails?['experience'];
+  final description = doctorDetails?['description'];
+  final profileImage = data?['profileImage'];
+  final cardFrontImage = doctorDetails?['cardFrontImage'];
+  final cardBackImage = doctorDetails?['cardBackImage'];
+  final idImage = doctorDetails?['idImage'];
 
-      return 'doctor_home';
-    }
+  if (experience == null || experience.isEmpty ||
+      description == null || description.isEmpty ||
+      profileImage == null || profileImage.isEmpty ||
+      cardFrontImage == null || cardFrontImage.isEmpty ||
+      cardBackImage == null || cardBackImage.isEmpty ||
+      idImage == null || idImage.isEmpty) {
+    return 'incomplete_form_doctor';
+  }
+
+  return 'doctor_home';
+}
+
+
 
     // لو مش دكتور → روح لصفحة المستخدم
     return 'user_home';

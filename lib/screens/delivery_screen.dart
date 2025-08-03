@@ -116,7 +116,10 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           subtotal: widget.subtotal,
           deliveryFee: deliveryTax,
           total: total,
-          deliveryTime: selectedDateTime!
+          deliveryTime: selectedDateTime!,
+          postalCode: _postalCodeController.text.trim(),
+          deliveryMethod: selectedMethod!,
+
         ),
       ),
     );

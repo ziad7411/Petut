@@ -19,7 +19,7 @@ class CardData {
     required this.price,
     this.isFavorite = false,
     this.quantity = 1,
-    this.category = "",
+    required this.category,
     this.weight,
   });
 
