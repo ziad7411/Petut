@@ -10,6 +10,9 @@ import 'package:petut/screens/cart_screen.dart';
 import 'package:petut/screens/product_details_screen.dart';
 import 'package:petut/screens/search_screen.dart';
 import 'package:petut/screens/side_draw.dart';
+import 'package:petut/screens/chats_list_screen.dart';
+import 'package:petut/services/simple_chat_service.dart';
+import '../models/Chat.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -114,6 +117,50 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
               );
             },
           ),
+          const SizedBox(width: 8),
+          FirebaseAuth.instance.currentUser != null
+              ? StreamBuilder<List<Chat>>(
+                  stream: SimpleChatService.getUserChats(),
+                  builder: (context, snapshot) {
+                    int unreadCount = 0;
+                    if (snapshot.hasData) {
+                      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                      if (currentUserId != null) {
+                        unreadCount = snapshot.data!.fold(0, (sum, chat) => 
+                          sum + (chat.unreadCount[currentUserId] ?? 0));
+                      }
+                    }
+                    return iconContainer(
+                      Icons.chat_bubble_outline,
+                      theme.colorScheme.primary,
+                      badgeCount: unreadCount,
+                      onTap: () {
+                        if (FirebaseAuth.instance.currentUser != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const ChatsListScreen()),
+                          );
+                        } else {
+                          Navigator.pushNamed(context, '/login');
+                        }
+                      },
+                    );
+                  },
+                )
+              : iconContainer(
+                  Icons.chat_bubble_outline,
+                  theme.colorScheme.primary,
+                  onTap: () {
+                    if (FirebaseAuth.instance.currentUser != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChatsListScreen()),
+                      );
+                    } else {
+                      Navigator.pushNamed(context, '/login');
+                    }
+                  },
+                ),
           const SizedBox(width: 8),
           iconContainer(
             Icons.shopping_cart_outlined,
