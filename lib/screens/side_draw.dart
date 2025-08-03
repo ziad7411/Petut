@@ -36,7 +36,7 @@ class _SideDrawState extends State<SideDraw> {
       if (mounted && doc.exists) {
         final data = doc.data();
         setState(() {
-          name = data?['name'] ?? 'Guest';
+          name = data?['fullName'] ?? 'Guest';
           imageData = data?['profileImage'];
         });
       }

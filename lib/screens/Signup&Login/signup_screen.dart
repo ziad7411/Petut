@@ -55,9 +55,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             'uid': credential.user!.uid,
           });
 
-      if (selectedRole == 'Customer') {
+      if (selectedRole == 'customer') {
         Navigator.pushReplacementNamed(context, '/customer_form');
-      } else if (selectedRole == 'Doctor') {
+      } else if (selectedRole == 'doctor') {
         Navigator.pushReplacementNamed(context, '/doctor_form');
       }
     } catch (e) {
@@ -97,7 +97,7 @@ Future<void> _signInWithGoogle() async {
 
       if (role == 'doctor') {
         Navigator.pushReplacementNamed(context, '/goToWebPage');
-      } else if (role == 'Customer') {
+      } else if (role == 'customer') {
         Navigator.pushReplacementNamed(context, '/main');
       }else {
         // دور غير معروف، رجعه يختار
@@ -241,11 +241,11 @@ Future<void> _signInWithGoogle() async {
                             ),
                             items: const [
                               DropdownMenuItem(
-                                value: 'Customer',
+                                value: 'customer',
                                 child: Text('Customer'),
                               ),
                               DropdownMenuItem(
-                                value: 'Doctor',
+                                value: 'doctor',
                                 child: Text('Doctor'),
                               ),
                             ],

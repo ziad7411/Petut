@@ -68,6 +68,7 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
       price: product.price,
       rate: product.rate,
       weight: product.weight.replaceAll("g", ""),
+      category: product.category,
 
       isFavorite: favoriteIds.contains(product.id.toString()),
     );
@@ -298,6 +299,7 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
                                   price: cardData.price,
                                   isFavorite: cardData.isFavorite,
                                   quantity: 1,
+                                  category: cardData.category,
                                 ),
                               );
                             }

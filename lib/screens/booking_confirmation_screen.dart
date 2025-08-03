@@ -136,7 +136,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       DocumentReference bookingRef =
           await FirebaseFirestore.instance.collection('bookings').add({
         'userId': user.uid,
-        'username': customerName,
         'clinicId': widget.clinic.id,
         'doctorId': widget.clinic.id,
         'customerName': customerName,

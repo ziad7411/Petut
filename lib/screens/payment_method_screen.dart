@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/Data/globelCartItem.dart';
+import 'package:petut/screens/delivery_screen.dart';
 import 'package:petut/screens/main_screen.dart';
 import 'package:petut/screens/order_success_screen.dart';
 import 'package:petut/screens/payment_screen.dart';
@@ -15,6 +16,8 @@ class PaymentMethodScreen extends StatefulWidget {
   final double deliveryFee;
   final double total;
   final DateTime deliveryTime;
+  final String postalCode;
+  final DeliveryMethod deliveryMethod;
 
   const PaymentMethodScreen({
     super.key,
@@ -25,6 +28,8 @@ class PaymentMethodScreen extends StatefulWidget {
     required this.deliveryFee,
     required this.total,
     required this.deliveryTime,
+    required  this.postalCode, 
+    required  this.deliveryMethod
   });
 
   @override
@@ -75,18 +80,19 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         'phone': widget.phone,
         'email': user.email ?? '',
         'address': widget.address,
-        'city': 'Alex', // ← عدل بناءً على اختيار المستخدم
-        'postalCode': '22626', // ← عدل إذا متاح
-        'deliveryMethod': 'standard', // ← اجعلها ديناميكية إذا في اختيارات
-        'deliveryTime':
-            'anytime', // ← أو استخدم widget.deliveryTime.toIso8601String()
+        'city': widget.address.split(' ').first,
+        'postalCode':widget.postalCode , 
+        'deliveryMethod': widget.deliveryMethod, 
+        'deliveryTime': 
+            widget.deliveryTime.toIso8601String(),
       },
       'paymentInfo': {
         'paymentMethod': paymentMethod,
-        'cardHolder': '', // ← يمكنك ملؤه لاحقًا إذا مستخدم دفع بالبطاقة
+        'cardHolder': '',
         'status': 'pending',
       },
       'createdAt': FieldValue.serverTimestamp(),
+       'status': 'pending',
     };
 
     WriteBatch batch = firestore.batch();

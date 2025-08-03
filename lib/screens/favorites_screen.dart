@@ -31,6 +31,7 @@ class FavoritesScreen extends StatelessWidget {
         weight: data['weight'],
         rate: 5,
         isFavorite: true,
+        category: data['category'],
       );
     }).toList();
   }
@@ -110,6 +111,7 @@ class FavoritesScreen extends StatelessWidget {
                         rate: selectedProduct.rate,
                         isFavorite: selectedProduct.isFavorite,
                         quantity: 1, // 👈 مهم
+                        category: selectedProduct.category,
                       ),
                     );
                   }
