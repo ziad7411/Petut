@@ -26,6 +26,7 @@ Future<void> saveOrderToFirestore({
     'deliveryFee': deliveryFee,
     'total': total,
     'status': 'pending',
+   
   };
 
   // ✅ تخزين الأوردر في: users/{uid}/order

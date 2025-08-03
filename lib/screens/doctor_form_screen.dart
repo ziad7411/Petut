@@ -64,6 +64,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   @override
   void initState() {
     super.initState();
+    loadDoctorData();
     // Initialize working schedule as array of objects
     for (String day in _daysOfWeek) {
       _workingSchedule.add({
@@ -74,6 +75,79 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       });
     }
   }
+  
+
+//get doctor data if not completed before 
+
+Future<void> loadDoctorData() async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return;
+
+  final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  final userData = userDoc.data();
+
+  final doctorDetails = userData?['doctorDetails'] as Map<String, dynamic>?;
+
+  final clinicQuery = await FirebaseFirestore.instance
+      .collection('clinics')
+      .where('doctorId', isEqualTo: uid)
+      .limit(1)
+      .get();
+  final clinicData = clinicQuery.docs.isNotEmpty ? clinicQuery.docs.first.data() : null;
+
+  setState(() {
+    _doctorNameController.text = userData?['fullName'] ?? '';
+    _phoneController.text = userData?['phone'] ?? '';
+    _experienceController.text = userData?['experience'] ?? '';
+    _selectedGender = userData?['gender'];
+
+    _descriptionController.text = doctorDetails?['description'] ?? '';
+    _facebookController.text = doctorDetails?['socialMedia']?['facebook'] ?? '';
+    _instagramController.text = doctorDetails?['socialMedia']?['instagram'] ?? '';
+    _twitterController.text = doctorDetails?['socialMedia']?['twitter'] ?? '';
+    _linkedinController.text = doctorDetails?['socialMedia']?['linkedin'] ?? '';
+     _cardFrontImage = doctorDetails?['cardFrontImage'];
+      _cardBackImage = doctorDetails?['cardBackImage'];
+      _idImage = doctorDetails?['idImage'];
+    
+    if (clinicData != null) {
+      _clinicNameController.text = clinicData['name'] ?? '';
+      _clinicPhoneController.text = clinicData['phone'] ?? '';
+      _clinicAddressController.text = clinicData['address'] ?? '';
+      _priceController.text = clinicData['price']?.toString() ?? '';
+
+      governorate = clinicData['governorate'];
+      city = clinicData['city'];
+      street = clinicData['street'];
+      latitude = clinicData['latitude'];
+      longitude = clinicData['longitude'];
+      if (clinicData['workingHours'] != null) {
+        final List workingHours = clinicData['workingHours'];
+        _workingSchedule.clear();
+        _workingSchedule.addAll(workingHours.map<Map<String, dynamic>>((item) {
+          final openParts = (item['openTime'] as String).split(':');
+          final closeParts = (item['closeTime'] as String).split(':');
+
+          return {
+            'day': item['day'],
+            'isSelected': true,
+            'startTime': TimeOfDay(
+              hour: int.parse(openParts[0]),
+              minute: int.parse(openParts[1]),
+            ),
+            'endTime': TimeOfDay(
+              hour: int.parse(closeParts[0]),
+              minute: int.parse(closeParts[1]),
+            ),
+          };
+        }).toList());
+      }
+    }
+  });
+}
+
+
+
 
   bool _hasClinic = false;
 
@@ -243,13 +317,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'email': user.email,
         'phone': _phoneController.text.trim(),
         'gender': _selectedGender,
-        'role': 'Doctor',
+        'role': 'doctor',
         'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
         'profileImage': profileBase64,
         'experience': _experienceController.text.trim(),
         'rating': 0.0,
-        'specialization': 'Veterinarian',
       };
       await FirebaseFirestore.instance
           .collection('users')
@@ -306,19 +379,16 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       if (_instagramController.text.trim().isNotEmpty)
         socialMedia['instagram'] = _instagramController.text.trim();
 
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection("doctorsDetails")
-          .doc("details")
-          .set({
-            'experience': _experienceController.text.trim(),
-            'description': _descriptionController.text.trim(),
-            'socialMedia': socialMedia,
-            'cardFrontImage': cardFrontBase64,
-            'cardBackImage': cardBackBase64,
-            'idImage': idBase64,
-          }, SetOptions(merge: true));
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'doctorDetails': {
+          'experience': _experienceController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'socialMedia': socialMedia,
+          'cardFrontImage': cardFrontBase64,
+          'cardBackImage': cardBackBase64,
+          'idImage': idBase64,
+        },
+      }, SetOptions(merge: true));
 
       Navigator.pushReplacement(
         context,
@@ -628,8 +698,8 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                           street = result['street'];
                           latitude = result['lat']; // ← هنا بنخزن الـ lat
                           longitude = result['lng']; // ← وهنا الـ lng
-                          _clinicAddressController.text = "$governorate - $city - $street";
-
+                          _clinicAddressController.text =
+                              "$governorate - $city - $street";
                         });
                       }
                     },

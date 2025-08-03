@@ -33,6 +33,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           price: widget.data.price,
           isFavorite: widget.data.isFavorite,
           quantity: quantity,
+          category: widget.data.category,
         ),
       );
     }

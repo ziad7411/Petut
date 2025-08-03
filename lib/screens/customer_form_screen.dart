@@ -29,6 +29,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   final _petGenderController = TextEditingController();
   final _petAgeController = TextEditingController();
   final _petWeightController = TextEditingController();
+  String? profileImageBase64;
 
   // State
   File? _selectedProfileImage, _selectedPetImage;
@@ -221,6 +222,21 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     }
   }
 
+Future<void> loaduser() async {
+
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (mounted && doc.exists) {
+      final data = doc.data();
+      setState(() {
+        _nameController.text = data?['fullName'] ?? 'Guest';
+        profileImageBase64 = data?['profileImage'];
+         _phoneController.text = data?['phone'] ?? '';
+      });
+    }
+}
   Future<String?> _convertImageToBase64(File image) async {
     try {
       final bytes = await image.readAsBytes();
@@ -259,7 +275,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
       if (user == null) return;
 
       // Convert profile image or use avatar
-      String? profileImageBase64;
+      
       if (_selectedAvatar != null) {
         profileImageBase64 = _selectedAvatar; // Store avatar path
       } else if (_selectedProfileImage != null) {
@@ -273,7 +289,7 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
         'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'profileImage': profileImageBase64,
-        'role': 'Customer',
+        'role': 'customer',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
