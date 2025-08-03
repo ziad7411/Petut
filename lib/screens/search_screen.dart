@@ -60,6 +60,8 @@ class _SearchScreenState extends State<SearchScreen> {
       rate: product.rate,
       weight:
           product.weight.replaceAll("g", "")
+          ,
+          category: product.category,
     );
   }
 
@@ -154,6 +156,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               rate: cardData.rate,
                               isFavorite: cardData.isFavorite,
                               quantity: 1,
+                              category: cardData.category,
                             ),
                           );
                         }

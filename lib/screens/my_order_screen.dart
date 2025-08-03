@@ -211,6 +211,7 @@ class MyOrdersScreen extends StatelessWidget {
                                 globalCartItems.add(
                                   CardData(
                                     id: product['id'],
+                                    category: product['category'],
                                     title: product['productName'],
                                     description: product['description'] ?? '',
                                     image: product['imageURL'],
