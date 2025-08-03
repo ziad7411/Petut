@@ -6,6 +6,7 @@ import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/utils/avatar_helper.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
+import 'community_screen.dart';
 
 class SideDraw extends StatefulWidget {
   const SideDraw({super.key});
@@ -172,6 +173,18 @@ class _SideDrawState extends State<SideDraw> {
                       title: const Text("Favorites"),
                       onTap: () {
                         Navigator.pushNamed(context, '/favorites');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.group, color: theme.colorScheme.primary),
+                      title: const Text("Community"),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CommunityScreen()),
+                        );
                       },
                     ),
                     const SizedBox(height: 12),
