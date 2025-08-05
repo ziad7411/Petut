@@ -18,6 +18,9 @@ class PaymentMethodScreen extends StatefulWidget {
   final DateTime deliveryTime;
   final String postalCode;
   final DeliveryMethod deliveryMethod;
+  final String governorate;
+  final String city;
+  final String street;
 
   const PaymentMethodScreen({
     super.key,
@@ -28,8 +31,11 @@ class PaymentMethodScreen extends StatefulWidget {
     required this.deliveryFee,
     required this.total,
     required this.deliveryTime,
-    required  this.postalCode, 
-    required  this.deliveryMethod
+    required this.postalCode,
+    required this.deliveryMethod,
+    required this.governorate,
+    required this.city,
+    required this.street,
   });
 
   @override
@@ -79,20 +85,24 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         'fullName': widget.name,
         'phone': widget.phone,
         'email': user.email ?? '',
-        'address': widget.address,
-        'city': widget.address.split(' ').first,
-        'postalCode':widget.postalCode , 
-        'deliveryMethod': widget.deliveryMethod, 
-        'deliveryTime': 
-            widget.deliveryTime.toIso8601String(),
+        'address':
+            "${widget.governorate}, ${widget.city}, ${widget.street} - ${widget.address}",
+        'governorate': widget.governorate,
+        'city': widget.city,
+        'street': widget.street,
+        'extraAddress': widget.address,
+        'postalCode': widget.postalCode,
+        'deliveryMethod': widget.deliveryMethod.toString(),
+        'deliveryTime': widget.deliveryTime.toIso8601String(),
       },
+
       'paymentInfo': {
         'paymentMethod': paymentMethod,
         'cardHolder': '',
         'status': 'pending',
       },
       'createdAt': FieldValue.serverTimestamp(),
-       'status': 'pending',
+      'status': 'pending',
     };
 
     WriteBatch batch = firestore.batch();

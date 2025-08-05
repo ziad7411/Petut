@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // 🌞 Light Theme Colors
-  static const Color lightPrimary = Color(0xFFFFC107);
+  static const Color lightPrimary = Color(0xFFff985e);
   static const Color lightSecondary = Color(0xFF2196F3);
   static const Color lightBackground = Color(0xFFFFFFFF);
   static const Color lightSurface = Color(0xFFF5F5F5);
@@ -11,9 +11,9 @@ class AppColors {
   static const Color lightAccent = Color(0xFFFF7043);
 
   // 🌚 Dark Theme Colors
-  static const Color darkPrimary = Color(0xFFFFB300);
+  static const Color darkPrimary = Color(0xFFff985e);
   static const Color darkSecondary = Color(0xFF1565C0);
-  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkBackground = Color(0xFF1d202d);
   static const Color darkSurface = Color(0xFF1E1E1E);
   static const Color darkTextPrimary = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFBDBDBD);

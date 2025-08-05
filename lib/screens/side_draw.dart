@@ -150,6 +150,18 @@ class _SideDrawState extends State<SideDraw> {
                         },
                       ),
                     ),
+                    const SizedBox(height: 16),
+                      ListTile(
+                  leading: const Icon(Icons.dark_mode),
+                  title: const Text('Dark Mode'),
+                  trailing: Switch(
+                    value: themeProvider.isDark,
+                    onChanged: (val) {
+                      themeProvider.toggleTheme();
+                    },
+                    activeColor: theme.colorScheme.primary,
+                  ),
+                ),
                   ] else ...[
                     const SizedBox(height: 16),
                     ListTile(
@@ -195,6 +207,18 @@ class _SideDrawState extends State<SideDraw> {
                         Navigator.pushNamed(context, '/settings');
                       },
                     ),
+                    const SizedBox(height: 12),
+                      ListTile(
+                  leading: const Icon(Icons.dark_mode),
+                  title: const Text('Dark Mode'),
+                  trailing: Switch(
+                    value: themeProvider.isDark,
+                    onChanged: (val) {
+                      themeProvider.toggleTheme();
+                    },
+                    activeColor: theme.colorScheme.primary,
+                  ),
+                ),
                     const SizedBox(height: 12),
                     ListTile(
                       leading: Icon(Icons.logout, color: theme.colorScheme.error),
