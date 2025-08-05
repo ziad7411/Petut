@@ -38,9 +38,10 @@ class _CardsState extends State<Cards> {
       onTap: widget.onTap,
       child: IntrinsicHeight(
         child: Card(
-          elevation: 3,
+          elevation: 4,
           shadowColor: theme.shadowColor,
           color: theme.cardColor,
+
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(color: theme.dividerColor, width: 1.2),
@@ -62,79 +63,82 @@ class _CardsState extends State<Cards> {
                     const SizedBox(width: 4),
                     Text("${_card.rate}", style: const TextStyle(fontSize: 12)),
                     const Spacer(),
-                    IconButton(
-                      icon: Icon(
-                        _card.isFavorite
-                            ? Icons.favorite
-                            : Icons.favorite_border,
-                        color:
-                            _card.isFavorite
-                                ? Colors.red
-                                : theme.iconTheme.color,
-                      ),
-                      onPressed: () async {
-                        final user = FirebaseAuth.instance.currentUser;
+                      IconButton(
+                        icon: Icon(
+                          _card.isFavorite
+                              ? Icons.favorite
+                              : Icons.favorite_border,
+                          color:
+                              _card.isFavorite
+                                  ? Colors.red
+                                  : theme.iconTheme.color,
+                        ),
+                        onPressed: () async {
+                          final user = FirebaseAuth.instance.currentUser;
 
-                        if (user == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "You must login to add to favorites",
+                          if (user == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  "You must login to add to favorites",
+                                ),
+                                backgroundColor: Colors.red,
                               ),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          Navigator.pushNamed(context, '/login');
-                          return;
-                        }
+                            );
+                            Navigator.pushNamed(context, '/login');
+                            return;
+                          }
 
-                        final userId = user.uid;
-                        final favRef = FirebaseFirestore.instance
-                            .collection('users')
-                            .doc(userId)
-                            .collection('favorites')
-                            .doc(_card.id);
+                          final userId = user.uid;
+                          final favRef = FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(userId)
+                              .collection('favorites')
+                              .doc(_card.id);
 
-                        final newState = !_card.isFavorite;
+                          final newState = !_card.isFavorite;
 
-                        if (newState) {
-                          await favRef.set({
-                            'id': _card.id,
-                            'title': _card.title,
-                            'image': _card.image,
-                            'price': _card.price,
-                            'description': _card.description,
-                            'weight': _card.weight,
+                          if (newState) {
+                            await favRef.set({
+                              'id': _card.id,
+                              'title': _card.title,
+                              'image': _card.image,
+                              'price': _card.price,
+                              'description': _card.description,
+                              'weight': _card.weight,
+                              'category': _card.category,
+                              'rate': _card.rate,
+                              
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Added to favorites successfully"),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          } else {
+                            await favRef.delete();
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("Removed from favorites"),
+                                backgroundColor: Colors.orange,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+
+                          setState(() {
+                            _card.isFavorite = newState;
                           });
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Added to favorites successfully"),
-                              backgroundColor: Colors.green,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        } else {
-                          await favRef.delete();
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text("Removed from favorites"),
-                              backgroundColor: Colors.orange,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                        }
-
-                        setState(() {
-                          _card.isFavorite = newState;
-                        });
-
-                        widget.favFunction();
-                      },
-                    ),
-                  ],
-                ),
+                          widget.favFunction();
+                        },
+                      ),
+                    ],
+                  ),
 
                 const SizedBox(height: 6),
 

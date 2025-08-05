@@ -58,7 +58,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
       context: context,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 30)),
-      initialDate: selectedDateTime ?? DateTime.now().add(const Duration(days: 1)),
+      initialDate:
+          selectedDateTime ?? DateTime.now().add(const Duration(days: 1)),
     );
 
     if (pickedDate == null) return;
@@ -89,6 +90,13 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
       return;
     }
 
+    if (governorate == null || city == null || street == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select full address details')),
+      );
+      return;
+    }
+
     if (selectedMethod == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a delivery method')),
@@ -104,23 +112,26 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     }
 
     final fullAddress =
-        "$governorate, $city, $street - ${_addressController.text.trim()}";
+        "$governorate $city $street ${_addressController.text.trim()}";
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PaymentMethodScreen(
-          name: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-          address: fullAddress,
-          subtotal: widget.subtotal,
-          deliveryFee: deliveryTax,
-          total: total,
-          deliveryTime: selectedDateTime!,
-          postalCode: _postalCodeController.text.trim(),
-          deliveryMethod: selectedMethod!,
-
-        ),
+        builder:
+            (_) => PaymentMethodScreen(
+              name: _nameController.text.trim(),
+              phone: _phoneController.text.trim(),
+              address: fullAddress,
+              governorate: governorate!,
+              city: city!,
+              street: street!,
+              subtotal: widget.subtotal,
+              deliveryFee: deliveryTax,
+              total: total,
+              deliveryTime: selectedDateTime!,
+              postalCode: _postalCodeController.text.trim(),
+              deliveryMethod: selectedMethod!,
+            ),
       ),
     );
   }
@@ -146,29 +157,34 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              Text("Delivery Information",
-                  style: theme.textTheme.titleMedium),
+              Text("Delivery Information", style: theme.textTheme.titleMedium),
               const SizedBox(height: 16),
 
               CustomTextField(
                 hintText: 'Full Name',
                 controller: _nameController,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Enter your name' : null,
+                validator:
+                    (v) =>
+                        v == null || v.trim().isEmpty
+                            ? 'Enter your name'
+                            : null,
               ),
               CustomTextField(
                 hintText: 'Phone Number',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                validator: (v) =>
-                    v == null || v.length < 8 ? 'Enter valid phone number' : null,
+                validator:
+                    (v) =>
+                        v == null || v.length < 8
+                            ? 'Enter valid phone number'
+                            : null,
               ),
               CustomTextField(
                 hintText: 'Postal Code',
                 controller: _postalCodeController,
                 keyboardType: TextInputType.number,
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter postal code' : null,
+                validator:
+                    (v) => v == null || v.isEmpty ? 'Enter postal code' : null,
               ),
               const SizedBox(height: 10),
 
@@ -182,27 +198,45 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                     ),
                   );
 
-                  if (result != null && result is Map<String, String>) {
-                    setState(() {
-                      governorate = result['governorate'];
-                      city = result['city'];
-                      street = result['street'];
-                    });
+                  if (result != null && result is Map<String, dynamic>) {
+                    if (result['governorate'] != null &&
+                        result['city'] != null &&
+                        result['street'] != null) {
+                      setState(() {
+                        governorate = result['governorate'];
+                        city = result['city'];
+                        street = result['street'];
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Address info incomplete'),
+                        ),
+                      );
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Address not selected')),
+                    );
                   }
                 },
+
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border.all(color: theme.dividerColor),
                     borderRadius: BorderRadius.circular(12),
-                    color: theme.colorScheme.surface
+                    color: theme.colorScheme.surface,
                   ),
                   child: Text(
                     governorate != null
                         ? "$governorate - $city - $street"
                         : "Select Address from Map",
                     style: TextStyle(
-                      color: governorate != null ? theme.textTheme.bodyLarge?.color : theme.hintColor,
+                      color:
+                          governorate != null
+                              ? theme.textTheme.bodyLarge?.color
+                              : theme.hintColor,
                     ),
                   ),
                 ),
@@ -212,18 +246,21 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               CustomTextField(
                 hintText: 'Street Details / House No.',
                 controller: _addressController,
-                validator: (v) => v == null || v.isEmpty
-                    ? 'Enter additional street info'
-                    : null,
+                validator:
+                    (v) =>
+                        v == null || v.isEmpty
+                            ? 'Enter additional street info'
+                            : null,
               ),
 
               const SizedBox(height: 20),
 
               Text("Delivery Method", style: theme.textTheme.titleMedium),
               ...DeliveryMethod.values.map((method) {
-                final label = method == DeliveryMethod.standard
-                    ? "Standard (5–7 days) - Free"
-                    : method == DeliveryMethod.express
+                final label =
+                    method == DeliveryMethod.standard
+                        ? "Standard (5–7 days) - Free"
+                        : method == DeliveryMethod.express
                         ? "Express (1–2 days) - 50 EGP"
                         : "Postal Office - 20 EGP";
 
@@ -242,13 +279,18 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
 
               const SizedBox(height: 20),
 
-              Text("Preferred Delivery Time", style: theme.textTheme.titleMedium),
+              Text(
+                "Preferred Delivery Time",
+                style: theme.textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               InkWell(
                 onTap: _pickDateTime,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 16),
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
                     border: Border.all(color: theme.dividerColor),
                     borderRadius: BorderRadius.circular(12),
@@ -259,11 +301,15 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                     children: [
                       Text(
                         selectedDateTime != null
-                            ? DateFormat('yyyy-MM-dd hh:mm a')
-                                .format(selectedDateTime!)
+                            ? DateFormat(
+                              'yyyy-MM-dd hh:mm a',
+                            ).format(selectedDateTime!)
                             : "Select delivery date & time",
                         style: TextStyle(
-                           color: selectedDateTime != null ? theme.textTheme.bodyLarge?.color : theme.hintColor,
+                          color:
+                              selectedDateTime != null
+                                  ? theme.textTheme.bodyLarge?.color
+                                  : theme.hintColor,
                         ),
                       ),
                       const Icon(Icons.calendar_today),
@@ -276,8 +322,10 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
 
               Text("Subtotal: ${widget.subtotal.toStringAsFixed(2)} EGP"),
               Text("Delivery: ${deliveryTax.toStringAsFixed(2)} EGP"),
-              Text("Total: ${total.toStringAsFixed(2)} EGP",
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                "Total: ${total.toStringAsFixed(2)} EGP",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
 
               const SizedBox(height: 20),
               CustomButton(text: "Confirm Order", onPressed: _submit),

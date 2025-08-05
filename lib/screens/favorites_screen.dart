@@ -13,25 +13,25 @@ class FavoritesScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
 
-    final snapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('favorites')
-            .get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('favorites')
+        .get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
+
       return CardData(
-        id: data['id'],
-        title: data['title'],
-        description: data['description'],
-        image: data['image'],
-        price: data['price'],
-        weight: data['weight'],
-        rate: 5,
+        id: data['id'] ?? '',
+        title: data['title'] ?? '',
+        description: data['description'] ?? '',
+        image: data['image'] ?? '',
+        price: (data['price'] ?? 0).toDouble(),
+        weight: data['weight'] ?? '',
+        rate: (data['rate'] ?? 5).toDouble(),
         isFavorite: true,
-        category: data['category'],
+        category: data['category'] ?? '',
       );
     }).toList();
   }
@@ -63,11 +63,20 @@ class FavoritesScreen extends StatelessWidget {
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return Center(
-              child: Text(
-                "No favorites yet.",
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.hintColor,
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_border,
+                      size: 80, color: theme.hintColor),
+                  const SizedBox(height: 12),
+                  Text(
+                    "No favorites yet.",
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.hintColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -75,51 +84,67 @@ class FavoritesScreen extends StatelessWidget {
           final favs = snapshot.data!;
 
           return ListView.builder(
-            padding: const EdgeInsets.all(12),
+            
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             itemCount: favs.length,
             itemBuilder: (context, index) {
-              return Cards(
-                data: favs[index],
-                favFunction: () {},
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) => ProductDetailsScreen(data: favs[index]),
-                    ),
-                  );
-                },
-                onCartTap: () {
-                  final selectedProduct = favs[index];
-
-                  final indexInCart = globalCartItems.indexWhere(
-                    (item) => item.id == selectedProduct.id,
-                  );
-
-                  if (indexInCart >= 0) {
-                    globalCartItems[indexInCart].quantity++;
-                  } else {
-                    globalCartItems.add(
-                      CardData(
-                        id: selectedProduct.id,
-                        title: selectedProduct.title,
-                        description: selectedProduct.description,
-                        image: selectedProduct.image,
-                        price: selectedProduct.price,
-                        weight: selectedProduct.weight,
-                        rate: selectedProduct.rate,
-                        isFavorite: selectedProduct.isFavorite,
-                        quantity: 1, // 👈 مهم
-                        category: selectedProduct.category,
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 4),
                       ),
-                    );
-                  }
+                    ],
+                  ),
+                  child: Cards(
+                    data: favs[index],
+                    favFunction: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ProductDetailsScreen(data: favs[index]),
+                        ),
+                      );
+                    },
+                    onCartTap: () {
+                      final selectedProduct = favs[index];
+                      final indexInCart = globalCartItems.indexWhere(
+                        (item) => item.id == selectedProduct.id,
+                      );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Added to cart")),
-                  );
-                },
+                      if (indexInCart >= 0) {
+                        globalCartItems[indexInCart].quantity++;
+                      } else {
+                        globalCartItems.add(
+                          CardData(
+                            id: selectedProduct.id,
+                            title: selectedProduct.title,
+                            description: selectedProduct.description,
+                            image: selectedProduct.image,
+                            price: selectedProduct.price,
+                            weight: selectedProduct.weight,
+                            rate: selectedProduct.rate,
+                            isFavorite: selectedProduct.isFavorite,
+                            quantity: 1,
+                            category: selectedProduct.category,
+                          ),
+                        );
+                      }
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Added to cart")),
+                      );
+                    },
+                  ),
+                ),
               );
             },
           );
