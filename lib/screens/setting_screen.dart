@@ -167,17 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     // TODO: Navigate to change password screen
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.dark_mode),
-                  title: const Text('Dark Mode'),
-                  trailing: Switch(
-                    value: themeProvider.isDark,
-                    onChanged: (val) {
-                      themeProvider.toggleTheme();
-                    },
-                    activeColor: theme.colorScheme.primary,
-                  ),
-                ),
+              
                 const Spacer(),
                 if (FirebaseAuth.instance.currentUser != null)
                   Padding(

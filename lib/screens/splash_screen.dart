@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:petut/screens/Signup&Login/auth_helper.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -18,10 +19,10 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    navigateUser();
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 5),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -34,22 +35,15 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-
-    Timer(const Duration(seconds: 5), () {
+    // خلي التنقل بعد ما الأنيميشن يخلص
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          // لو المستخدم مسجّل، روح للصفحة الرئيسية (Main)
-          Navigator.pushReplacementNamed(context, '/main');
-        } else {
-          // ولو مش مسجّل، روح لصفحة البدء (Start)
-          Navigator.pushReplacementNamed(context, '/start');
-        }
+        navigateUser();
       }
     });
   }
 
-   void navigateUser() async {
+  void navigateUser() async {
     String status = await AuthHelper.checkUserState();
 
     switch (status) {
