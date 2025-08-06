@@ -406,16 +406,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
     
     if (emoji != null) {
-      try {
-        setState(() => _isLoading = true);
-        await SimpleChatService.sendMessage(widget.chatId, emoji, MessageType.emoji);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send emoji: $e')),
-        );
-      } finally {
-        setState(() => _isLoading = false);
-      }
+      _messageController.text += emoji;
     }
   }
 
@@ -457,7 +448,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   Widget _buildUserAvatar(String? imageData, String? userName, double radius) {
     if (imageData != null && imageData.isNotEmpty) {
-      if (AvatarHelper.avatarData.containsKey(imageData)) {
+      if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: radius * 2);
       }
       try {

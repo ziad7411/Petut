@@ -44,7 +44,7 @@ class _CardsState extends State<Cards> {
 
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: theme.dividerColor, width: 1.2),
+            side: BorderSide(color: theme.dividerColor.withOpacity(0.3), width: 0.8),
           ),
           margin: const EdgeInsets.all(6),
           child: Padding(

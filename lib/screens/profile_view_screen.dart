@@ -25,6 +25,7 @@ class ProfileViewScreen extends StatefulWidget {
 class _ProfileViewScreenState extends State<ProfileViewScreen> {
   Map<String, dynamic>? userData;
   List<Map<String, dynamic>> userPets = [];
+  Map<String, dynamic> privacySettings = {};
   bool isLoading = true;
 
   @override
@@ -43,13 +44,19 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
       
       if (userDoc.exists) {
         userData = userDoc.data();
+        privacySettings = userData?['privacy'] ?? {
+          'showPhone': true,
+          'showEmail': true,
+          'showLocation': true,
+          'showPets': true,
+          'allowMessages': true,
+        };
       }
 
       // Load user pets
       final petsSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
           .collection('pets')
+          .where('ownerId', isEqualTo: widget.userId)
           .get();
       
       userPets = petsSnapshot.docs.map((doc) => {
@@ -154,18 +161,93 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (userData?['phone'] != null) ...[
+                          if (!isOwnProfile && userData?['phone'] != null && privacySettings['showPhone'] == true) ...[
                             const SizedBox(height: 8),
-                            Text(
-                              userData!['phone'],
-                              style: TextStyle(
-                                color: theme.hintColor,
-                                fontSize: 16,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.phone, size: 16, color: theme.hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userData!['phone'],
+                                  style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (!isOwnProfile && userData?['email'] != null && privacySettings['showEmail'] == true) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.email, size: 16, color: theme.hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userData!['email'],
+                                  style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (isOwnProfile && userData?['phone'] != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.phone, size: 16, color: theme.hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userData!['phone'],
+                                  style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (isOwnProfile && userData?['email'] != null) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.email, size: 16, color: theme.hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userData!['email'],
+                                  style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (userData?['location'] != null && privacySettings['showLocation'] == true) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.location_on, size: 16, color: theme.hintColor),
+                                const SizedBox(width: 4),
+                                Text(
+                                  userData!['location'],
+                                  style: TextStyle(
+                                    color: theme.hintColor,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                           const SizedBox(height: 16),
-                          if (!isOwnProfile)
+                          if (!isOwnProfile && privacySettings['allowMessages'] == true)
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
@@ -187,40 +269,98 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                   const SizedBox(height: 16),
                   
                   // Pets Section
-                  if (userPets.isNotEmpty) ...[
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pets (${userPets.length})',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                  if (isOwnProfile || privacySettings['showPets'] == true) ...[
+                    if (userPets.isNotEmpty) ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                            const SizedBox(height: 12),
-                            ...userPets.map((pet) => _buildPetCard(pet, theme)),
                           ],
                         ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pets (${userPets.length})',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ...userPets.map((pet) => _buildPetCard(pet, theme)),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ] else ...[
-                    Card(
+                    ] else ...[
+                      Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.pets,
+                                size: 48,
+                                color: theme.hintColor,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No pets registered',
+                                style: TextStyle(
+                                  color: theme.hintColor,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ] else if (!isOwnProfile) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
                           children: [
                             Icon(
-                              Icons.pets,
+                              Icons.pets_outlined,
                               size: 48,
                               color: theme.hintColor,
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'No pets registered',
+                              'Pet information is private',
                               style: TextStyle(
                                 color: theme.hintColor,
                                 fontSize: 16,
@@ -231,6 +371,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
                       ),
                     ),
                   ],
+
                 ],
               ),
             ),
@@ -320,7 +461,7 @@ class _ProfileViewScreenState extends State<ProfileViewScreen> {
 
   Widget _buildUserAvatar(String? imageData, String? userName, double radius) {
     if (imageData != null && imageData.isNotEmpty) {
-      if (AvatarHelper.avatarData.containsKey(imageData)) {
+      if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: radius * 2);
       }
       try {

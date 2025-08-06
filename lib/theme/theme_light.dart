@@ -29,6 +29,35 @@ final ThemeData lightTheme = ThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: AppColors.lightAccent,
       foregroundColor: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    ),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: AppColors.lightSurface,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: AppColors.lightPrimary.withOpacity(0.5), width: 1.5),
+    ),
+  ),
+  cardTheme: CardThemeData(
+    elevation: 4,
+    shadowColor: Colors.black.withOpacity(0.08),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
     ),
   ),
 );
