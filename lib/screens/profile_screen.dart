@@ -9,6 +9,7 @@ import 'avatar_selection_screen.dart';
 import '../utils/avatar_helper.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import 'profile_settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -41,6 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _originalName = '', _originalPhone = '', _originalLocation = '';
   String? _originalProfileImage;
   bool _isDoctor = false;
+  bool _isEditingName = false;
 
   // Form keys
   final _profileFormKey = GlobalKey<FormState>();
@@ -66,11 +68,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final data = profileDoc.data()!;
         if (mounted) {
           setState(() {
-            _nameController.text = data['name'] ?? '';
+            _nameController.text = data['fullName'] ?? data['name'] ?? '';
             _phoneController.text = data['phone'] ?? '';
             _locationController.text = data['location'] ?? '';
             _profileImageBase64 = data['profileImage'];
-            _originalName = data['name'] ?? '';
+            _originalName = data['fullName'] ?? data['name'] ?? '';
             _originalPhone = data['phone'] ?? '';
             _originalLocation = data['location'] ?? '';
             _originalProfileImage = data['profileImage'];
@@ -243,8 +245,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildProfileAvatar(String? profileImage, String userName, double size) {
     if (profileImage != null && profileImage.isNotEmpty) {
-      // Check if it's an avatar ID
-      if (AvatarHelper.avatarData.containsKey(profileImage)) {
+      // Check if it's fluttermoji avatar
+      if (profileImage == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(profileImage, size: size);
       }
       // Check if it's base64 image
@@ -376,6 +378,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _selectedAvatar != null;
   }
 
+  Future<void> _updateName() async {
+    if (!_isUserAuthenticated) return;
+    
+    final newName = _nameController.text.trim();
+    if (newName.isEmpty || newName == _originalName) {
+      setState(() => _isEditingName = false);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      await _firestore.collection('users').doc(user.uid).update({
+        'fullName': newName,
+        'name': newName,
+        'email': user.email,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      setState(() {
+        _originalName = newName;
+        _isEditingName = false;
+      });
+
+      _showSnackBar('Name updated successfully!', Colors.green);
+    } catch (e) {
+      _showSnackBar('Failed to update name: $e', Theme.of(context).colorScheme.error);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _updateProfile() async {
     if (!_isUserAuthenticated) {
       _showLoginPrompt();
@@ -407,8 +444,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       await _firestore.collection('users').doc(user.uid).set({
         'name': _nameController.text.trim(),
+        'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
         'location': _locationController.text.trim(),
+        'email': user.email,
         'profileImage': imageBase64,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -665,6 +704,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             }
           },
         ),
+        actions: _isUserAuthenticated ? [
+          IconButton(
+            icon: Icon(Icons.settings, color: theme.iconTheme.color),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfileSettingsScreen()),
+            ),
+          ),
+        ] : null,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -720,11 +768,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 8),
               Text('Tap to change photo', style: TextStyle(color: theme.textTheme.bodyMedium!.color, fontSize: 12)),
               const SizedBox(height: 32),
+              // Name Section with Edit Button
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.person, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _isEditingName
+                          ? TextField(
+                              controller: _nameController,
+                              decoration: InputDecoration(
+                                hintText: 'Enter your name',
+                                border: InputBorder.none,
+                                hintStyle: TextStyle(color: theme.hintColor),
+                              ),
+                              style: TextStyle(fontSize: 16, color: theme.textTheme.bodyLarge!.color),
+                              onSubmitted: (_) => _updateName(),
+                            )
+                          : Text(
+                              _nameController.text.isEmpty ? 'Add your name' : _nameController.text,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _nameController.text.isEmpty ? theme.hintColor : theme.textTheme.bodyLarge!.color,
+                              ),
+                            ),
+                    ),
+                    if (_isEditingName)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            onPressed: _updateName,
+                            icon: Icon(Icons.check, color: Colors.green, size: 20),
+                            tooltip: 'Save',
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              _nameController.text = _originalName;
+                              setState(() => _isEditingName = false);
+                            },
+                            icon: Icon(Icons.close, color: Colors.red, size: 20),
+                            tooltip: 'Cancel',
+                          ),
+                        ],
+                      )
+                    else
+                      IconButton(
+                        onPressed: () => setState(() => _isEditingName = true),
+                        icon: Icon(Icons.edit, color: theme.colorScheme.primary, size: 20),
+                        tooltip: 'Edit name',
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Form(
                 key: _profileFormKey,
                 child: Column(
                   children: [
-                    CustomTextField(hintText: 'Name', controller: _nameController, prefixIcon: Icons.person, validator: _validateName),
                     CustomTextField(hintText: 'Phone Number', controller: _phoneController, prefixIcon: Icons.phone, validator: _validatePhone),
                     CustomTextField(hintText: 'Location', controller: _locationController, prefixIcon: Icons.location_on, validator: _validateLocation),
                   ],

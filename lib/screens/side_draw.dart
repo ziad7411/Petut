@@ -45,8 +45,8 @@ class _SideDrawState extends State<SideDraw> {
 
   Widget _buildProfileImage(ThemeData theme) {
     if (imageData != null && imageData!.isNotEmpty) {
-      // Check if it's an avatar ID
-      if (AvatarHelper.avatarData.containsKey(imageData)) {
+      // Check if it's fluttermoji avatar
+      if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: 60);
       }
       // Check if it's base64 image
