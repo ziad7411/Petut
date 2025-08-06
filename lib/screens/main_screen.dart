@@ -42,19 +42,22 @@ class _MainScreenState extends State<MainScreen> {
       body: _pages[_currentIndex],
       bottomNavigationBar: CurvedNavigationBar(
         index: _currentIndex,
-        height: 60.0,
+        height: 65.0,
         backgroundColor: Colors.transparent,
         color: theme.colorScheme.surface,
         buttonBackgroundColor: theme.colorScheme.primary,
         animationDuration: const Duration(milliseconds: 300),
         items: _icons.map((icon) {
           int index = _icons.indexOf(icon);
-          return Icon(
-            icon,
-            size: 32,
-            color: _currentIndex == index
-                ? Colors.white
-                : theme.colorScheme.primary,
+          return Container(
+            padding: const EdgeInsets.all(8),
+            child: Icon(
+              icon,
+              size: 28,
+              color: _currentIndex == index
+                  ? Colors.white
+                  : theme.colorScheme.primary,
+            ),
           );
         }).toList(),
         onTap: (index) {

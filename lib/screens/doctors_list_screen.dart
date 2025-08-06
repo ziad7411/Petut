@@ -173,7 +173,44 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
             StreamBuilder<DocumentSnapshot>(
               stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
               builder: (context, snapshot) {
-                return CircleAvatar(); // Placeholder
+                if (!snapshot.hasData || snapshot.hasError) {
+                  return CircleAvatar(
+                    radius: 18,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    child: Icon(Icons.person, size: 20, color: theme.colorScheme.primary),
+                  );
+                }
+                
+                final userData = snapshot.data!.data() as Map<String, dynamic>?;
+                if (userData == null) {
+                  return CircleAvatar(
+                    radius: 18,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    child: Icon(Icons.person, size: 20, color: theme.colorScheme.primary),
+                  );
+                }
+                
+                final profileImage = userData['profileImage'] as String?;
+                final userName = userData['fullName'] as String? ?? 'User';
+                
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundImage: profileImage != null && profileImage.isNotEmpty 
+                        ? _getImageProvider(profileImage) 
+                        : null,
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                    child: profileImage == null || profileImage.isEmpty ? Text(
+                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                      style: TextStyle(
+                        fontSize: 14, 
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ) : null,
+                  ),
+                );
               },
             ),
         ],
@@ -189,7 +226,17 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
               maxHeight: 200,
               child: Container(
                 margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: theme.colorScheme.surface),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: theme.colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 clipBehavior: Clip.hardEdge,
                 child: FlutterMap(
                   options: MapOptions(center: userLocation ?? LatLng(30.0444, 31.2357), zoom: 13),
@@ -327,10 +374,18 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Card(
-                          elevation: 4,
-                          shadowColor: Colors.black.withOpacity(0.1),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             leading: ClipRRect(

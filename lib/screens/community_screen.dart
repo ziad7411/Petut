@@ -343,8 +343,8 @@ class _CommunityScreenState extends State<CommunityScreen> {
 
   Widget _buildUserAvatar(String? imageData, String? userName, double radius) {
     if (imageData != null && imageData.isNotEmpty) {
-      // Check if it's an avatar ID
-      if (AvatarHelper.avatarData.containsKey(imageData)) {
+      // Check if it's fluttermoji avatar
+      if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: radius * 2);
       }
       // Check if it's base64 image
