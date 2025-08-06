@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/reset_password_screen.dart';
+import 'package:petut/screens/appoinment_user_screen.dart';
 import 'package:petut/services/notification_service.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
@@ -83,6 +84,7 @@ class MainApp extends StatelessWidget {
         '/favourites': (context) => const FavoritesScreen(),
         '/settings': (context) => const SettingsScreen(),
         '/cart': (context) => const CartScreen(),
+        '/bookingHistory': (context) => const UserBookingsScreen(),
       },
     );
   }

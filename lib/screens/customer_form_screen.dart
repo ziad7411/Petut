@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -237,18 +238,34 @@ Future<void> loaduser() async {
       });
     }
 }
-  Future<String?> _convertImageToBase64(File image) async {
-    try {
-      final bytes = await image.readAsBytes();
-      return base64Encode(bytes);
-    } catch (e) {
-      _showSnackBar(
-        'Failed to process image: $e',
-        Theme.of(context).colorScheme.error,
-      );
+Future<String?> uploadImageToImgbb(File? imageFile) async {
+  if (imageFile == null) return null;
+
+  const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
+
+  try {
+    final bytes = await imageFile.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
+
+    final response = await http.post(url, body: {
+      'image': base64Image,
+    });
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['data']['url'];
+    } else {
+      print('❌ Upload failed: ${response.body}');
       return null;
     }
+  } catch (e) {
+    print('❌ Error uploading image: $e');
+    return null;
   }
+}
+
 
   void _clearPetForm() {
     _petNameController.clear();
@@ -277,12 +294,11 @@ Future<void> loaduser() async {
       // Convert profile image or use avatar
       
       if (_selectedAvatar != null) {
-        profileImageBase64 = _selectedAvatar; // Store avatar path
-      } else if (_selectedProfileImage != null) {
-        profileImageBase64 = await _convertImageToBase64(
-          _selectedProfileImage!,
-        );
-      }
+  profileImageBase64 = _selectedAvatar; // Store avatar path
+} else if (_selectedProfileImage != null) {
+  profileImageBase64 = await uploadImageToImgbb(_selectedProfileImage!);
+}
+
 
       // Save user profile
       await _firestore.collection('users').doc(user.uid).set({
@@ -298,7 +314,7 @@ Future<void> loaduser() async {
       if (_hasPet) {
         String? petImageBase64;
         if (_selectedPetImage != null) {
-          petImageBase64 = await _convertImageToBase64(_selectedPetImage!);
+          petImageBase64 = await uploadImageToImgbb(_selectedPetImage!);
         }
 
         await _firestore
