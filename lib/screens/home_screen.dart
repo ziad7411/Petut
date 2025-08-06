@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:petut/Common/cards.dart';
 import 'package:petut/Data/Product.dart';
 import 'package:petut/Data/fetchProducts.dart';
@@ -14,7 +15,6 @@ import 'package:petut/screens/chats_list_screen.dart';
 import 'package:petut/services/simple_chat_service.dart';
 import '../models/Chat.dart';
 
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedCategory = 'All';
   Set<String> favoriteIds = {};
 
-final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
+  final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
 
   String getCategoryImage(String category) {
     switch (category.toLowerCase()) {
@@ -45,7 +45,6 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
         return 'assets/images/petut.png';
     }
   }
-
 
   @override
   void initState() {
@@ -95,57 +94,87 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      drawer: const SideDraw(),
-      backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Builder(
-              builder:
-                  (context) => IconButton(
-                    icon: Icon(Icons.menu, color: theme.iconTheme.color),
-                    onPressed: () {
-                      Scaffold.of(context).openDrawer();
-                    },
+    return PopScope(
+      canPop: false, // يمنع الباك الطبيعي
+      onPopInvoked: (didPop) async {
+        // هنا بقى نتحكم في الباك
+        final shouldExit = await showDialog<bool>(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: Text('Do You want to Leave ?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text('No'),
                   ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text('Yes'),
+                  ),
+                ],
+              ),
+        );
+
+        if (shouldExit == true) {
+          SystemNavigator.pop(); // يخرج من التطبيق
+        }
+      },
+      child: Scaffold(
+        drawer: const SideDraw(),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              Builder(
+                builder:
+                    (context) => IconButton(
+                      icon: Icon(Icons.menu, color: theme.iconTheme.color),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Home',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: theme.textTheme.bodyMedium!.color,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            iconContainer(
+              Icons.search,
+              theme.iconTheme.color ?? Colors.grey,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SearchScreen()),
+                );
+              },
             ),
             const SizedBox(width: 8),
-            Text(
-              'Home',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: theme.textTheme.bodyMedium!.color,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          iconContainer(
-            Icons.search,
-            theme.iconTheme.color ?? Colors.grey,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SearchScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-          FirebaseAuth.instance.currentUser != null
-              ? StreamBuilder<List<Chat>>(
+            FirebaseAuth.instance.currentUser != null
+                ? StreamBuilder<List<Chat>>(
                   stream: SimpleChatService.getUserChats(),
                   builder: (context, snapshot) {
                     int unreadCount = 0;
                     if (snapshot.hasData) {
-                      final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+                      final currentUserId =
+                          FirebaseAuth.instance.currentUser?.uid;
                       if (currentUserId != null) {
-                        unreadCount = snapshot.data!.fold(0, (sum, chat) => 
-                          sum + (chat.unreadCount[currentUserId] ?? 0));
+                        unreadCount = snapshot.data!.fold(
+                          0,
+                          (sum, chat) =>
+                              sum + (chat.unreadCount[currentUserId] ?? 0),
+                        );
                       }
                     }
                     return iconContainer(
@@ -156,7 +185,9 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
                         if (FirebaseAuth.instance.currentUser != null) {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ChatsListScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => const ChatsListScreen(),
+                            ),
                           );
                         } else {
                           Navigator.pushNamed(context, '/login');
@@ -165,252 +196,270 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
                     );
                   },
                 )
-              : iconContainer(
+                : iconContainer(
                   Icons.chat_bubble_outline,
                   theme.colorScheme.primary,
                   onTap: () {
                     if (FirebaseAuth.instance.currentUser != null) {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ChatsListScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const ChatsListScreen(),
+                        ),
                       );
                     } else {
                       Navigator.pushNamed(context, '/login');
                     }
                   },
                 ),
-          const SizedBox(width: 8),
-          iconContainer(
-            Icons.shopping_cart_outlined,
-            theme.colorScheme.primary,
-            badgeCount: globalCartItems.fold(
-              0,
-              (sum, item) => sum + item.quantity,
+            const SizedBox(width: 8),
+            iconContainer(
+              Icons.shopping_cart_outlined,
+              theme.colorScheme.primary,
+              badgeCount: globalCartItems.fold(
+                0,
+                (sum, item) => sum + item.quantity,
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ).then((_) => setState(() {}));
+              },
             ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CartScreen()),
-              ).then((_) => setState(() {}));
-            },
-          ),
-          const SizedBox(width: 12),
-        ],
-      ),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 200,
-            floating: false,
-            pinned: false,
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.transparent,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                margin: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Stack(
-                    children: [
-                      Image.network(
-                        'https://readdy.ai/api/search-image?query=Happy%20golden%20retriever%20and%20persian%20cat%20playing%20together%20in%20a%20bright%20veterinary%20clinic%20with%20modern%20equipment%2C%20soft%20natural%20lighting%2C%20clean%20white%20background%20with%20plants%2C%20professional%20pet%20care%20atmosphere%2C%20warm%20and%20welcoming%20environment%20with%20medical%20tools%20visible%20in%20background&width=1920&height=1080&seq=hero-bg&orientation=landscape',
-                        width: double.infinity,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: double.infinity,
-                            height: 180,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: double.infinity,
-                            height: 180,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                            child: Icon(
-                              Icons.pets,
-                              size: 50,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          );
-                        },
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              Colors.black.withOpacity(0.5),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 16,
-                        top: 0,
-                        bottom: 0,
-                        right: 100,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Premium Care for\nYour Beloved Pets',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Professional veterinary services with 24/7 care',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white.withOpacity(0.9),
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
+            const SizedBox(width: 12),
+          ],
+        ),
+        body: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 200,
+              floating: false,
+              pinned: false,
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      children: [
+                        Image.network(
+                          'https://readdy.ai/api/search-image?query=Happy%20golden%20retriever%20and%20persian%20cat%20playing%20together%20in%20a%20bright%20veterinary%20clinic%20with%20modern%20equipment%2C%20soft%20natural%20lighting%2C%20clean%20white%20background%20with%20plants%2C%20professional%20pet%20care%20atmosphere%2C%20warm%20and%20welcoming%20environment%20with%20medical%20tools%20visible%20in%20background&width=1920&height=1080&seq=hero-bg&orientation=landscape',
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: double.infinity,
+                              height: 180,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 180,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withOpacity(0.1),
+                              child: Icon(
+                                Icons.pets,
+                                size: 50,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            );
+                          },
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                Colors.black.withOpacity(0.5),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 16,
+                          top: 0,
+                          bottom: 0,
+                          right: 100,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Premium Care for\nYour Beloved Pets',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Professional veterinary services with 24/7 care',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white.withOpacity(0.9),
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: Row(
-                children: categories.map((category) {
-                  final isSelected = category == selectedCategory;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? theme.colorScheme.primary.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : Colors.grey.shade300,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            category[0].toUpperCase() + category.substring(1),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.textTheme.bodyMedium!.color,
+            SliverToBoxAdapter(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children:
+                      categories.map((category) {
+                        final isSelected = category == selectedCategory;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedCategory = category;
+                            });
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 48,
-                            height: 48,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
+                              color:
+                                  isSelected
+                                      ? theme.colorScheme.primary.withOpacity(
+                                        0.2,
+                                      )
+                                      : Colors.transparent, // ← هنا التغيير
+                              borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: isSelected 
-                                    ? theme.colorScheme.primary
-                                    : Colors.transparent,
+                                color:
+                                    isSelected
+                                        ? theme.colorScheme.primary
+                                        : Colors.grey.shade300,
                                 width: 2,
                               ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                            child: ClipOval(
-                              child: Image.asset(
-                                getCategoryImage(category),
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                alignment: Alignment.center,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    width: 48,
-                                    height: 48,
-                                    color: theme.colorScheme.primary.withOpacity(0.1),
-                                    child: Icon(
-                                      Icons.pets,
-                                      size: 24,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  );
-                                },
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: Image.asset(
+                                    getCategoryImage(category),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.1),
+                                        child: Icon(
+                                          Icons.pets,
+                                          size: 20,
+                                          color: theme.colorScheme.primary,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  category[0].toUpperCase() +
+                                      category.substring(1),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                    color:
+                                        isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.textTheme.bodyMedium!.color,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
+                        );
+                      }).toList(),
+                ),
+              ),
+            ),
+
+            FutureBuilder<List<Product>>(
+              future: futureProducts,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
                       ),
                     ),
                   );
-                }).toList(),
-              ),
-            ),
-          ),
-          FutureBuilder<List<Product>>(
-            future: futureProducts,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return SliverFillRemaining(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                );
-              } else if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  child: Center(child: Text("Error: ${snapshot.error}")),
-                );
-              }
+                } else if (snapshot.hasError) {
+                  return SliverFillRemaining(
+                    child: Center(child: Text("Error: ${snapshot.error}")),
+                  );
+                }
 
-              final allProducts = snapshot.data!;
-              final filtered = filterByCategory(
-                allProducts,
-                selectedCategory,
-              );
+                final allProducts = snapshot.data!;
+                final filtered = filterByCategory(
+                  allProducts,
+                  selectedCategory,
+                );
 
-              return SliverGrid(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
+                return SliverGrid(
+                  delegate: SliverChildBuilderDelegate((context, index) {
                     final product = filtered[index];
                     final cardData = convertProductToCard(product);
 
@@ -455,19 +504,18 @@ final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
                         setState(() {});
                       },
                     );
-                  },
-                  childCount: filtered.length,
-                ),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  mainAxisExtent: 300,
-                ),
-              );
-            },
-          ),
-        ],
+                  }, childCount: filtered.length),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    mainAxisExtent: 300,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

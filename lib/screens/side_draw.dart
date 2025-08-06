@@ -18,6 +18,7 @@ class SideDraw extends StatefulWidget {
 class _SideDrawState extends State<SideDraw> {
   String? name;
   String? imageData;
+  String? userRole;
 
   @override
   void initState() {
@@ -28,16 +29,16 @@ class _SideDrawState extends State<SideDraw> {
   Future<void> fetchUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc =
-          await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (mounted && doc.exists) {
         final data = doc.data();
         setState(() {
           name = data?['fullName'] ?? 'Guest';
           imageData = data?['profileImage'];
+          userRole = data?['role']; // doctor or customer
         });
       }
     }
@@ -45,11 +46,9 @@ class _SideDrawState extends State<SideDraw> {
 
   Widget _buildProfileImage(ThemeData theme) {
     if (imageData != null && imageData!.isNotEmpty) {
-      // Check if it's fluttermoji avatar
       if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: 60);
       }
-      // Check if it's base64 image
       try {
         final imageBytes = base64Decode(imageData!);
         return Image.memory(
@@ -59,20 +58,22 @@ class _SideDrawState extends State<SideDraw> {
           height: 60,
         );
       } catch (e) {
-        // Fallback to text avatar
         return _buildTextAvatar(name ?? 'User', 60, theme);
       }
     }
-    
-    // Default text avatar
     return _buildTextAvatar(name ?? 'User', 60, theme);
   }
 
   Widget _buildTextAvatar(String userName, double size, ThemeData theme) {
-    final initials = userName.isNotEmpty 
-        ? userName.trim().split(' ').map((name) => name.isNotEmpty ? name[0].toUpperCase() : '').take(2).join()
+    final initials = userName.isNotEmpty
+        ? userName
+            .trim()
+            .split(' ')
+            .map((name) => name.isNotEmpty ? name[0].toUpperCase() : '')
+            .take(2)
+            .join()
         : 'U';
-    
+
     return Container(
       width: size,
       height: size,
@@ -98,6 +99,7 @@ class _SideDrawState extends State<SideDraw> {
     final user = FirebaseAuth.instance.currentUser;
     final themeProvider = Provider.of<ThemeController>(context);
     final theme = Theme.of(context);
+    final isDoctor = userRole == 'doctor';
 
     return Drawer(
       child: Container(
@@ -115,14 +117,14 @@ class _SideDrawState extends State<SideDraw> {
               ),
               accountEmail: Text(
                 user?.email ?? "Please login to continue",
-                style: TextStyle(color: theme.colorScheme.onPrimary.withOpacity(0.9)),
+                style: TextStyle(
+                    color: theme.colorScheme.onPrimary.withOpacity(0.9)),
               ),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: theme.scaffoldBackgroundColor,
                 child: ClipOval(child: _buildProfileImage(theme)),
               ),
             ),
-
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -151,77 +153,96 @@ class _SideDrawState extends State<SideDraw> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                      ListTile(
-                  leading: const Icon(Icons.dark_mode),
-                  title: const Text('Dark Mode'),
-                  trailing: Switch(
-                    value: themeProvider.isDark,
-                    onChanged: (val) {
-                      themeProvider.toggleTheme();
-                    },
-                    activeColor: theme.colorScheme.primary,
-                  ),
-                ),
+                    ListTile(
+                      leading: const Icon(Icons.dark_mode),
+                      title: const Text('Dark Mode'),
+                      trailing: Switch(
+                        value: themeProvider.isDark,
+                        onChanged: (val) {
+                          themeProvider.toggleTheme();
+                        },
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                    ),
                   ] else ...[
                     const SizedBox(height: 16),
                     ListTile(
-                      leading: Icon(Icons.person, color: theme.colorScheme.primary),
+                      leading: Icon(Icons.person,
+                          color: theme.colorScheme.primary),
                       title: const Text("Profile"),
                       onTap: () {
                         Navigator.pushNamed(context, '/profile');
                       },
                     ),
+                    if (!isDoctor) ...[
+                      const SizedBox(height: 12),
+                      ListTile(
+                        leading: Icon(Icons.history,
+                            color: theme.colorScheme.primary),
+                        title: const Text("History"),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/myOrders');
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      ListTile(
+                        leading: Icon(Icons.favorite,
+                            color: theme.colorScheme.primary),
+                        title: const Text("Favorites"),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/favorites');
+                        },
+                      ),
+                    
                     const SizedBox(height: 12),
                     ListTile(
-                      leading: Icon(Icons.history, color: theme.colorScheme.primary),
-                      title: const Text("History"),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/myOrders');
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      leading: Icon(Icons.favorite, color: theme.colorScheme.primary),
-                      title: const Text("Favorites"),
-                      onTap: () {
-                        Navigator.pushNamed(context, '/favorites');
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      leading: Icon(Icons.group, color: theme.colorScheme.primary),
+                      leading: Icon(Icons.group,
+                          color: theme.colorScheme.primary),
                       title: const Text("Community"),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const CommunityScreen()),
+                          MaterialPageRoute(
+                              builder: (_) => const CommunityScreen()),
                         );
                       },
                     ),
                     const SizedBox(height: 12),
                     ListTile(
-                      leading: Icon(Icons.settings, color: theme.colorScheme.primary),
+                      leading: Icon(Icons.bookmark_add_outlined,
+                          color: theme.colorScheme.primary),
+                      title: const Text("booking History"),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/bookingHistory');
+                      },
+                    ),
+                  ],
+                    const SizedBox(height: 12),
+                    ListTile(
+                      leading: Icon(Icons.settings,
+                          color: theme.colorScheme.primary),
                       title: const Text("Settings"),
                       onTap: () {
                         Navigator.pushNamed(context, '/settings');
                       },
                     ),
                     const SizedBox(height: 12),
-                      ListTile(
-                  leading: const Icon(Icons.dark_mode),
-                  title: const Text('Dark Mode'),
-                  trailing: Switch(
-                    value: themeProvider.isDark,
-                    onChanged: (val) {
-                      themeProvider.toggleTheme();
-                    },
-                    activeColor: theme.colorScheme.primary,
-                  ),
-                ),
+                    ListTile(
+                      leading: const Icon(Icons.dark_mode),
+                      title: const Text('Dark Mode'),
+                      trailing: Switch(
+                        value: themeProvider.isDark,
+                        onChanged: (val) {
+                          themeProvider.toggleTheme();
+                        },
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     ListTile(
-                      leading: Icon(Icons.logout, color: theme.colorScheme.error),
+                      leading: Icon(Icons.logout,
+                          color: theme.colorScheme.error),
                       title: const Text("Logout"),
                       onTap: () async {
                         await FirebaseAuth.instance.signOut();
@@ -236,12 +257,9 @@ class _SideDrawState extends State<SideDraw> {
                 ],
               ),
             ),
-
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 12,
-              ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
