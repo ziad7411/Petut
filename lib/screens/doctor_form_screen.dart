@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
@@ -75,79 +76,83 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
       });
     }
   }
-  
 
-//get doctor data if not completed before 
+  //get doctor data if not completed before
 
-Future<void> loadDoctorData() async {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-  if (uid == null) return;
+  Future<void> loadDoctorData() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
 
-  final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-  final userData = userDoc.data();
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userData = userDoc.data();
 
-  final doctorDetails = userData?['doctorDetails'] as Map<String, dynamic>?;
+    final doctorDetails = userData?['doctorDetails'] as Map<String, dynamic>?;
 
-  final clinicQuery = await FirebaseFirestore.instance
-      .collection('clinics')
-      .where('doctorId', isEqualTo: uid)
-      .limit(1)
-      .get();
-  final clinicData = clinicQuery.docs.isNotEmpty ? clinicQuery.docs.first.data() : null;
+    final clinicQuery =
+        await FirebaseFirestore.instance
+            .collection('clinics')
+            .where('doctorId', isEqualTo: uid)
+            .limit(1)
+            .get();
+    final clinicData =
+        clinicQuery.docs.isNotEmpty ? clinicQuery.docs.first.data() : null;
 
-  setState(() {
-    _doctorNameController.text = userData?['fullName'] ?? '';
-    _phoneController.text = userData?['phone'] ?? '';
-    _experienceController.text = userData?['experience'] ?? '';
-    _selectedGender = userData?['gender'];
+    setState(() {
+      _doctorNameController.text = userData?['fullName'] ?? '';
+      _phoneController.text = userData?['phone'] ?? '';
+      _experienceController.text = userData?['experience'] ?? '';
+      _selectedGender = userData?['gender'];
 
-    _descriptionController.text = doctorDetails?['description'] ?? '';
-    _facebookController.text = doctorDetails?['socialMedia']?['facebook'] ?? '';
-    _instagramController.text = doctorDetails?['socialMedia']?['instagram'] ?? '';
-    _twitterController.text = doctorDetails?['socialMedia']?['twitter'] ?? '';
-    _linkedinController.text = doctorDetails?['socialMedia']?['linkedin'] ?? '';
-     _cardFrontImage = doctorDetails?['cardFrontImage'];
+      _descriptionController.text = doctorDetails?['description'] ?? '';
+      _facebookController.text =
+          doctorDetails?['socialMedia']?['facebook'] ?? '';
+      _instagramController.text =
+          doctorDetails?['socialMedia']?['instagram'] ?? '';
+      _twitterController.text = doctorDetails?['socialMedia']?['twitter'] ?? '';
+      _linkedinController.text =
+          doctorDetails?['socialMedia']?['linkedin'] ?? '';
+      _cardFrontImage = doctorDetails?['cardFrontImage'];
       _cardBackImage = doctorDetails?['cardBackImage'];
       _idImage = doctorDetails?['idImage'];
-    
-    if (clinicData != null) {
-      _clinicNameController.text = clinicData['name'] ?? '';
-      _clinicPhoneController.text = clinicData['phone'] ?? '';
-      _clinicAddressController.text = clinicData['address'] ?? '';
-      _priceController.text = clinicData['price']?.toString() ?? '';
 
-      governorate = clinicData['governorate'];
-      city = clinicData['city'];
-      street = clinicData['street'];
-      latitude = clinicData['latitude'];
-      longitude = clinicData['longitude'];
-      if (clinicData['workingHours'] != null) {
-        final List workingHours = clinicData['workingHours'];
-        _workingSchedule.clear();
-        _workingSchedule.addAll(workingHours.map<Map<String, dynamic>>((item) {
-          final openParts = (item['openTime'] as String).split(':');
-          final closeParts = (item['closeTime'] as String).split(':');
+      if (clinicData != null) {
+        _clinicNameController.text = clinicData['name'] ?? '';
+        _clinicPhoneController.text = clinicData['phone'] ?? '';
+        _clinicAddressController.text = clinicData['address'] ?? '';
+        _priceController.text = clinicData['price']?.toString() ?? '';
 
-          return {
-            'day': item['day'],
-            'isSelected': true,
-            'startTime': TimeOfDay(
-              hour: int.parse(openParts[0]),
-              minute: int.parse(openParts[1]),
-            ),
-            'endTime': TimeOfDay(
-              hour: int.parse(closeParts[0]),
-              minute: int.parse(closeParts[1]),
-            ),
-          };
-        }).toList());
+        governorate = clinicData['governorate'];
+        city = clinicData['city'];
+        street = clinicData['street'];
+        latitude = clinicData['latitude'];
+        longitude = clinicData['longitude'];
+        if (clinicData['workingHours'] != null) {
+          final List workingHours = clinicData['workingHours'];
+          _workingSchedule.clear();
+          _workingSchedule.addAll(
+            workingHours.map<Map<String, dynamic>>((item) {
+              final openParts = (item['openTime'] as String).split(':');
+              final closeParts = (item['closeTime'] as String).split(':');
+
+              return {
+                'day': item['day'],
+                'isSelected': true,
+                'startTime': TimeOfDay(
+                  hour: int.parse(openParts[0]),
+                  minute: int.parse(openParts[1]),
+                ),
+                'endTime': TimeOfDay(
+                  hour: int.parse(closeParts[0]),
+                  minute: int.parse(closeParts[1]),
+                ),
+              };
+            }).toList(),
+          );
+        }
       }
-    }
-  });
-}
-
-
-
+    });
+  }
 
   bool _hasClinic = false;
 
@@ -259,10 +264,30 @@ Future<void> loadDoctorData() async {
     }
   }
 
-  Future<String?> _convertImageToBase64(File? image) async {
-    if (image == null) return null;
-    final bytes = await image.readAsBytes();
-    return base64Encode(bytes);
+  Future<String?> uploadImageToImgbb(File? imageFile) async {
+    if (imageFile == null) return null;
+
+    const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
+
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
+
+      final response = await http.post(url, body: {'image': base64Image});
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data']['url'];
+      } else {
+        print('❌ Upload failed: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error uploading image: $e');
+      return null;
+    }
   }
 
   Future<void> _submit() async {
@@ -309,7 +334,7 @@ Future<void> loadDoctorData() async {
       if (user == null) throw Exception('User not logged in');
 
       String? profileBase64 =
-          _selectedAvatar ?? (await _convertImageToBase64(_profileImage));
+          _selectedAvatar ?? await uploadImageToImgbb(_profileImage);
 
       final Map<String, dynamic> doctorData = {
         'uid': user.uid,
@@ -369,10 +394,9 @@ Future<void> loadDoctorData() async {
             .add(clinicData);
         await clinicRef.update({'clinicId': clinicRef.id});
       }
-
-      final cardFrontBase64 = await _convertImageToBase64(_cardFrontImage);
-      final cardBackBase64 = await _convertImageToBase64(_cardBackImage);
-      final idBase64 = await _convertImageToBase64(_idImage);
+      final cardFrontBase64 = await uploadImageToImgbb(_cardFrontImage);
+      final cardBackBase64 = await uploadImageToImgbb(_cardBackImage);
+      final idBase64 = await uploadImageToImgbb(_idImage);
       final socialMedia = <String, String>{};
       if (_facebookController.text.trim().isNotEmpty)
         socialMedia['facebook'] = _facebookController.text.trim();
