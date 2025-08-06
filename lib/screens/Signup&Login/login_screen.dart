@@ -41,9 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
       } else if (e.code == 'wrong-password') {
         message = 'Incorrect password';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("$message ${e.message}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("$message ${e.message}")));
     } finally {
       setState(() => isLoading = false);
     }
@@ -70,9 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       await _navigateBasedOnUserState();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google sign-in error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Google sign-in error')));
     } finally {
       setState(() => isLoading = false);
     }
@@ -109,15 +109,13 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textColor = theme.textTheme.bodyLarge?.color;
 
     return GestureDetector(
-      onTap: () =>  FocusScope.of(context).unfocus(),
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
@@ -151,20 +149,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           CustomTextField(
                             hintText: 'Email',
                             controller: emailController,
-                            validator: (value) =>
-                                value == null || value.isEmpty ? 'Enter your Email' : null,
+                            validator:
+                                (value) =>
+                                    value == null || value.isEmpty
+                                        ? 'Enter your Email'
+                                        : null,
                           ),
                           CustomTextField(
                             hintText: 'Password',
                             obscureText: _obscurePassword,
                             controller: passwordController,
-                            validator: (value) =>
-                                value != null && value.length >= 6
-                                    ? null
-                                    : 'Enter at least 6 characters',
+                            validator:
+                                (value) =>
+                                    value != null && value.length >= 6
+                                        ? null
+                                        : 'Enter at least 6 characters',
                             suffixIcon: IconButton(
                               icon: Icon(
-                                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                                 color: Colors.grey,
                               ),
                               onPressed: () {
@@ -174,22 +178,43 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/reset_password');
+                              },
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           isLoading
                               ? const CircularProgressIndicator()
                               : CustomButton(
-                                  text: 'Log In',
-                                  onPressed: _login,
-                                  width: double.infinity,
-                                  fontSize: 20,
-                                ),
+                                text: 'Log In',
+                                onPressed: _login,
+                                width: double.infinity,
+                                fontSize: 20,
+                              ),
                           const SizedBox(height: 24),
                           Row(
                             children: [
                               const Expanded(child: Divider()),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8),
-                                child: Text('or', style: TextStyle(color: textColor)),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                child: Text(
+                                  'or',
+                                  style: TextStyle(color: textColor),
+                                ),
                               ),
                               const Expanded(child: Divider()),
                             ],
@@ -207,25 +232,31 @@ class _LoginScreenState extends State<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Don\'t have an account?', style: TextStyle(color: textColor)),
+                              Text(
+                                'Don\'t have an account?',
+                                style: TextStyle(color: textColor),
+                              ),
                               TextButton(
-                                onPressed: () => Navigator.pushNamed(context, '/signup'),
+                                onPressed:
+                                    () =>
+                                        Navigator.pushNamed(context, '/signup'),
                                 child: Text(
                                   'Sign Up',
-                                  style: TextStyle(color: theme.colorScheme.primary),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.1,
+                          ),
                           TextButton(
                             onPressed: _skipLogin,
                             child: Text(
                               'Skip',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: textColor,
-                              ),
+                              style: TextStyle(fontSize: 16, color: textColor),
                             ),
                           ),
                         ],
