@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../models/Clinic.dart';
 import './booking_confirmation_screen.dart';
 import 'package:intl/intl.dart';
@@ -19,25 +21,55 @@ class ClinicDetailsScreen extends StatefulWidget {
 class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   DateTime? selectedDate;
   String? selectedTime;
+  DateTime _focusedDay = DateTime.now();
+  CalendarFormat _calendarFormat = CalendarFormat.month;
 
   List<String> _availableTimes = [];
   bool _isLoadingTimes = false;
   String? _errorLoadingTimes;
+  Set<DateTime> _availableDays = {};
 
   String getDayName(DateTime date) {
     return DateFormat('EEEE').format(date);
   }
 
-  ImageProvider _getImageProvider(String? imageBase64) {
+  @override
+  void initState() {
+    super.initState();
+    _generateAvailableDays();
+  }
+
+  void _generateAvailableDays() {
+    final now = DateTime.now();
+    final endDate = now.add(const Duration(days: 30));
+    
+    for (DateTime date = now; date.isBefore(endDate); date = date.add(const Duration(days: 1))) {
+      final dayName = getDayName(date);
+      if (widget.clinic.workingDays.contains(dayName)) {
+        _availableDays.add(DateTime(date.year, date.month, date.day));
+      }
+    }
+  }
+
+  ImageProvider? _getImageProvider(String? imageBase64) {
     if (imageBase64 == null || imageBase64.isEmpty) {
-      return const AssetImage('assets/images/default_avatar.png'); // تأكد من وجود صورة افتراضية
+      return null;
     }
     try {
       final bytes = base64Decode(imageBase64);
       return MemoryImage(bytes);
     } catch (e) {
       print("Error decoding image: $e");
-      return const AssetImage('assets/images/default_avatar.png');
+      return null;
+    }
+  }
+
+  Uint8List _decodeBase64Image(String base64String) {
+    try {
+      return base64Decode(base64String);
+    } catch (e) {
+      print("Error decoding base64 image: $e");
+      return Uint8List(0);
     }
   }
   
@@ -111,37 +143,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     }
   }
 
-  void _pickDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate ?? now,
-      firstDate: now,
-      lastDate: now.add(const Duration(days: 30)),
-    );
 
-    if (picked != null) {
-      final pickedDay = getDayName(picked);
-      final availableDays = widget.clinic.workingDays;
-
-      if (!availableDays.contains(pickedDay)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Doctor not available on $pickedDay")),
-        );
-        setState(() {
-          selectedDate = null;
-          selectedTime = null;
-          _availableTimes = [];
-        });
-        return;
-      }
-
-      setState(() {
-        selectedDate = picked;
-      });
-      _fetchAvailableTimes();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -164,12 +166,39 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 50,
-                    // ================== التعديل رقم 2: استخدام الدالة الجديدة ==================
-                    backgroundImage: _getImageProvider(clinic.image),
-                    // ======================================================================
-                    onBackgroundImageError: (exception, stackTrace) {},
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: clinic.image.isNotEmpty
+                          ? Image.memory(
+                              _decodeBase64Image(clinic.image),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.local_hospital,
+                                  size: 40,
+                                  color: theme.colorScheme.primary,
+                                );
+                              },
+                            )
+                          : Icon(
+                              Icons.local_hospital,
+                              size: 40,
+                              color: theme.colorScheme.primary,
+                            ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -195,10 +224,79 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               const SizedBox(height: 24),
               const Text("Choose Appointment Day", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: _pickDate,
-                icon: const Icon(Icons.calendar_today),
-                label: Text(selectedDate != null ? DateFormat.yMMMd().format(selectedDate!) : "Pick a date"),
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: TableCalendar<DateTime>(
+                  firstDay: DateTime.now(),
+                  lastDay: DateTime.now().add(const Duration(days: 30)),
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(selectedDate, day);
+                  },
+                  enabledDayPredicate: (day) {
+                    return _availableDays.contains(DateTime(day.year, day.month, day.day));
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    if (_availableDays.contains(DateTime(selectedDay.year, selectedDay.month, selectedDay.day))) {
+                      setState(() {
+                        selectedDate = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                      _fetchAvailableTimes();
+                    }
+                  },
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                  onPageChanged: (focusedDay) {
+                    _focusedDay = focusedDay;
+                  },
+                  calendarStyle: CalendarStyle(
+                    outsideDaysVisible: false,
+                    weekendTextStyle: TextStyle(color: theme.colorScheme.primary),
+                    holidayTextStyle: TextStyle(color: theme.colorScheme.primary),
+                    selectedDecoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    todayDecoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    disabledTextStyle: TextStyle(
+                      color: theme.hintColor.withOpacity(0.3),
+                    ),
+                    markerDecoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  headerStyle: HeaderStyle(
+                    formatButtonVisible: true,
+                    titleCentered: true,
+                    formatButtonShowsNext: false,
+                    formatButtonDecoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    formatButtonTextStyle: const TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               const Text("Available Times", style: TextStyle(fontWeight: FontWeight.bold)),

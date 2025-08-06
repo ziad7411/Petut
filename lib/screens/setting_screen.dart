@@ -64,8 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildProfileImage(ThemeData theme) {
     if (profileImage != null && profileImage!.isNotEmpty) {
-      // Check if it's an avatar ID
-      if (AvatarHelper.avatarData.containsKey(profileImage)) {
+      // Check if it's fluttermoji avatar
+      if (profileImage == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(profileImage, size: 60);
       }
       // Check if it's base64 image

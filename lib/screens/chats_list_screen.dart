@@ -254,7 +254,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
 
   Widget _buildUserAvatar(String? imageData, String? userName, double radius) {
     if (imageData != null && imageData.isNotEmpty) {
-      if (AvatarHelper.avatarData.containsKey(imageData)) {
+      if (imageData == 'fluttermoji_avatar') {
         return AvatarHelper.buildAvatar(imageData, size: radius * 2);
       }
       try {

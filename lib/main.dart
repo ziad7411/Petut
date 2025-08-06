@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:petut/firebase_options.dart';
+import 'package:petut/screens/Signup&Login/reset_password_screen.dart';
 import 'package:petut/services/notification_service.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
@@ -27,12 +28,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('🔔 رسالة في الخلفية: ${message.messageId}');
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
- 
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  
+
   // Initialize chat notifications safely
   try {
     await NotificationService.initialize();
@@ -67,20 +69,21 @@ class MainApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
+        '/reset_password': (context) => const ResetPasswordScreen(),
         '/start': (context) => const StartScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainScreen(),
         '/role_selection': (context) => const RoleSelectionScreen(),
-        '/doctor_form': (context) => const DoctorFormScreen(),
+        '/doctor_form': (context) => const DoctorFormScreen(),  
         '/customer_form': (context) => const CustomerFormScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/goToWebPage': (context) => const GoToWebPage(),
         '/myOrders': (context) => const MyOrdersScreen(),
         '/favourites': (context) => const FavoritesScreen(),
-        '/settings':(context)=> const SettingsScreen(),
+        '/settings': (context) => const SettingsScreen(),
         '/cart': (context) => const CartScreen(),
-       },
+      },
     );
   }
 }
