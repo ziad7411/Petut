@@ -13,7 +13,7 @@ plugins {
 android {
     namespace = "com.example.petut"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion =  "27.0.12077973"
+    // ndkVersion =  "27.0.12077973"
     
 
     compileOptions {
