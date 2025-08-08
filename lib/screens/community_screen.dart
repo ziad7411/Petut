@@ -19,6 +19,7 @@ class CommunityScreen extends StatefulWidget {
 class _CommunityScreenState extends State<CommunityScreen> {
   String _selectedTopic = 'All';
   String _sortBy = 'latest';
+  String _timeFilter = 'all';
   final List<String> _topics = ['All', 'Adoption', 'Breeding', 'Others'];
 
   @override
@@ -33,12 +34,23 @@ class _CommunityScreenState extends State<CommunityScreen> {
         elevation: 0,
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) => setState(() => _sortBy = value),
+            onSelected: (value) {
+              if (value.startsWith('sort_')) {
+                setState(() => _sortBy = value.replaceFirst('sort_', ''));
+              } else {
+                setState(() => _timeFilter = value);
+              }
+            },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'latest', child: Text('Latest')),
-              const PopupMenuItem(value: 'nearest', child: Text('Nearest')),
+              const PopupMenuItem(value: 'sort_latest', child: Text('الأحدث')),
+              const PopupMenuItem(value: 'sort_oldest', child: Text('الأقدم')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'all', child: Text('الكل')),
+              const PopupMenuItem(value: '24h', child: Text('آخر 24 ساعة')),
+              const PopupMenuItem(value: '7d', child: Text('آخر أسبوع')),
+              const PopupMenuItem(value: '30d', child: Text('آخر 30 يوم')),
             ],
-            child: Icon(Icons.sort, color: theme.colorScheme.primary),
+            child: Icon(Icons.filter_list, color: theme.colorScheme.primary),
           ),
         ],
       ),
@@ -92,7 +104,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                       return const Center(child: Text('Error loading posts'));
                     }
                     
-                    final posts = postsSnapshot.data!;
+                    final posts = _filterAndSortPosts(postsSnapshot.data!);
                     return ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: posts.length,
@@ -122,7 +134,41 @@ class _CommunityScreenState extends State<CommunityScreen> {
       query = query.where('topic', isEqualTo: _selectedTopic);
     }
     
-    return query.orderBy('timestamp', descending: _sortBy == 'latest').snapshots();
+    return query.orderBy('timestamp', descending: true).snapshots();
+  }
+
+  List<Post> _filterAndSortPosts(List<Post> posts) {
+    final now = DateTime.now();
+    List<Post> filteredPosts = posts;
+
+    // Apply time filter
+    switch (_timeFilter) {
+      case '24h':
+        filteredPosts = posts.where((post) => 
+          now.difference(post.timestamp).inHours <= 24).toList();
+        break;
+      case '7d':
+        filteredPosts = posts.where((post) => 
+          now.difference(post.timestamp).inDays <= 7).toList();
+        break;
+      case '30d':
+        filteredPosts = posts.where((post) => 
+          now.difference(post.timestamp).inDays <= 30).toList();
+        break;
+      case 'all':
+      default:
+        filteredPosts = posts;
+        break;
+    }
+
+    // Apply sorting
+    if (_sortBy == 'latest') {
+      filteredPosts.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    } else if (_sortBy == 'oldest') {
+      filteredPosts.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    }
+
+    return filteredPosts;
   }
 
   Future<List<Post>> _loadPostsWithUserData(List<DocumentSnapshot> docs) async {

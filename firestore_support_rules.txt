@@ -1,0 +1,57 @@
+// قواعد الأمان لنظام الدعم الفني في Firestore
+// يجب إضافة هذه القواعد إلى Firebase Console
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // قواعد تذاكر الدعم الفني
+    match /support_tickets/{ticketId} {
+      // المستخدمون يمكنهم قراءة تذاكرهم فقط
+      allow read: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // المستخدمون يمكنهم إنشاء تذاكر جديدة
+      allow create: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // المستخدمون يمكنهم تحديث رسائلهم فقط، الأدمن يمكنهم تحديث كل شيء
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // الأدمن فقط يمكنهم حذف التذاكر
+      allow delete: if isAdmin();
+    }
+    
+    // قواعد مجموعة الأدمن (يجب إنشاؤها يدوياً)
+    match /admins/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+    }
+    
+    // دالة للتحقق من صلاحيات الأدمن
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+  }
+}
+
+// ملاحظات مهمة:
+// 1. يجب إنشاء collection اسمه "admins" في Firestore
+// 2. يجب إضافة document لكل أدمن بـ uid الخاص به
+// 3. مثال على document الأدمن:
+//    Collection: admins
+//    Document ID: [admin_uid]
+//    Data: {
+//      "name": "Admin Name",
+//      "email": "admin@example.com",
+//      "role": "admin",
+//      "createdAt": [timestamp]
+//    }
+
+// فهارس مطلوبة في Firestore:
+// Collection: support_tickets
+// 1. userId (Ascending), updatedAt (Descending)
+// 2. status (Ascending), updatedAt (Descending)  
+// 3. assignedAdminId (Ascending), updatedAt (Descending)
+// 4. priority (Ascending), updatedAt (Descending)

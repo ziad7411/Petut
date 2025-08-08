@@ -114,21 +114,40 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
   Future<ClinicWithDistance?> _fetchClinicData(DocumentSnapshot clinicDoc) async {
     final clinicData = clinicDoc.data() as Map<String, dynamic>;
     final doctorId = clinicData['doctorId'];
-    if (doctorId == null) return null;
+    
+    print("🏥 Processing clinic: ${clinicDoc.id}");
+    print("📋 Clinic data: $clinicData");
+    print("👨‍⚕️ Doctor ID: $doctorId");
+    
+    if (doctorId == null) {
+      print("❌ No doctorId found for clinic ${clinicDoc.id}");
+      return null;
+    }
 
     try {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(doctorId).get();
-      if (!userDoc.exists) return null;
+      print("👤 User doc exists: ${userDoc.exists}");
+      
+      if (!userDoc.exists) {
+        print("❌ User document not found for doctorId: $doctorId");
+        return null;
+      }
 
       final detailsDoc = await FirebaseFirestore.instance.collection('users').doc(doctorId).collection('doctorsDetails').doc('details').get();
+      print("📄 Details doc exists: ${detailsDoc.exists}");
       
       final doctorData = userDoc.data()!;
       final detailsData = detailsDoc.exists ? detailsDoc.data()! : <String, dynamic>{};
       
+      print("👨‍⚕️ Doctor data: $doctorData");
+      print("📋 Details data: $detailsData");
+      
       final combinedData = {...doctorData, ...clinicData, ...detailsData};
+      print("🔄 Combined data: $combinedData");
       
       // هنا نستخدم الموديل الآمن لتحويل البيانات
       final clinic = Clinic.fromCombinedData(combinedData);
+      print("✅ Clinic created successfully: ${clinic.name}");
       
       // حساب المسافة باستخدام lat/lng المحفوظة في البيانات
       final clinicLat = (combinedData['latitude'] ?? 30.0444).toDouble();
@@ -145,7 +164,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
 
       return ClinicWithDistance(clinic: clinic, distance: distance);
     } catch (e) {
-      print("Error fetching data for doctor $doctorId: $e");
+      print("❌ Error fetching data for doctor $doctorId: $e");
       return null;
     }
   }
@@ -296,7 +315,7 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
           ),
           // الجزء الثالث: قائمة العيادات
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('clinics').where('status', isEqualTo: 'active').snapshots(),
+            stream: FirebaseFirestore.instance.collection('clinics').where('status', whereIn: ['active', 'pending']).snapshots(),
             builder: (context, clinicSnapshot) {
               if (clinicSnapshot.hasError) return const SliverFillRemaining(child: Center(child: Text('An error occurred')));
               if (clinicSnapshot.connectionState == ConnectionState.waiting) return const SliverFillRemaining(child: Center(child: CircularProgressIndicator()));

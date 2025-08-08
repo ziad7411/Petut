@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'dart:io';
 import 'dart:convert';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
+import '../widgets/image_picker_widget.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -19,16 +20,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   String _selectedTopic = 'Others';
   File? _selectedImage;
   bool _isLoading = false;
-  final ImagePicker _picker = ImagePicker();
-
   final List<String> _topics = ['Adoption', 'Breeding', 'Others'];
-
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() => _selectedImage = File(image.path));
-    }
-  }
 
   Future<void> _createPost() async {
     if (_contentController.text.trim().isEmpty) {
@@ -125,29 +117,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             const SizedBox(height: 24),
             
             // Image Selection
-            Row(
-              children: [
-                const Text('Add Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Choose Image'),
-                ),
-              ],
+            ImagePickerWidget(
+              selectedImage: _selectedImage,
+              onImageSelected: (image) => setState(() => _selectedImage = image),
+              buttonText: 'Add & Crop',
             ),
-            if (_selectedImage != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  _selectedImage!,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
             const Spacer(),
             
             // Create Button
