@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'dart:io';
 import 'dart:convert';
 import '../models/Post.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/edit_image_widget.dart';
 
 class EditPostScreen extends StatefulWidget {
   final Post post;
@@ -20,7 +21,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
   late String _selectedTopic;
   File? _selectedImage;
   bool _isLoading = false;
-  final ImagePicker _picker = ImagePicker();
+  bool _imageChanged = false;
 
   final List<String> _topics = ['Adoption', 'Breeding', 'Others'];
 
@@ -31,12 +32,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
     _selectedTopic = widget.post.topic;
   }
 
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() => _selectedImage = File(image.path));
-    }
-  }
+
 
   Future<void> _updatePost() async {
     if (_contentController.text.trim().isEmpty) {
@@ -60,7 +56,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
         'topic': _selectedTopic,
       };
 
-      if (imageBase64 != null) {
+      if (_imageChanged && imageBase64 != null) {
         updateData['imageUrl'] = imageBase64;
       }
 
@@ -135,40 +131,12 @@ class _EditPostScreenState extends State<EditPostScreen> {
             const SizedBox(height: 24),
             
             // Image Selection
-            Row(
-              children: [
-                const Text('Update Photo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Choose New Image'),
-                ),
-              ],
+            EditImageWidget(
+              selectedImage: _selectedImage,
+              existingImageBase64: widget.post.imageUrl,
+              onImageSelected: (image) => setState(() => _selectedImage = image),
+              onImageChanged: () => setState(() => _imageChanged = true),
             ),
-            if (_selectedImage != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  _selectedImage!,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ] else if (widget.post.imageUrl != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.memory(
-                  base64Decode(widget.post.imageUrl!),
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ],
             const Spacer(),
             
             // Update Button

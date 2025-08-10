@@ -1,13 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
+
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/reset_password_screen.dart';
 import 'package:petut/screens/appoinment_user_screen.dart';
 import 'package:petut/screens/privacy_policy.dart';
 import 'package:petut/screens/terms_of_service.dart';
 import 'package:petut/services/notification_service.dart';
+import 'package:petut/services/support_notification_service.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
 import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
@@ -22,6 +23,7 @@ import 'package:petut/screens/role_selection_screen.dart';
 import 'package:petut/screens/doctor_form_screen.dart';
 import 'package:petut/screens/customer_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
+import 'package:petut/screens/contact_us_screen.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
@@ -41,13 +43,12 @@ void main() async {
   // Initialize chat notifications safely
   try {
     await NotificationService.initialize();
+    await SupportNotificationService.initialize();
   } catch (e) {
     print('Failed to initialize notifications: $e');
   }
 
-  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-  OneSignal.initialize("0f5304b0-aea7-4f4a-8eb3-0e715915a563");
-  OneSignal.Notifications.requestPermission(false);
+  // OneSignal removed for web compatibility
 
   runApp(
     ChangeNotifierProvider(
@@ -87,6 +88,7 @@ class MainApp extends StatelessWidget {
         '/settings': (context) => const SettingsScreen(),
         '/cart': (context) => const CartScreen(),
         '/bookingHistory': (context) => const UserBookingsScreen(),
+        '/contactUs': (context) => const ContactUsScreen(),
         '/terms': (context) => const TermsOfServiceScreen(),
         '/privacy': (context) => const PrivacyPolicyScreen(),
       },
