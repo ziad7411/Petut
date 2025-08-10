@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/reset_password_screen.dart';
 import 'package:petut/screens/appoinment_user_screen.dart';
+import 'package:petut/screens/privacy_policy.dart';
+import 'package:petut/screens/terms_of_service.dart';
 import 'package:petut/services/notification_service.dart';
 import 'package:petut/services/support_notification_service.dart';
 import 'package:petut/screens/Signup&Login/login_screen.dart';
@@ -77,7 +79,7 @@ class MainApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/main': (context) => const MainScreen(),
         '/role_selection': (context) => const RoleSelectionScreen(),
-        '/doctor_form': (context) => const DoctorFormScreen(),  
+        '/doctor_form': (context) => const DoctorFormScreen(),
         '/customer_form': (context) => const CustomerFormScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/goToWebPage': (context) => const GoToWebPage(),
@@ -87,6 +89,8 @@ class MainApp extends StatelessWidget {
         '/cart': (context) => const CartScreen(),
         '/bookingHistory': (context) => const UserBookingsScreen(),
         '/contactUs': (context) => const ContactUsScreen(),
+        '/terms': (context) => const TermsOfServiceScreen(),
+        '/privacy': (context) => const PrivacyPolicyScreen(),
       },
     );
   }

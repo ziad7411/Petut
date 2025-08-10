@@ -24,6 +24,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? selectedRole;
 
   bool isLoading = false;
+  bool _agreedToTerms = false;
 
   Future<void> signup() async {
     if (!_formKey.currentState!.validate()) return;
@@ -33,6 +34,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
         const SnackBar(
           content: Text('Please select a role'),
           duration: Durations.medium4,
+        ),
+      );
+      return;
+    }
+    if (!_agreedToTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must agree to the terms and privacy policy'),
         ),
       );
       return;
@@ -70,53 +79,55 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-Future<void> _signInWithGoogle() async {
-  setState(() => isLoading = true);
-  try {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) {
-      setState(() => isLoading = false);
-      return;
-    }
+  Future<void> _signInWithGoogle() async {
+    setState(() => isLoading = true);
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        setState(() => isLoading = false);
+        return;
+      }
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-    final uid = userCredential.user!.uid;
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+      final uid = userCredential.user!.uid;
 
-    // نجيب الداتا من Firestore
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      // نجيب الداتا من Firestore
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
 
-    if (userDoc.exists && userDoc.data()?['role'] != null) {
-      final role = userDoc.data()!['role'];
+      if (userDoc.exists && userDoc.data()?['role'] != null) {
+        final role = userDoc.data()!['role'];
 
-      if (role == 'doctor') {
-        Navigator.pushReplacementNamed(context, '/goToWebPage');
-      } else if (role == 'customer') {
-        Navigator.pushReplacementNamed(context, '/main');
-      }else {
-        // دور غير معروف، رجعه يختار
+        if (role == 'doctor') {
+          Navigator.pushReplacementNamed(context, '/goToWebPage');
+        } else if (role == 'customer') {
+          Navigator.pushReplacementNamed(context, '/main');
+        } else {
+          // دور غير معروف، رجعه يختار
+          Navigator.pushReplacementNamed(context, '/role_selection');
+        }
+      } else {
+        // مستخدم جديد أو بدون role
         Navigator.pushReplacementNamed(context, '/role_selection');
       }
-    } else {
-      // مستخدم جديد أو بدون role
-      Navigator.pushReplacementNamed(context, '/role_selection');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    } finally {
+      setState(() => isLoading = false);
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-  SnackBar(content: Text('Error: ${e.toString()}')),
-);
-
-  } finally {
-    setState(() => isLoading = false);
   }
-}
-
 
   void _skipLogin() => Navigator.pushReplacementNamed(context, '/main');
 
@@ -255,6 +266,62 @@ Future<void> _signInWithGoogle() async {
                               });
                             },
                           ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Checkbox(
+                                value: _agreedToTerms,
+                                onChanged: (value) {
+                                  setState(
+                                    () => _agreedToTerms = value ?? false,
+                                  );
+                                },
+                              ),
+                              SizedBox(height: 12),
+                              Expanded(
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      'I agree to the ',
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pushNamed(context, '/terms');
+                                      },
+                                      child: Text(
+                                        'Terms of Service',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      ' and ',
+                                      style: TextStyle(color: textColor),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/privacy',
+                                        );
+                                      },
+                                      child: Text(
+                                        'Privacy Policy',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.primary,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+
                           const SizedBox(height: 24),
                           isLoading
                               ? const CircularProgressIndicator()
@@ -299,7 +366,8 @@ Future<void> _signInWithGoogle() async {
                               ),
                               TextButton(
                                 onPressed:
-                                    () => Navigator.pushNamed(context, '/login'),
+                                    () =>
+                                        Navigator.pushNamed(context, '/login'),
                                 child: Text(
                                   'Log In',
                                   style: TextStyle(
