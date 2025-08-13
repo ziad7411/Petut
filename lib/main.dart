@@ -27,6 +27,7 @@ import 'package:petut/screens/contact_us_screen.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
+import 'package:petut/widgets/app_wrapper.dart'; 
 import 'package:provider/provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -40,15 +41,12 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Initialize chat notifications safely
   try {
     await NotificationService.initialize();
     await SupportNotificationService.initialize();
   } catch (e) {
     print('Failed to initialize notifications: $e');
   }
-
-  // OneSignal removed for web compatibility
 
   runApp(
     ChangeNotifierProvider(
@@ -72,25 +70,83 @@ class MainApp extends StatelessWidget {
       themeMode: themeController.themeMode,
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/reset_password': (context) => const ResetPasswordScreen(),
-        '/start': (context) => const StartScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/main': (context) => const MainScreen(),
-        '/role_selection': (context) => const RoleSelectionScreen(),
-        '/doctor_form': (context) => const DoctorFormScreen(),
-        '/customer_form': (context) => const CustomerFormScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/goToWebPage': (context) => const GoToWebPage(),
-        '/myOrders': (context) => const MyOrdersScreen(),
-        '/favourites': (context) => const FavoritesScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/cart': (context) => const CartScreen(),
-        '/bookingHistory': (context) => const UserBookingsScreen(),
-        '/contactUs': (context) => const ContactUsScreen(),
-        '/terms': (context) => const TermsOfServiceScreen(),
-        '/privacy': (context) => const PrivacyPolicyScreen(),
+       
+        '/': (context) => AppWrapper(
+              child: const SplashScreen(),
+              routeName: '/',
+            ),
+        '/reset_password': (context) => AppWrapper(
+              child: const ResetPasswordScreen(),
+              routeName: '/reset_password',
+            ),
+        '/start': (context) => AppWrapper(
+              child: const StartScreen(),
+              routeName: '/start',
+            ),
+        '/signup': (context) => AppWrapper(
+              child: const SignUpScreen(),
+              routeName: '/signup',
+            ),
+        '/login': (context) => AppWrapper(
+              child: const LoginScreen(),
+              routeName: '/login',
+            ),
+        '/main': (context) => AppWrapper(
+              child: const MainScreen(),
+              routeName: '/main',
+            ),
+        '/role_selection': (context) => AppWrapper(
+              child: const RoleSelectionScreen(),
+              routeName: '/role_selection',
+            ),
+        '/doctor_form': (context) => AppWrapper(
+              child: const DoctorFormScreen(),
+              routeName: '/doctor_form',
+            ),
+        '/customer_form': (context) => AppWrapper(
+              child: const CustomerFormScreen(),
+              routeName: '/customer_form',
+            ),
+        '/profile': (context) => AppWrapper(
+              child: const ProfileScreen(),
+              routeName: '/profile',
+            ),
+        '/goToWebPage': (context) => AppWrapper(
+              child: const GoToWebPage(),
+              routeName: '/goToWebPage',
+            ),
+        '/myOrders': (context) => AppWrapper(
+              child: const MyOrdersScreen(),
+              routeName: '/myOrders',
+            ),
+        '/favourites': (context) => AppWrapper(
+              child: const FavoritesScreen(),
+              routeName: '/favourites',
+            ),
+        '/settings': (context) => AppWrapper(
+              child: const SettingsScreen(),
+              routeName: '/settings',
+            ),
+        '/cart': (context) => AppWrapper(
+              child: const CartScreen(),
+              routeName: '/cart',
+            ),
+        '/bookingHistory': (context) => AppWrapper(
+              child: const UserBookingsScreen(),
+              routeName: '/bookingHistory',
+            ),
+        '/contactUs': (context) => AppWrapper(
+              child: const ContactUsScreen(),
+              routeName: '/contactUs',
+            ),
+        '/terms': (context) => AppWrapper(
+              child: const TermsOfServiceScreen(),
+              routeName: '/terms',
+            ),
+        '/privacy': (context) => AppWrapper(
+              child: const PrivacyPolicyScreen(),
+              routeName: '/privacy',
+            ),
       },
     );
   }
