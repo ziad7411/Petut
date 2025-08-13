@@ -1,0 +1,8 @@
+0 Golden Retriever
+1 Labrador Retriever
+2 Shih Tzu
+3 Maine Coon
+4 Persian Cat
+5 Ragdoll
+6 Turtle
+7 Hamster
