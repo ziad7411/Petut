@@ -24,6 +24,7 @@ import 'package:petut/screens/doctor_form_screen.dart';
 import 'package:petut/screens/customer_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
 import 'package:petut/screens/contact_us_screen.dart';
+import 'package:petut/screens/pet_breed_classifier.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
@@ -146,6 +147,10 @@ class MainApp extends StatelessWidget {
         '/privacy': (context) => AppWrapper(
               child: const PrivacyPolicyScreen(),
               routeName: '/privacy',
+            ),
+        '/petClassifier': (context) => AppWrapper(
+              child: const PetBreedClassifier(),
+              routeName: '/petClassifier',
             ),
       },
     );
