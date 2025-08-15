@@ -42,8 +42,4 @@ class AppWrapper extends StatelessWidget {
       ],
     );
   }
-
-  // void _navigateToIdentify(BuildContext context) {
-  //   Navigator.pushNamed(context, '/lib/screens/pet_classifier_test.dart');
-  // }
 }
