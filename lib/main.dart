@@ -23,7 +23,7 @@ import 'package:petut/screens/role_selection_screen.dart';
 import 'package:petut/screens/doctor_form_screen.dart';
 import 'package:petut/screens/customer_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
-import 'package:petut/screens/contact_us_screen.dart';
+import 'package:petut/screens/support_tickets_list_screen.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
@@ -32,7 +32,7 @@ import 'package:provider/provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('🔔 رسالة في الخلفية: ${message.messageId}');
+  print('🔔 Background message: ${message.messageId}');
 }
 
 void main() async {
@@ -70,7 +70,6 @@ class MainApp extends StatelessWidget {
       themeMode: themeController.themeMode,
       initialRoute: '/',
       routes: {
-       
         '/': (context) => AppWrapper(
               child: const SplashScreen(),
               routeName: '/',
@@ -135,10 +134,6 @@ class MainApp extends StatelessWidget {
               child: const UserBookingsScreen(),
               routeName: '/bookingHistory',
             ),
-        '/contactUs': (context) => AppWrapper(
-              child: const ContactUsScreen(),
-              routeName: '/contactUs',
-            ),
         '/terms': (context) => AppWrapper(
               child: const TermsOfServiceScreen(),
               routeName: '/terms',
@@ -146,6 +141,10 @@ class MainApp extends StatelessWidget {
         '/privacy': (context) => AppWrapper(
               child: const PrivacyPolicyScreen(),
               routeName: '/privacy',
+            ),
+        '/support': (context) => AppWrapper(
+              child: const SupportTicketsListScreen(),
+              routeName: '/support',
             ),
       },
     );

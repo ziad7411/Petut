@@ -54,4 +54,13 @@ service cloud.firestore {
 // 1. userId (Ascending), updatedAt (Descending)
 // 2. status (Ascending), updatedAt (Descending)  
 // 3. assignedAdminId (Ascending), updatedAt (Descending)
-// 4. priority (Ascending), updatedAt (Descending)
+// 4. priority (Ascending), updatedAt (Descending)rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /support_tickets/{ticketId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+    }
+  }
+}

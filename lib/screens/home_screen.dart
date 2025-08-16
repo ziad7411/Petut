@@ -212,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                 ),
+
             const SizedBox(width: 8),
             iconContainer(
               Icons.shopping_cart_outlined,

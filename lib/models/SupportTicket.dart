@@ -34,26 +34,49 @@ class SupportTicket {
   });
 
   factory SupportTicket.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return SupportTicket(
-      id: doc.id,
-      userId: data['userId'] ?? '',
-      userName: data['userName'] ?? '',
-      userEmail: data['userEmail'] ?? '',
-      userImage: data['userImage'],
-      subject: data['subject'] ?? '',
-      status: data['status'] ?? 'open',
-      priority: data['priority'] ?? 'medium',
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      assignedAdminId: data['assignedAdminId'],
-      assignedAdminName: data['assignedAdminName'],
-      messages: (data['messages'] as List<dynamic>?)
-              ?.map((m) => SupportMessage.fromMap(m))
-              .toList() ??
-          [],
-      hasUnreadMessages: data['hasUnreadMessages'] ?? false,
-    );
+    try {
+      final data = doc.data() as Map<String, dynamic>;
+      print('Parsing ticket ${doc.id}: $data');
+      
+      final ticket = SupportTicket(
+        id: doc.id,
+        userId: data['userId'] ?? '',
+        userName: data['userName'] ?? '',
+        userEmail: data['userEmail'] ?? '',
+        userImage: data['userImage'],
+        subject: data['subject'] ?? '',
+        status: data['status'] ?? 'open',
+        priority: data['priority'] ?? 'medium',
+        createdAt: data['createdAt'] != null 
+            ? (data['createdAt'] as Timestamp).toDate() 
+            : DateTime.now(),
+        updatedAt: data['updatedAt'] != null 
+            ? (data['updatedAt'] as Timestamp).toDate() 
+            : DateTime.now(),
+        assignedAdminId: data['assignedAdminId'],
+        assignedAdminName: data['assignedAdminName'],
+        messages: (data['messages'] as List<dynamic>?)
+                ?.map((m) {
+                  try {
+                    return SupportMessage.fromMap(m as Map<String, dynamic>);
+                  } catch (e) {
+                    print('Error parsing message: $e');
+                    return null;
+                  }
+                })
+                .where((m) => m != null)
+                .cast<SupportMessage>()
+                .toList() ??
+            [],
+        hasUnreadMessages: data['hasUnreadMessages'] ?? false,
+      );
+      
+      print('Successfully parsed ticket: ${ticket.id} - ${ticket.subject}');
+      return ticket;
+    } catch (e) {
+      print('Error parsing ticket ${doc.id}: $e');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toMap() {
@@ -101,7 +124,9 @@ class SupportMessage {
       senderName: data['senderName'] ?? '',
       senderRole: data['senderRole'] ?? 'user',
       message: data['message'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'] != null 
+          ? (data['timestamp'] as Timestamp).toDate() 
+          : DateTime.now(),
       imageUrl: data['imageUrl'],
     );
   }
