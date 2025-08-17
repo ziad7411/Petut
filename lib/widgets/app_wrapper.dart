@@ -32,8 +32,4 @@ class AppWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return child;
   }
-
-  // void _navigateToIdentify(BuildContext context) {
-  //   Navigator.pushNamed(context, '/lib/screens/pet_classifier_test.dart');
-  // }
 }

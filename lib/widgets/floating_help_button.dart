@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:petut/app_colors.dart';
- import 'custom_button.dart';
-
-
-
+import 'custom_button.dart';
 class FloatingHelpButton extends StatefulWidget {
   final VoidCallback? onIdentifyPressed;
 
@@ -25,8 +22,6 @@ class _FloatingHelpButtonState extends State<FloatingHelpButton>
   @override
   void initState() {
     super.initState();
-
-    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -70,7 +65,11 @@ class _FloatingHelpButtonState extends State<FloatingHelpButton>
     }
   }
 
-// // دالة للانتقال لصفحة التصنيف
+  void _navigateToClassifier() {
+    _toggleHelp();
+    Navigator.pushNamed(context, '/petClassifier');
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -151,13 +150,12 @@ class _FloatingHelpButtonState extends State<FloatingHelpButton>
 
                       // Divider
                       Container(height: 1, color: Colors.grey.withOpacity(0.2)),
-
                       const SizedBox(height: 16),
 
                       // AI Breed Identifier Button
                       CustomButton(
                         text: 'AI Breed Identifier',
-                        onPressed: widget.onIdentifyPressed,
+                        onPressed: _navigateToClassifier,
                         icon: const Text('🧠', style: TextStyle(fontSize: 20)),
                         width: double.infinity,
                         height: 50,
