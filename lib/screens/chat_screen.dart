@@ -30,6 +30,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
+  final FocusNode _messageFocusNode = FocusNode();
   final String currentUserId = FirebaseAuth.instance.currentUser!.uid;
   final ImagePicker _picker = ImagePicker();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -52,6 +53,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     SimpleChatService.updateOnlineStatus(false);
     _messageController.dispose();
+    _messageFocusNode.dispose();
     super.dispose();
   }
 
@@ -77,6 +79,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
@@ -220,6 +223,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     Expanded(
                       child: TextField(
                         controller: _messageController,
+                        focusNode: _messageFocusNode,
                         decoration: InputDecoration(
                           hintText: 'Type a message...',
                           border: OutlineInputBorder(
@@ -232,6 +236,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                         maxLines: null,
                         textCapitalization: TextCapitalization.sentences,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.send,
+                        enableSuggestions: true,
+                        autocorrect: true,
+                        onSubmitted: (_) => _sendMessage(),
+                        onTap: () {
+                          _messageFocusNode.requestFocus();
+                        },
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -492,6 +504,4 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
     return 'Now';
   }
-
-
 }

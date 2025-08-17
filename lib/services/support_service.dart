@@ -8,7 +8,7 @@ class SupportService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // إنشاء تذكرة دعم جديدة
+  // وظيفة إنشاء تذكرة دعم جديدة
   static Future<String> createSupportTicket({
     required String subject,
     required String initialMessage,
@@ -17,9 +17,23 @@ class SupportService {
     final user = _auth.currentUser;
     if (user == null) throw Exception('User not authenticated');
 
-    // جلب بيانات المستخدم
+    // التحقق من وجود Live Chat مفتوح فقط
+    if (priority == 'live_chat') {
+      final liveChatTickets = await _firestore
+          .collection('support_tickets')
+          .where('userId', isEqualTo: user.uid)
+          .where('priority', isEqualTo: 'live_chat')
+          .where('status', whereIn: ['open', 'in_progress'])
+          .get();
+      
+      if (liveChatTickets.docs.isNotEmpty) {
+        throw Exception('You already have an active live chat session. Please close it before starting a new one.');
+      }
+    }
+
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
     final userData = userDoc.data() ?? {};
+    print('Creating ticket for user: ${user.uid}, userData: $userData');
 
     final ticketId = _firestore.collection('support_tickets').doc().id;
     final now = DateTime.now();
@@ -47,11 +61,17 @@ class SupportService {
       messages: [firstMessage],
     );
 
-    await _firestore.collection('support_tickets').doc(ticketId).set(ticket.toMap());
-    return ticketId;
+    try {
+      await _firestore.collection('support_tickets').doc(ticketId).set(ticket.toMap());
+      print('Ticket created successfully: $ticketId');
+      return ticketId;
+    } catch (e) {
+      print('Error creating ticket: $e');
+      throw Exception('Failed to create ticket: $e');
+    }
   }
 
-  // إرسال رسالة في تذكرة الدعم
+  // وظيفة إرسال رسالة في تذكرة الدعم (لليوزر فقط)
   static Future<void> sendMessage({
     required String ticketId,
     required String message,
@@ -73,14 +93,29 @@ class SupportService {
       imageUrl: imageUrl,
     );
 
+    // جلب حالة التذكرة الحالية
+    final ticketDoc = await _firestore.collection('support_tickets').doc(ticketId).get();
+    final currentStatus = ticketDoc.data()?['status'] ?? 'open';
+    
     await _firestore.collection('support_tickets').doc(ticketId).update({
       'messages': FieldValue.arrayUnion([newMessage.toMap()]),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
-      'status': 'open', // إعادة فتح التذكرة عند إرسال رسالة جديدة
+      'status': currentStatus == 'closed' ? 'open' : currentStatus,
     });
+
+    // إرسال إشعار للأدمن
+    if (ticketDoc.exists) {
+      final ticketData = ticketDoc.data()!;
+      await SupportNotificationService.sendUserMessageNotification(
+        ticketId: ticketId,
+        subject: ticketData['subject'],
+        userName: userData['fullName'] ?? 'User',
+        message: message,
+      );
+    }
   }
 
-  // جلب تذاكر الدعم للمستخدم الحالي
+  // وظيفة جلب تذاكر الدعم للمستخدم الحالي فقط
   static Stream<List<SupportTicket>> getUserSupportTickets() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
@@ -90,12 +125,26 @@ class SupportService {
         .where('userId', isEqualTo: user.uid)
         .orderBy('updatedAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => SupportTicket.fromFirestore(doc))
-            .toList());
+        .map((snapshot) {
+          print('Raw snapshot: ${snapshot.docs.length} documents');
+          final tickets = <SupportTicket>[];
+          
+          for (final doc in snapshot.docs) {
+            try {
+              final ticket = SupportTicket.fromFirestore(doc);
+              tickets.add(ticket);
+              print('Added ticket to list: ${ticket.subject}');
+            } catch (e) {
+              print('Error parsing ticket ${doc.id}: $e');
+            }
+          }
+          
+          print('Final tickets list: ${tickets.length} tickets');
+          return tickets;
+        });
   }
 
-  // جلب تذكرة دعم محددة
+  // وظيفة جلب تذكرة دعم محددة
   static Stream<SupportTicket?> getSupportTicket(String ticketId) {
     return _firestore
         .collection('support_tickets')
@@ -186,5 +235,10 @@ class SupportService {
     await _firestore.collection('support_tickets').doc(ticketId).update({
       'hasUnreadMessages': false,
     });
+  }
+
+  // حذف التذكرة تماماً
+  static Future<void> deleteTicket(String ticketId) async {
+    await _firestore.collection('support_tickets').doc(ticketId).delete();
   }
 }

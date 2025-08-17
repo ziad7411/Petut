@@ -161,7 +161,16 @@ class SupportNotificationService {
         'data': data,
         'timestamp': FieldValue.serverTimestamp(),
         'processed': false,
+        'priority': 'high',
+        'type': 'support_reply',
       });
+      
+      // عرض إشعار محلي فوري
+      await _showSupportNotification(
+        title: title,
+        body: body,
+        ticketId: data['ticketId'] ?? '',
+      );
     } catch (e) {
       print('Error sending push notification: $e');
     }
@@ -220,5 +229,55 @@ class SupportNotificationService {
     }
 
     await batch.commit();
+  }
+
+  // إرسال إشعار للأدمن عند إرسال المستخدم رسالة
+  static Future<void> sendUserMessageNotification({
+    required String ticketId,
+    required String subject,
+    required String userName,
+    required String message,
+  }) async {
+    try {
+      // جلب جميع الأدمن
+      final adminQuery = await _firestore
+          .collection('users')
+          .where('role', isEqualTo: 'admin')
+          .get();
+
+      for (final adminDoc in adminQuery.docs) {
+        final adminData = adminDoc.data();
+        final fcmToken = adminData['fcmToken'];
+        
+        if (fcmToken == null) continue;
+
+        // حفظ الإشعار في قاعدة البيانات
+        await _firestore.collection('notifications').add({
+          'userId': adminDoc.id,
+          'title': 'New Support Message',
+          'message': '$userName sent a message: ${message.length > 50 ? message.substring(0, 50) + '...' : message}',
+          'type': 'user_message',
+          'data': {
+            'ticketId': ticketId,
+            'userName': userName,
+          },
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // إرسال push notification
+        await _sendPushNotification(
+          token: fcmToken,
+          title: 'New Support Message',
+          body: '$userName: $subject',
+          data: {
+            'type': 'user_message',
+            'ticketId': ticketId,
+          },
+        );
+      }
+    } catch (e) {
+      print('Error sending admin notification: $e');
+    }
   }
 }
