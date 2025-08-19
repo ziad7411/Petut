@@ -109,7 +109,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final role = userDoc.data()!['role'];
 
         if (role == 'doctor') {
-          Navigator.pushReplacementNamed(context, '/goToWebPage');
+          Navigator.pushReplacementNamed(context, '/doctorBooking');
         } else if (role == 'customer') {
           Navigator.pushReplacementNamed(context, '/main');
         } else {
