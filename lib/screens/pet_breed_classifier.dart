@@ -49,14 +49,22 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
       final bytes = await imageFile.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+<<<<<<< HEAD
+      final apiKey = '2929b00fa2ded7b1a8c258df46705a60'; 
+=======
       final apiKey = '2929b00fa2ded7b1a8c258df46705a60';
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
       final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
       final response = await http.post(url, body: {'image': base64Image});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+<<<<<<< HEAD
+        return data['data']['url'];  
+=======
         return data['data']['url'];
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
       } else {
         debugPrint('Failed to upload image: ${response.statusCode}');
         return null;
@@ -247,8 +255,13 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
+<<<<<<< HEAD
+        child: Column(
+          children: [
+=======
         child: SingleChildScrollView(
           child: Column(children: [
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
             // Model status indicator
             Container(
               width: double.infinity,
