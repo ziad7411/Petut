@@ -38,11 +38,10 @@ class CustomButton extends StatelessWidget {
     // 🔹 قياسات Responsive
     final responsiveHeight = height ?? (screenWidth < 360 ? 48 : 56);
     final responsiveFontSize = fontSize ?? (screenWidth < 360 ? 14 : 16);
-    final responsiveIconSpacing = iconSpacing ?? (screenWidth < 360 ? 6 : 8);
-    final responsivePadding = padding ??
-        EdgeInsets.symmetric(
-          horizontal: screenWidth < 360 ? 16 : 20,
-        );
+    final responsiveIconSpacing = iconSpacing ?? (screenWidth < 360 ? 4 : 6);
+    final responsivePadding =
+        padding ??
+        EdgeInsets.symmetric(horizontal: screenWidth < 360 ? 16 : 20);
 
     Color backgroundColor;
     Color textColor;
@@ -50,10 +49,11 @@ class CustomButton extends StatelessWidget {
 
     if (customColor != null) {
       backgroundColor = customColor!;
-      textColor = ThemeData.estimateBrightnessForColor(backgroundColor) ==
-              Brightness.dark
-          ? Colors.white
-          : Colors.black;
+      textColor =
+          ThemeData.estimateBrightnessForColor(backgroundColor) ==
+                  Brightness.dark
+              ? Colors.white
+              : Colors.black;
       borderColor = null;
     } else if (isPrimary) {
       backgroundColor = theme.colorScheme.primary;
@@ -75,46 +75,55 @@ class CustomButton extends StatelessWidget {
           foregroundColor: textColor,
           padding: responsivePadding,
           elevation: isPrimary ? 4 : 0,
-          shadowColor: isPrimary
-              ? theme.colorScheme.primary.withOpacity(0.3)
-              : Colors.transparent,
+          shadowColor:
+              isPrimary
+                  ? theme.colorScheme.primary.withOpacity(0.3)
+                  : Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
-            side: borderColor != null
-                ? BorderSide(color: borderColor, width: 1.5)
-                : BorderSide.none,
+            side:
+                borderColor != null
+                    ? BorderSide(color: borderColor, width: 1.5)
+                    : BorderSide.none,
           ),
           disabledBackgroundColor: backgroundColor.withOpacity(0.6),
         ),
-        child: icon != null
-            ? Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  icon!,
-                  SizedBox(width: responsiveIconSpacing),
-                  Flexible(
-                    child: Text(
-                      text,
-                      style: TextStyle(
-                        fontSize: responsiveFontSize,
-                        fontWeight: fontWeight,
-                        letterSpacing: 0.7,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+        child:
+            icon != null
+                ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height:
+                          responsiveFontSize +
+                          6, // 🔹 حجم الأيقونة بالنسبة للنص
+                      width: responsiveFontSize + 6,
+                      child: icon,
                     ),
+                    SizedBox(width: responsiveIconSpacing),
+                    Flexible(
+                      child: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: responsiveFontSize,
+                          fontWeight: fontWeight,
+                          letterSpacing: 0.7,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+                : Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: responsiveFontSize,
+                    fontWeight: fontWeight,
+                    letterSpacing: 0.7,
                   ),
-                ],
-              )
-            : Text(
-                text,
-                style: TextStyle(
-                  fontSize: responsiveFontSize,
-                  fontWeight: fontWeight,
-                  letterSpacing: 0.7,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                overflow: TextOverflow.ellipsis,
-              ),
       ),
     );
   }

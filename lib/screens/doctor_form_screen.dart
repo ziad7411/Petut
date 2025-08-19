@@ -36,7 +36,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
   final _priceController = TextEditingController();
 
   String? _selectedGender;
-  final List<String> _genders = ['Male', 'Female'];
+  final List<String> _genders = ['male', 'female'];
   String? governorate;
   String? city;
   String? street;
@@ -264,31 +264,38 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
   }
 
-  Future<String?> uploadImageToImgbb(File? imageFile) async {
-    if (imageFile == null) return null;
+ Future<String?> uploadImageToImgbb(File? imageFile) async {
+  if (imageFile == null) return null;
 
-    const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
+  const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
 
-    try {
-      final bytes = await imageFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
+  try {
+    final bytes = await imageFile.readAsBytes();
+    final base64Image = base64Encode(bytes);
 
-      final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
+    final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
-      final response = await http.post(url, body: {'image': base64Image});
+    final response = await http.post(url, body: {
+      'image': base64Image,
+    });
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['data']['url'];
-      } else {
-        print('❌ Upload failed: ${response.body}');
-        return null;
-      }
-    } catch (e) {
-      print('❌ Error uploading image: $e');
+    print("📤 Response: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+
+      // ✅ جرب display_url بدل url
+      return data['data']['display_url'] ?? data['data']['url'];
+    } else {
+      print('❌ Upload failed: ${response.body}');
       return null;
     }
+  } catch (e) {
+    print('❌ Error uploading image: $e');
+    return null;
   }
+}
+
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {

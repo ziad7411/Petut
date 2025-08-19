@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:petut/widgets/custom_text_field.dart'; // Assuming you have this
-import 'package:petut/widgets/custom_button.dart'; // Assuming you have this
+import 'package:petut/screens/get_current_location.dart';
+import 'package:petut/widgets/custom_text_field.dart';
+import 'package:petut/widgets/custom_button.dart';
 
 class SelectLocationScreen extends StatefulWidget {
   const SelectLocationScreen({super.key});
@@ -13,7 +14,7 @@ class SelectLocationScreen extends StatefulWidget {
 }
 
 class _SelectLocationScreenState extends State<SelectLocationScreen> {
-  LatLng selectedLocation = LatLng(30.033333, 31.233334); // Cairo default
+  LatLng? selectedLocation;
   final MapController _mapController = MapController();
 
   bool useMap = true;
@@ -26,16 +27,40 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
   final cityController = TextEditingController();
   final streetController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _loadUserLocation();
+  }
+
+void _loadUserLocation() async {
+  try {
+    LatLng userLocation = await getCurrentLocation();
+    setState(() {
+      selectedLocation = userLocation;
+    });
+
+    // هنا نخلي الماب تتحرك للمكان الحالي
+    _mapController.move(userLocation, 15.0);
+  } catch (e) {
+    print("Error getting location: $e");
+    setState(() {
+      selectedLocation = LatLng(30.033333, 31.233334); // fallback Cairo
+    });
+
+    _mapController.move(selectedLocation!, 12.0);
+  }
+}
+
+
   void _handleTap(LatLng latLng) async {
     setState(() {
       selectedLocation = latLng;
     });
 
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        latLng.latitude,
-        latLng.longitude,
-      );
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(latLng.latitude, latLng.longitude);
 
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -44,74 +69,40 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
           governorate = place.administrativeArea ?? 'Cairo';
           city =
               place.locality ?? place.subAdministrativeArea ?? 'Unknown City';
-          street =
-              place.street?.isNotEmpty == true
-                  ? "${place.street}, ${place.subLocality ?? ''}"
-                  : 'Selected Location';
+          street = place.street?.isNotEmpty == true
+              ? "${place.street}, ${place.subLocality ?? ''}"
+              : 'Selected Location';
 
-          // Update text controllers as well
           governorateController.text = governorate ?? 'Cairo';
           cityController.text = city ?? 'Unknown City';
           streetController.text = street ?? 'Selected Location';
         });
-      } else {
-        // Fallback if no placemarks found
-        setState(() {
-          governorate = 'Cairo';
-          city = 'Selected Area';
-          street =
-              'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
-
-          governorateController.text = governorate!;
-          cityController.text = city!;
-          streetController.text = street!;
-        });
       }
     } catch (e) {
       print('Geocoding error: $e');
-      // Fallback address when geocoding fails
-      setState(() {
-        governorate = 'Cairo';
-        city = 'Selected Area';
-        street =
-            'Lat: ${latLng.latitude.toStringAsFixed(4)}, Lng: ${latLng.longitude.toStringAsFixed(4)}';
-
-        governorateController.text = governorate!;
-        cityController.text = city!;
-        streetController.text = street!;
-      });
     }
   }
 
   void _submit() {
-    // Ensure we have some data
-    final gov =
-        governorateController.text.trim().isNotEmpty
-            ? governorateController.text.trim()
-            : (governorate ?? 'Cairo');
-    final cityName =
-        cityController.text.trim().isNotEmpty
-            ? cityController.text.trim()
-            : (city ?? 'Selected Area');
-    final streetName =
-        streetController.text.trim().isNotEmpty
-            ? streetController.text.trim()
-            : (street ?? 'Selected Location');
+    if (selectedLocation == null) return;
 
-    final selectedData = {
-      "governorate": gov,
-      "city": cityName,
-      "street": streetName,
-    };
+    final gov = governorateController.text.trim().isNotEmpty
+        ? governorateController.text.trim()
+        : (governorate ?? 'Cairo');
+    final cityName = cityController.text.trim().isNotEmpty
+        ? cityController.text.trim()
+        : (city ?? 'Selected Area');
+    final streetName = streetController.text.trim().isNotEmpty
+        ? streetController.text.trim()
+        : (street ?? 'Selected Location');
 
-    // Return both address and coordinates
     final result = {
-      'address': selectedData.values.join(', '),
+      'address': [gov, cityName, streetName].join(', '),
       'governorate': gov,
       'city': cityName,
       'street': streetName,
-      'lat': selectedLocation.latitude,
-      'lng': selectedLocation.longitude,
+      'lat': selectedLocation!.latitude,
+      'lng': selectedLocation!.longitude,
     };
 
     Navigator.pop(context, result);
@@ -120,6 +111,10 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final LatLng defaultLocation =
+        selectedLocation ?? LatLng(30.033333, 31.233334);
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -145,7 +140,7 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
               child: FlutterMap(
                 mapController: _mapController,
                 options: MapOptions(
-                  center: selectedLocation,
+                  center: defaultLocation,
                   zoom: 13,
                   onTap: (_, latLng) => _handleTap(latLng),
                 ),
@@ -155,20 +150,21 @@ class _SelectLocationScreenState extends State<SelectLocationScreen> {
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.petut',
                   ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: selectedLocation,
-                        width: 50,
-                        height: 50,
-                        child: Icon(
-                          Icons.location_on,
-                          size: 40,
-                          color: theme.colorScheme.error,
+                  if (selectedLocation != null)
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: selectedLocation!,
+                          width: 50,
+                          height: 50,
+                          child: Icon(
+                            Icons.location_on,
+                            size: 40,
+                            color: theme.colorScheme.error,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                 ],
               ),
             ),

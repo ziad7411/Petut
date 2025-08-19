@@ -49,14 +49,22 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
       final bytes = await imageFile.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+<<<<<<< HEAD
       final apiKey = '2929b00fa2ded7b1a8c258df46705a60'; 
+=======
+      final apiKey = '2929b00fa2ded7b1a8c258df46705a60';
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
       final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
       final response = await http.post(url, body: {'image': base64Image});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+<<<<<<< HEAD
         return data['data']['url'];  
+=======
+        return data['data']['url'];
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
       } else {
         debugPrint('Failed to upload image: ${response.statusCode}');
         return null;
@@ -247,8 +255,13 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
+<<<<<<< HEAD
         child: Column(
           children: [
+=======
+        child: SingleChildScrollView(
+          child: Column(children: [
+>>>>>>> 19d5460023ee83da16bfc0c363dc7c78d39e8105
             // Model status indicator
             Container(
               width: double.infinity,
@@ -327,46 +340,169 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
                     : null,
               ),
             const SizedBox(height: 30),
-            if (_result.isNotEmpty)
+            if (_result.isNotEmpty && !_hasError)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: _hasError
-                      ? Colors.red.withOpacity(0.1)
-                      : Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(15),
-                  border:
-                      Border.all(color: _hasError ? Colors.red : Colors.green),
-                ),
+                margin: const EdgeInsets.only(top: 20),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                        _hasError
-                            ? Icons.error_outline
-                            : Icons.check_circle_outline,
-                        size: 40,
-                        color: _hasError ? Colors.red : Colors.green),
-                    const SizedBox(height: 10),
-                    Text(_hasError ? 'Error' : 'Result',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _hasError ? Colors.red : Colors.green)),
-                    const SizedBox(height: 10),
-                    Text(_result,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: _hasError
-                                ? Colors.red[700]
-                                : Colors.green[700])),
+                    // ===== Result Header =====
+                    Text(
+                      "Analysis Complete",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orangeAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+          
+                    // ===== Breed Card =====
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _result.split("\n")[0], // Breed
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _result.split("\n")[1], // Confidence
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+          
+                    const SizedBox(height: 15),
+          
+                    // ===== Info Card =====
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Key Information",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _chip("Type", "Dog"),
+                                _chip("Lifespan", "10-12 years"),
+                                _chip("Energy", "High"),
+                                _chip("Friendly", "Yes"),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+          
+                    const SizedBox(height: 15),
+          
+                    // ===== Care Info =====
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text("Care Information",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            SizedBox(height: 8),
+                            Text(
+                              "America’s most popular dog breed. Extremely social and energetic. Requires daily exercise and mental stimulation.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+          
+                    const SizedBox(height: 15),
+          
+                    // ===== Recommended Products =====
+                    Card(
+                      color: const Color(0xFF1A1A2E),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("Recommended Products",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white)),
+                            const SizedBox(height: 10),
+                            _productTile("🐾 Fetch toys"),
+                            _productTile("❄️ Cooling mat"),
+                            _productTile("🥩 Premium dog food"),
+                            _productTile("🏃 Running leash"),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-          ],
+          ]),
         ),
       ),
+    );
+  }
+
+  Widget _chip(String title, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text("$title: $value",
+          style: const TextStyle(color: Colors.white, fontSize: 13)),
+    );
+  }
+
+  Widget _productTile(String text) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black38,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child:
+          Text(text, style: const TextStyle(color: Colors.white, fontSize: 14)),
     );
   }
 }
