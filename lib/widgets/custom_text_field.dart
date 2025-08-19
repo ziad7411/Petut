@@ -13,7 +13,7 @@ class CustomTextField extends StatelessWidget {
   final bool? readOnly;
   final VoidCallback? onTap;
   final ValueChanged<String>? onChanged;
-   final int? maxLines;
+  final int? maxLines;
 
   const CustomTextField({
     super.key,
@@ -38,7 +38,6 @@ class CustomTextField extends StatelessWidget {
     // -- تعديل: استخدام لون السطح من الثيم الحالي --
     final fillColor = customFillColor ?? theme.colorScheme.surface;
 
-
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
@@ -47,19 +46,22 @@ class CustomTextField extends StatelessWidget {
         validator: validator,
         keyboardType: keyboardType,
         onChanged: onChanged,
-        maxLength:  maxLength,
-        readOnly:  readOnly ?? false,
-        onTap:onTap ,
+        maxLength: maxLength,
+        readOnly: readOnly ?? false,
+        onTap: onTap,
         maxLines: maxLines,
         style: TextStyle(color: theme.textTheme.bodyLarge?.color),
         decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: TextStyle(color: theme.hintColor),
-          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: theme.iconTheme.color) : null,
+          labelText: hintText,
+          labelStyle: TextStyle(color: theme.hintColor),
+          prefixIcon: prefixIcon != null
+              ? Icon(prefixIcon, color: theme.iconTheme.color)
+              : null,
           suffixIcon: suffixIcon,
           filled: true,
           fillColor: fillColor,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(25.0),
             borderSide: BorderSide.none,
@@ -70,7 +72,8 @@ class CustomTextField extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(25.0),
-            borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
+            borderSide:
+                BorderSide(color: theme.colorScheme.primary, width: 1.5),
           ),
         ),
       ),

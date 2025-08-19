@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:petut/screens/payment_method_screen.dart';
@@ -51,6 +53,22 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
           deliveryTax = 0;
       }
     });
+  }
+
+  Future<void> _loadUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        _nameController.text = data['fullName'] ?? '';
+        _phoneController.text = data['phone'] ?? '';
+      }
+    }
   }
 
   Future<void> _pickDateTime() async {
@@ -117,21 +135,20 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (_) => PaymentMethodScreen(
-              name: _nameController.text.trim(),
-              phone: _phoneController.text.trim(),
-              address: fullAddress,
-              governorate: governorate!,
-              city: city!,
-              street: street!,
-              subtotal: widget.subtotal,
-              deliveryFee: deliveryTax,
-              total: total,
-              deliveryTime: selectedDateTime!,
-              postalCode: _postalCodeController.text.trim(),
-              deliveryMethod: selectedMethod!,
-            ),
+        builder: (_) => PaymentMethodScreen(
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          address: fullAddress,
+          governorate: governorate!,
+          city: city!,
+          street: street!,
+          subtotal: widget.subtotal,
+          deliveryFee: deliveryTax,
+          total: total,
+          deliveryTime: selectedDateTime!,
+          postalCode: _postalCodeController.text.trim(),
+          deliveryMethod: selectedMethod!,
+        ),
       ),
     );
   }
@@ -143,6 +160,12 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     _postalCodeController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
   }
 
   @override
@@ -163,28 +186,24 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               CustomTextField(
                 hintText: 'Full Name',
                 controller: _nameController,
-                validator:
-                    (v) =>
-                        v == null || v.trim().isEmpty
-                            ? 'Enter your name'
-                            : null,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Enter your name' : null,
               ),
               CustomTextField(
                 hintText: 'Phone Number',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                validator:
-                    (v) =>
-                        v == null || v.length < 8
-                            ? 'Enter valid phone number'
-                            : null,
+                validator: (v) => v == null || v.length < 8
+                    ? 'Enter valid phone number'
+                    : null,
               ),
+
               CustomTextField(
                 hintText: 'Postal Code',
                 controller: _postalCodeController,
                 keyboardType: TextInputType.number,
-                validator:
-                    (v) => v == null || v.isEmpty ? 'Enter postal code' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Enter postal code' : null,
               ),
               const SizedBox(height: 10),
 
@@ -220,7 +239,6 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                     );
                   }
                 },
-
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -233,10 +251,9 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                         ? "$governorate - $city - $street"
                         : "Select Address from Map",
                     style: TextStyle(
-                      color:
-                          governorate != null
-                              ? theme.textTheme.bodyLarge?.color
-                              : theme.hintColor,
+                      color: governorate != null
+                          ? theme.textTheme.bodyLarge?.color
+                          : theme.hintColor,
                     ),
                   ),
                 ),
@@ -246,21 +263,18 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               CustomTextField(
                 hintText: 'Street Details / House No.',
                 controller: _addressController,
-                validator:
-                    (v) =>
-                        v == null || v.isEmpty
-                            ? 'Enter additional street info'
-                            : null,
+                validator: (v) => v == null || v.isEmpty
+                    ? 'Enter additional street info'
+                    : null,
               ),
 
               const SizedBox(height: 20),
 
               Text("Delivery Method", style: theme.textTheme.titleMedium),
               ...DeliveryMethod.values.map((method) {
-                final label =
-                    method == DeliveryMethod.standard
-                        ? "Standard (5–7 days) - Free"
-                        : method == DeliveryMethod.express
+                final label = method == DeliveryMethod.standard
+                    ? "Standard (5–7 days) - Free"
+                    : method == DeliveryMethod.express
                         ? "Express (1–2 days) - 50 EGP"
                         : "Postal Office - 20 EGP";
 
@@ -302,14 +316,13 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                       Text(
                         selectedDateTime != null
                             ? DateFormat(
-                              'yyyy-MM-dd hh:mm a',
-                            ).format(selectedDateTime!)
+                                'yyyy-MM-dd hh:mm a',
+                              ).format(selectedDateTime!)
                             : "Select delivery date & time",
                         style: TextStyle(
-                          color:
-                              selectedDateTime != null
-                                  ? theme.textTheme.bodyLarge?.color
-                                  : theme.hintColor,
+                          color: selectedDateTime != null
+                              ? theme.textTheme.bodyLarge?.color
+                              : theme.hintColor,
                         ),
                       ),
                       const Icon(Icons.calendar_today),

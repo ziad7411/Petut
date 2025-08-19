@@ -28,7 +28,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<IconData> _icons = [
     Icons.home,
     Icons.receipt,
-    Icons.favorite,
+    Icons.health_and_safety,
     Icons.favorite_border,
     Icons.person,
   ];
