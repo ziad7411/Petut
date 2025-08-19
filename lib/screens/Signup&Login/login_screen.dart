@@ -89,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/customer_form');
         break;
       case 'doctor_home':
-        Navigator.pushReplacementNamed(context, '/goToWebPage');
+        Navigator.pushReplacementNamed(context, '/doctorBooking');
         break;
       case 'user_home':
         Navigator.pushReplacementNamed(context, '/main');

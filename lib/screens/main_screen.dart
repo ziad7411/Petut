@@ -4,7 +4,7 @@ import 'home_screen.dart';
 import 'health_screen.dart';
 import 'favorites_screen.dart';
 import 'profile_screen.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
 class MainScreen extends StatefulWidget {
@@ -26,11 +26,11 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   final List<IconData> _icons = [
-    FontAwesomeIcons.house,
-    FontAwesomeIcons.receipt,
-    FontAwesomeIcons.heartPulse,
-    FontAwesomeIcons.solidHeart,
-    FontAwesomeIcons.user,
+    Icons.home,
+    Icons.receipt,
+    Icons.health_and_safety,
+    Icons.favorite_border,
+    Icons.person,
   ];
 
   @override

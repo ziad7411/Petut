@@ -1,10 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:petut/firebase_options.dart';
 import 'package:petut/screens/Signup&Login/reset_password_screen.dart';
 import 'package:petut/screens/appoinment_user_screen.dart';
+import 'package:petut/screens/doctor_booking_screen.dart';
 import 'package:petut/screens/privacy_policy.dart';
 import 'package:petut/screens/terms_of_service.dart';
 import 'package:petut/services/notification_service.dart';
@@ -23,7 +25,8 @@ import 'package:petut/screens/role_selection_screen.dart';
 import 'package:petut/screens/doctor_form_screen.dart';
 import 'package:petut/screens/customer_form_screen.dart';
 import 'package:petut/screens/profile_screen.dart';
-import 'package:petut/screens/contact_us_screen.dart';
+
+import 'package:petut/screens/support_tickets_list_screen.dart';
 import 'package:petut/screens/pet_breed_classifier.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
@@ -33,12 +36,11 @@ import 'package:provider/provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('🔔 رسالة في الخلفية: ${message.messageId}');
+  print('🔔 Background message: ${message.messageId}');
 }
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await Geolocator.requestPermission();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -71,86 +73,83 @@ class MainApp extends StatelessWidget {
       themeMode: themeController.themeMode,
       initialRoute: '/',
       routes: {
-       
         '/': (context) => AppWrapper(
-              child: const SplashScreen(),
               routeName: '/',
+              child: const SplashScreen(),
             ),
         '/reset_password': (context) => AppWrapper(
-              child: const ResetPasswordScreen(),
               routeName: '/reset_password',
+              child: const ResetPasswordScreen(),
             ),
         '/start': (context) => AppWrapper(
-              child: const StartScreen(),
               routeName: '/start',
+              child: const StartScreen(),
             ),
         '/signup': (context) => AppWrapper(
-              child: const SignUpScreen(),
               routeName: '/signup',
+              child: const SignUpScreen(),
             ),
         '/login': (context) => AppWrapper(
-              child: const LoginScreen(),
               routeName: '/login',
+              child: const LoginScreen(),
             ),
         '/main': (context) => AppWrapper(
-              child: const MainScreen(),
               routeName: '/main',
+              child: const MainScreen(),
             ),
         '/role_selection': (context) => AppWrapper(
-              child: const RoleSelectionScreen(),
               routeName: '/role_selection',
+              child: const RoleSelectionScreen(),
             ),
         '/doctor_form': (context) => AppWrapper(
-              child: const DoctorFormScreen(),
               routeName: '/doctor_form',
+              child: const DoctorFormScreen(),
             ),
         '/customer_form': (context) => AppWrapper(
-              child: const CustomerFormScreen(),
               routeName: '/customer_form',
+              child: const CustomerFormScreen(),
             ),
         '/profile': (context) => AppWrapper(
-              child: const ProfileScreen(),
               routeName: '/profile',
-            ),
-        '/goToWebPage': (context) => AppWrapper(
-              child: const GoToWebPage(),
-              routeName: '/goToWebPage',
+              child: const ProfileScreen(),
             ),
         '/myOrders': (context) => AppWrapper(
-              child: const MyOrdersScreen(),
               routeName: '/myOrders',
+              child: const MyOrdersScreen(),
             ),
         '/favourites': (context) => AppWrapper(
-              child: const FavoritesScreen(),
               routeName: '/favourites',
+              child: const FavoritesScreen(),
             ),
         '/settings': (context) => AppWrapper(
-              child: const SettingsScreen(),
               routeName: '/settings',
+              child: const SettingsScreen(),
             ),
         '/cart': (context) => AppWrapper(
-              child: const CartScreen(),
               routeName: '/cart',
+              child: const CartScreen(),
             ),
         '/bookingHistory': (context) => AppWrapper(
-              child: const UserBookingsScreen(),
               routeName: '/bookingHistory',
+              child: const UserBookingsScreen(),
             ),
-        '/contactUs': (context) => AppWrapper(
-              child: const ContactUsScreen(),
-              routeName: '/contactUs',
-            ),
+        '/support': (context) => AppWrapper(
+              routeName: '/support',
+              child: const SupportTicketsListScreen(),
+),
         '/terms': (context) => AppWrapper(
-              child: const TermsOfServiceScreen(),
               routeName: '/terms',
+              child: const TermsOfServiceScreen(),
             ),
         '/privacy': (context) => AppWrapper(
-              child: const PrivacyPolicyScreen(),
               routeName: '/privacy',
+              child: const PrivacyPolicyScreen(),
             ),
         '/petClassifier': (context) => AppWrapper(
-              child: const PetBreedClassifier(),
               routeName: '/petClassifier',
+              child: const PetBreedClassifier(),
+            ),
+            '/doctorBooking': (context) => AppWrapper(routeName: '/doctorBooking',child: DoctorDashboardPage(),
             ),
       },
     );

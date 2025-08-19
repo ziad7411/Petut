@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'floating_help_button.dart';
 
 class AppWrapper extends StatelessWidget {
   final Widget child;
@@ -31,15 +30,6 @@ class AppWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(' AppWrapper build called with route: $routeName');
-    print(' Should show help button: $shouldShowHelpButton');
-
-    return Stack(
-      children: [
-        child,
-
-        if (shouldShowHelpButton) const FloatingHelpButton(),
-      ],
-    );
+    return child;
   }
 }

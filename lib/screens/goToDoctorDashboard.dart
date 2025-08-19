@@ -17,7 +17,7 @@ class _GoToWebPageState extends State<GoToWebPage> {
   String doctorName = '';
   bool isLoading = true;
 
-  final Uri webUrl = Uri.parse('https://www.youtube.com/');
+  final Uri webUrl = Uri.parse('https://petutpetcare.vercel.app/login');
 
   @override
   void initState() {

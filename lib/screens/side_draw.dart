@@ -7,7 +7,7 @@ import 'package:petut/utils/avatar_helper.dart';
 import 'package:petut/widgets/custom_button.dart';
 import 'package:provider/provider.dart';
 import 'community_screen.dart';
-import 'contact_us_screen.dart';
+
 
 class SideDraw extends StatefulWidget {
   const SideDraw({super.key});
@@ -219,14 +219,15 @@ class _SideDrawState extends State<SideDraw> {
                       },
                     ),
                   ],
+
                     const SizedBox(height: 12),
                     ListTile(
                       leading: Icon(Icons.support_agent,
                           color: theme.colorScheme.primary),
-                      title: const Text("Contact Us"),
+                      title: const Text("Technical Support"),
                       onTap: () {
                         Navigator.pop(context);
-                        Navigator.pushNamed(context, '/contactUs');
+                        Navigator.pushNamed(context, '/support');
                       },
                     ),
                     const SizedBox(height: 12),
