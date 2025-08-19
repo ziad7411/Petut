@@ -133,8 +133,11 @@ class _ClinicsScreenState extends State<ClinicsScreen> {
         return null;
       }
 
-      final detailsDoc = await FirebaseFirestore.instance.collection('users').doc(doctorId).collection('doctorsDetails').doc('details').get();
-      print("📄 Details doc exists: ${detailsDoc.exists}");
+final detailsDoc = await FirebaseFirestore.instance
+    .collection('users')
+    .doc(doctorId)
+    .get();
+          print("📄 Details doc exists: ${detailsDoc.exists}");
       
       final doctorData = userDoc.data()!;
       final detailsData = detailsDoc.exists ? detailsDoc.data()! : <String, dynamic>{};
