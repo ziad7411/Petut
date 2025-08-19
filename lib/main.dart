@@ -31,13 +31,14 @@ import 'package:petut/screens/pet_breed_classifier.dart';
 import 'package:petut/theme/theme_controller.dart';
 import 'package:petut/theme/theme_light.dart';
 import 'package:petut/theme/theme_dark.dart';
-import 'package:petut/widgets/app_wrapper.dart'; 
+import 'package:petut/widgets/app_wrapper.dart';
 import 'package:provider/provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print('🔔 Background message: ${message.messageId}');
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Geolocator.requestPermission();
@@ -136,7 +137,7 @@ class MainApp extends StatelessWidget {
         '/support': (context) => AppWrapper(
               routeName: '/support',
               child: const SupportTicketsListScreen(),
-),
+            ),
         '/terms': (context) => AppWrapper(
               routeName: '/terms',
               child: const TermsOfServiceScreen(),
@@ -149,7 +150,9 @@ class MainApp extends StatelessWidget {
               routeName: '/petClassifier',
               child: const PetBreedClassifier(),
             ),
-            '/doctorBooking': (context) => AppWrapper(routeName: '/doctorBooking',child: DoctorDashboardPage(),
+        '/doctorBooking': (context) => AppWrapper(
+              routeName: '/doctorBooking',
+              child: DoctorDashboardPage(),
             ),
       },
     );
