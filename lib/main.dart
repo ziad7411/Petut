@@ -150,10 +150,11 @@ class MainApp extends StatelessWidget {
               child: const SupportTicketsListScreen(),
               routeName: '/support',
 
-        '/petClassifier': (context) => AppWrapper(
+        '/PetBreedClassifier': (context) => AppWrapper(
               child: const PetBreedClassifier(),
               routeName: '/petClassifier',
-            ),
+        )
+        )
       },
     );
   }

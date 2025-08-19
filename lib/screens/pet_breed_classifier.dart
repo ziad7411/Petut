@@ -1,11 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:image/image.dart' as img;
 import 'dart:io';
-import 'dart:typed_data';
 import '../app_colors.dart';
 import '../widgets/custom_button.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PetBreedClassifier extends StatefulWidget {
   const PetBreedClassifier({super.key});
@@ -39,6 +41,73 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
   void initState() {
     super.initState();
     _loadModel();
+    _fetchPetsDataViaRest();
+  }
+
+  Future<String?> uploadImageToImgbb(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final base64Image = base64Encode(bytes);
+
+      final apiKey = '2929b00fa2ded7b1a8c258df46705a60'; 
+      final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
+
+      final response = await http.post(url, body: {'image': base64Image});
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data']['url'];  
+      } else {
+        debugPrint('Failed to upload image: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  Future<void> saveResultToFirestore({
+    required String breed,
+    required double confidence,
+    File? imageFile,
+  }) async {
+    try {
+      String imageUrl = '';
+      if (imageFile != null) {
+        final uploadedUrl = await uploadImageToImgbb(imageFile);
+        if (uploadedUrl != null) imageUrl = uploadedUrl;
+      }
+
+      await FirebaseFirestore.instance.collection('ai').add({
+        'breed': breed,
+        'confidence': confidence,
+        'image_url': imageUrl,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      debugPrint('✅ Result saved to Firestore');
+    } catch (e) {
+      debugPrint('❌ Error saving to Firestore: $e');
+    }
+  }
+
+  /// جلب البيانات من Firebase Realtime Database باستخدام REST API
+  Future<void> _fetchPetsDataViaRest() async {
+    try {
+      final url =
+          Uri.parse("https://petut-55f40-default-rtdb.firebaseio.com/.json");
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        debugPrint('✅ بيانات الحيوانات من Firebase:');
+        debugPrint(data.toString());
+      } else {
+        debugPrint('فشل في جلب البيانات، رمز الحالة: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('حصل خطأ أثناء جلب بيانات Firebase عبر REST: $e');
+    }
   }
 
   @override
@@ -49,15 +118,17 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
 
   Future<void> _loadModel() async {
     try {
-      _interpreter = await Interpreter.fromAsset('models/model_unquant.tflite');
+      _interpreter =
+          await Interpreter.fromAsset('assets/models/model_unquant.tflite');
       setState(() {
         _isModelLoaded = true;
         _modelStatus = 'Model loaded ✓';
       });
-    } catch (_) {
+    } catch (e) {
+      debugPrint(' Error loading model: $e');
       setState(() {
         _isModelLoaded = false;
-        _modelStatus = 'Error loading model';
+        _modelStatus = 'Error loading model: $e';
       });
     }
   }
@@ -91,8 +162,8 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
     });
 
     try {
-      final imageBytes = await _selectedImage!.readAsBytes();
-      final image = img.decodeImage(imageBytes);
+      final bytes = await _selectedImage!.readAsBytes();
+      final image = img.decodeImage(bytes);
       if (image == null) throw Exception('Failed to read image');
 
       final resized = img.copyResize(image, width: 224, height: 224);
@@ -104,16 +175,22 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
 
       final predictions = output[0] as List<double>;
       final maxIndex = _argmax(predictions);
-      final maxConfidence = predictions[maxIndex];
+      final confidence = predictions[maxIndex];
 
       setState(() {
-        if (maxConfidence < 0.3) {
+        if (confidence < 0.3) {
           _result =
               'No pet detected in the image.\nPlease use a clear pet photo.';
           _hasError = true;
         } else {
           _result =
-              'Breed: ${_petLabels[maxIndex]}\nConfidence: ${(maxConfidence * 100).toStringAsFixed(1)}%';
+              'Breed: ${_petLabels[maxIndex]}\nConfidence: ${(confidence * 100).toStringAsFixed(1)}%';
+          // حفظ النتيجة مع رفع الصورة
+          saveResultToFirestore(
+            breed: _petLabels[maxIndex],
+            confidence: confidence,
+            imageFile: _selectedImage,
+          );
         }
         _isAnalyzing = false;
       });
@@ -126,35 +203,37 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
     }
   }
 
-  Float32List _imageToByteListFloat32(img.Image image) {
-    final buffer = Float32List(224 * 224 * 3);
-    int index = 0;
-    for (int y = 0; y < 224; y++) {
-      for (int x = 0; x < 224; x++) {
-        final pixel = image.getPixel(x, y);
-        buffer[index++] = pixel.r / 255.0;
-        buffer[index++] = pixel.g / 255.0;
-        buffer[index++] = pixel.b / 255.0;
-      }
-    }
-    return buffer;
+  List _imageToByteListFloat32(img.Image image) {
+    return List.generate(
+      1,
+      (_) => List.generate(
+        224,
+        (y) => List.generate(
+          224,
+          (x) {
+            final pixel = image.getPixel(x, y);
+            return [pixel.r / 255.0, pixel.g / 255.0, pixel.b / 255.0];
+          },
+        ),
+      ),
+    );
   }
 
   int _argmax(List<double> list) {
     double max = list[0];
-    int maxIndex = 0;
+    int index = 0;
     for (int i = 1; i < list.length; i++) {
       if (list[i] > max) {
         max = list[i];
-        maxIndex = i;
+        index = i;
       }
     }
-    return maxIndex;
+    return index;
   }
 
-  void _showError(String message) {
+  void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(msg), backgroundColor: Colors.red),
     );
   }
 
@@ -163,13 +242,14 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
       appBar: AppBar(
-        title: const Text('Pet Breed Classifier',
+        title: Text('Pet Breed Classifier',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
+            // Model status indicator
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(15),
@@ -184,12 +264,12 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
               child: Text(
                 _modelStatus,
                 style: TextStyle(
-                  color: _isModelLoaded ? Colors.green : Colors.orange,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: _isModelLoaded ? Colors.green : Colors.orange,
+                    fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 20),
+            // Image picker area
             GestureDetector(
               onTap: _pickImage,
               child: Container(
@@ -204,7 +284,7 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
                     BoxShadow(
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 10,
-                        offset: const Offset(0, 5))
+                        offset: Offset(0, 5))
                   ],
                 ),
                 child: _selectedImage == null
@@ -226,8 +306,7 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
                         child: Image.file(_selectedImage!,
                             fit: BoxFit.cover,
                             width: double.infinity,
-                            height: double.infinity),
-                      ),
+                            height: double.infinity)),
               ),
             ),
             const SizedBox(height: 20),
@@ -240,7 +319,7 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
                 height: 50,
                 customColor: AppColors.getPrimaryColor(context),
                 icon: _isAnalyzing
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -291,5 +370,3 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
     );
   }
 }
-
-
