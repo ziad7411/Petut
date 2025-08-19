@@ -113,10 +113,6 @@ class MainApp extends StatelessWidget {
               routeName: '/profile',
               child: const ProfileScreen(),
             ),
-        // '/goToWebPage': (context) => AppWrapper(
-        //       routeName: '/goToWebPage',
-        //       child: const GoToWebPage(),
-        //     ),
         '/myOrders': (context) => AppWrapper(
               routeName: '/myOrders',
               child: const MyOrdersScreen(),
@@ -153,7 +149,8 @@ class MainApp extends StatelessWidget {
               routeName: '/petClassifier',
               child: const PetBreedClassifier(),
             ),
-            '/doctorBooking': (context) => const DoctorDashboardPage(),
+            '/doctorBooking': (context) => AppWrapper(routeName: '/doctorBooking',child: DoctorDashboardPage(),
+            ),
       },
     );
   }

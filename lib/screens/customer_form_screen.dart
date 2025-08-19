@@ -31,12 +31,14 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
   final _petAgeController = TextEditingController();
   final _petWeightController = TextEditingController();
   String? profileImageBase64;
+   String? _selectedGender;
 
   // State
   File? _selectedProfileImage, _selectedPetImage;
   String? _selectedAvatar;
   bool _isLoading = false;
   bool _hasPet = false;
+   final List<String> _genders = ['male', 'female'];
 
   // Form keys
   final _formKey = GlobalKey<FormState>();
@@ -253,18 +255,23 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
       'image': base64Image,
     });
 
+    print("📤 Response: ${response.body}");
+
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['data']['url'];
-    } else {
-      print('❌ Upload failed: ${response.body}');
-      return null;
-    }
+  final data = json.decode(response.body);
+  print("✅ Upload success: ${data['data']['url']}");
+  return data['data']['url'];
+} else {
+  print('❌ Upload failed: code=${response.statusCode}, body=${response.body}');
+  return null;
+}
+
   } catch (e) {
     print('❌ Error uploading image: $e');
     return null;
   }
 }
+
 
 
   void _clearPetForm() {
@@ -293,11 +300,20 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
 
       // Convert profile image or use avatar
       
-      if (_selectedAvatar != null) {
+     // ✅ Convert profile image or use avatar
+String? profileImageBase64;
+if (_selectedAvatar != null) {
   profileImageBase64 = _selectedAvatar; // Store avatar path
 } else if (_selectedProfileImage != null) {
   profileImageBase64 = await uploadImageToImgbb(_selectedProfileImage!);
+
+  // 🟢 Retry مرة تانية لو أول مرة فشلت
+  if (profileImageBase64 == null) {
+    print("⚠️ First upload failed, retrying...");
+    profileImageBase64 = await uploadImageToImgbb(_selectedProfileImage!);
+  }
 }
+
 
 
       // Save user profile
@@ -308,6 +324,7 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
         'role': 'customer',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
+        'gender': _selectedGender,
       }, SetOptions(merge: true));
 
       // Save pet if exists
@@ -478,7 +495,42 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
                 maxLength: 11,
                 validator: _validatePhone,
               ),
-              
+               DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: theme.colorScheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.person_outline,
+                      color: theme.hintColor,
+                    ),
+                  ),
+                  hint: Text(
+                    'Select Gender',
+                    style: TextStyle(color: theme.hintColor),
+                  ),
+                  items:
+                      _genders
+                          .map(
+                            (gender) => DropdownMenuItem(
+                              value: gender,
+                              child: Text(gender),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) => setState(() => _selectedGender = value),
+                  validator:
+                      (value) =>
+                          value == null ? 'Please select your gender' : null,
+                ),
 
               const SizedBox(height: 32),
 

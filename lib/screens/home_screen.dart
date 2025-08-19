@@ -26,6 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
   late Future<List<Product>> futureProducts;
   String selectedCategory = 'All';
   Set<String> favoriteIds = {};
+  List<Product> allProducts = [];
+List<Product> filteredProducts = [];
+bool isLoading = true;
+
 
   final List<String> categories = ["All", "cat", "dog", "bird", "toys"];
 
@@ -51,8 +55,21 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     futureProducts = fetchProducts();
     loadFavorites();
+    _loadProducts();
   }
 
+Future<void> _loadProducts() async {
+  try {
+    final products = await fetchProducts(); // هتجيب مرة واحدة من Firebase أو الكاش
+    setState(() {
+      allProducts = products;
+      filteredProducts = filterByCategory(products, selectedCategory);
+      isLoading = false;
+    });
+  } catch (e) {
+    setState(() => isLoading = false);
+  }
+}
   Future<void> loadFavorites() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -71,10 +88,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  List<Product> filterByCategory(List<Product> products, String category) {
-    if (category == "All") return products;
-    return products.where((p) => p.category == category).toList();
-  }
+// فلترة أساسية
+List<Product> filterByCategory(List<Product> products, String category) {
+  if (category.trim().toLowerCase() == "all") return products;
+
+  final selected = category.trim().toLowerCase();
+
+  return products.where((p) {
+    final productCategory = (p.category ?? "").trim().toLowerCase();
+    return productCategory.contains(selected);
+  }).toList();
+}
+
+// دالة تستخدم الفلترة وتعمل setState
+void _filter(String category) {
+  setState(() {
+    selectedCategory = category; 
+    filteredProducts = filterByCategory(allProducts, selectedCategory);
+  });
+}
+
+
 
   CardData convertProductToCard(Product product) {
     return CardData(
@@ -340,183 +374,142 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SliverToBoxAdapter(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: categories.map((category) {
+            final isSelected = category == selectedCategory;
+            return GestureDetector(
+              onTap: () => _filter(category), // ⬅️ استدعاء الفلترة
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withOpacity(0.2)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : Colors.grey.shade300,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
-                  children:
-                      categories.map((category) {
-                        final isSelected = category == selectedCategory;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedCategory = category;
-                            });
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? theme.colorScheme.primary.withOpacity(
-                                        0.2,
-                                      )
-                                      : Colors.transparent, // ← هنا التغيير
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(
-                                color:
-                                    isSelected
-                                        ? theme.colorScheme.primary
-                                        : Colors.grey.shade300,
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: Image.asset(
-                                    getCategoryImage(category),
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: theme.colorScheme.primary
-                                            .withOpacity(0.1),
-                                        child: Icon(
-                                          Icons.pets,
-                                          size: 20,
-                                          color: theme.colorScheme.primary,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  category[0].toUpperCase() +
-                                      category.substring(1),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.w500,
-                                    color:
-                                        isSelected
-                                            ? theme.colorScheme.primary
-                                            : theme.textTheme.bodyMedium!.color,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                ),
-              ),
-            ),
-
-            FutureBuilder<List<Product>>(
-              future: futureProducts,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: theme.colorScheme.primary,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.asset(
+                        getCategoryImage(category),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            child: Icon(Icons.pets,
+                                size: 20, color: theme.colorScheme.primary),
+                          );
+                        },
                       ),
                     ),
-                  );
-                } else if (snapshot.hasError) {
-                  return SliverFillRemaining(
-                    child: Center(child: Text("Error: ${snapshot.error}")),
-                  );
-                }
+                    const SizedBox(width: 8),
+                    Text(
+                      category[0].toUpperCase() + category.substring(1),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.textTheme.bodyMedium!.color,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    ),
 
-                final allProducts = snapshot.data!;
-                final filtered = filterByCategory(
-                  allProducts,
-                  selectedCategory,
-                );
+    // ✅ المنتجات
+    if (isLoading)
+      SliverFillRemaining(
+        child: Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        ),
+      )
+    else if (filteredProducts.isEmpty)
+      const SliverFillRemaining(
+        child: Center(child: Text("No products available")),
+      )
+    else
+      SliverGrid(
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final product = filteredProducts[index];
+          final cardData = convertProductToCard(product);
 
-                return SliverGrid(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final product = filtered[index];
-                    final cardData = convertProductToCard(product);
-
-                    return Cards(
-                      data: cardData,
-                      favFunction: () async {
-                        await loadFavorites();
-                        setState(() {});
-                      },
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    ProductDetailsScreen(data: cardData),
-                          ),
-                        );
-                      },
-                      onCartTap: () {
-                        final index = globalCartItems.indexWhere(
-                          (item) => item.id == cardData.id,
-                        );
-                        if (index != -1) {
-                          globalCartItems[index].quantity++;
-                        } else {
-                          globalCartItems.add(
-                            CardData(
-                              id: cardData.id,
-                              rate: cardData.rate,
-                              image: cardData.image,
-                              title: cardData.title,
-                              description: cardData.description,
-                              weight: cardData.weight,
-                              price: cardData.price,
-                              isFavorite: cardData.isFavorite,
-                              quantity: 1,
-                              category: cardData.category,
-                            ),
-                          );
-                        }
-                        setState(() {});
-                      },
-                    );
-                  }, childCount: filtered.length),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    // mainAxisExtent: 300,
-                    childAspectRatio: 0.6,
+          return Cards(
+            data: cardData,
+            favFunction: () async {
+              await loadFavorites();
+              setState(() {});
+            },
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductDetailsScreen(data: cardData),
+                ),
+              );
+            },
+            onCartTap: () {
+              final index = globalCartItems.indexWhere(
+                (item) => item.id == cardData.id,
+              );
+              if (index != -1) {
+                globalCartItems[index].quantity++;
+              } else {
+                globalCartItems.add(
+                  CardData(
+                    id: cardData.id,
+                    rate: cardData.rate,
+                    image: cardData.image,
+                    title: cardData.title,
+                    description: cardData.description,
+                    weight: cardData.weight,
+                    price: cardData.price,
+                    isFavorite: cardData.isFavorite,
+                    quantity: 1,
+                    category: cardData.category,
                   ),
                 );
-              },
-            ),
-          ],
+              }
+              setState(() {});
+            },
+          );
+        }, childCount: filteredProducts.length),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.6,
+        ),
+      ),
+  ],
         ),
       ),
     );
