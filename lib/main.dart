@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -16,7 +17,6 @@ import 'package:petut/screens/Signup&Login/signup_screen.dart';
 import 'package:petut/screens/Signup&Login/start_screen.dart';
 import 'package:petut/screens/cart_screen.dart';
 import 'package:petut/screens/favorites_screen.dart';
-import 'package:petut/screens/goToDoctorDashboard.dart';
 import 'package:petut/screens/my_order_screen.dart';
 import 'package:petut/screens/setting_screen.dart';
 import 'package:petut/screens/splash_screen.dart';
@@ -36,7 +36,9 @@ import 'package:provider/provider.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('🔔 Background message: ${message.messageId}');
+  if (kDebugMode) {
+    print('🔔 Background message: ${message.messageId}');
+  }
 }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,7 +50,9 @@ void main() async {
     await NotificationService.initialize();
     await SupportNotificationService.initialize();
   } catch (e) {
-    print('Failed to initialize notifications: $e');
+    if (kDebugMode) {
+      print('Failed to initialize notifications: $e');
+    }
   }
 
   runApp(
