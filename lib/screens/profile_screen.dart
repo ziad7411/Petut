@@ -26,7 +26,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Controllers
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
   final _petNameController = TextEditingController();
   final _petTypeController = TextEditingController();
   final _petGenderController = TextEditingController();
@@ -39,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _selectedProfileImage, _selectedPetImage;
   bool _isLoading = false;
   List<Map<String, dynamic>> _pets = [];
-  String _originalName = '', _originalPhone = '', _originalLocation = '';
+  String _originalName = '', _originalPhone = '';
   String? _originalProfileImage;
   bool _isDoctor = false;
   bool _isEditingName = false;
@@ -70,11 +69,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           setState(() {
             _nameController.text = data['fullName'] ?? data['name'] ?? '';
             _phoneController.text = data['phone'] ?? '';
-            _locationController.text = data['location'] ?? '';
             _profileImageBase64 = data['profileImage'];
             _originalName = data['fullName'] ?? data['name'] ?? '';
             _originalPhone = data['phone'] ?? '';
-            _originalLocation = data['location'] ?? '';
             _originalProfileImage = data['profileImage'];
             _isDoctor = data['role'] == 'doctor';
           });
@@ -215,22 +212,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<String?> _uploadImage(File image) async {
     try {
       const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
-
-      final bytes = await image.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
       final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
-      final response = await http.post(url, body: {
-        'image': base64Image,
-      });
+      // Multipart request (من غير Base64)
+      var request = http.MultipartRequest('POST', url);
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
+
+      var response = await request.send();
+      var responseData = await http.Response.fromStream(response);
+
+      print("📤 Status: ${responseData.statusCode}");
+      print("📤 Body: ${responseData.body}");
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return data['data']['url']; // 🔥 رابط مباشر من imgbb
+        final data = json.decode(responseData.body);
+        final imageUrl = data['data']['display_url'] ?? data['data']['url'];
+        return imageUrl;
       } else {
         _showSnackBar(
-          'Upload failed: ${response.body}',
+          'Upload failed: ${responseData.body}',
           Theme.of(context).colorScheme.error,
         );
         return null;
@@ -353,15 +353,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  String? _validateLocation(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Location is required';
-    if (value.trim().length < 3)
-      return 'Location must be at least 3 characters';
-    if (value.trim().length > 100)
-      return 'Location must be less than 100 characters';
-    return null;
-  }
-
   String? _validatePetName(String? value) {
     if (value == null || value.trim().isEmpty) return 'Pet name is required';
     return null;
@@ -403,11 +394,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _hasDataChanged() {
     final currentName = _nameController.text.trim();
     final currentPhone = _phoneController.text.trim();
-    final currentLocation = _locationController.text.trim();
 
     return currentName != _originalName ||
         currentPhone != _originalPhone ||
-        currentLocation != _originalLocation ||
         _selectedProfileImage != null ||
         _selectedAvatar != null;
   }
@@ -470,21 +459,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = _auth.currentUser;
       if (user == null) return;
 
-      String? imageUrl = _profileImageBase64;
+      String? imageUrl = _profileImageBase64; // الصورة القديمة
 
       if (_selectedAvatar != null) {
-        imageUrl =
-            _selectedAvatar; // 🔹 لو اختار Avatar بنخزن الـ ID أو الرابط بتاعه
+        // ✅ اختار Avatar
+        imageUrl = _selectedAvatar;
       } else if (_selectedProfileImage != null) {
-        imageUrl = await _uploadImage(
-            _selectedProfileImage!); // 🔥 رفع على imgbb ورجوع URL
+        // ✅ جرب ترفع الصورة
+        final uploadedUrl = await _uploadImage(_selectedProfileImage!);
+        if (uploadedUrl != null) {
+          imageUrl = uploadedUrl; // لو نجحت
+        } else {
+          // ⚠️ لو فشلت، احتفظ بالقديم
+          imageUrl = _profileImageBase64;
+        }
       }
 
       await _firestore.collection('users').doc(user.uid).set({
         'name': _nameController.text.trim(),
         'fullName': _nameController.text.trim(),
         'phone': _phoneController.text.trim(),
-        'location': _locationController.text.trim(),
         'email': user.email,
         'profileImage': imageUrl,
         'updatedAt': FieldValue.serverTimestamp(),
@@ -497,7 +491,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _selectedAvatar = null;
           _originalName = _nameController.text.trim();
           _originalPhone = _phoneController.text.trim();
-          _originalLocation = _locationController.text.trim();
           _originalProfileImage = imageUrl;
         });
       }
@@ -528,10 +521,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final user = _auth.currentUser;
       if (user == null) return;
 
-    String? petImageUrl;
-if (_selectedPetImage != null) {
-  petImageUrl = await _uploadImage(_selectedPetImage!); // 🔥 رفع الصورة على imgbb
-}
+      String? petImageUrl;
+      if (_selectedPetImage != null) {
+        petImageUrl =
+            await _uploadImage(_selectedPetImage!); // 🔥 رفع الصورة على imgbb
+      }
 
       await _firestore.collection('pets').add({
         'ownerId': user.uid,
@@ -777,7 +771,6 @@ if (_selectedPetImage != null) {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _locationController.dispose();
     _petNameController.dispose();
     _petTypeController.dispose();
     _petGenderController.dispose();
@@ -884,21 +877,50 @@ if (_selectedPetImage != null) {
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(60),
                       border: Border.all(
-                          color: theme.colorScheme.primary, width: 3),
+                        color: theme.colorScheme.primary,
+                        width: 3,
+                      ),
                     ),
                     child: _selectedProfileImage != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(60),
-                            child: Image.file(_selectedProfileImage!,
-                                fit: BoxFit.cover))
+                            child: Image.file(
+                              _selectedProfileImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
                         : _selectedAvatar != null
-                            ? AvatarHelper.buildAvatar(_selectedAvatar,
-                                size: 120)
-                            : _buildProfileAvatar(
-                                _profileImageBase64, _nameController.text, 120),
+                            ? AvatarHelper.buildAvatar(
+                                _selectedAvatar,
+                                size: 120,
+                              )
+                            : (_profileImageBase64 != null &&
+                                    _profileImageBase64!.isNotEmpty)
+                                ? ClipOval(
+                                    child: Image.network(
+                                      _profileImageBase64!, // 🔥 هنا لينك imgbb
+                                      width: 120,
+                                      height: 120,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Icon(
+                                          Icons.local_hospital,
+                                          size: 60,
+                                          color: theme.colorScheme.primary,
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.local_hospital,
+                                    size: 60,
+                                    color: theme.colorScheme.primary,
+                                  ),
                   ),
                 ),
               ),
+
               const SizedBox(height: 8),
               Text('Tap to change photo',
                   style: TextStyle(
@@ -982,11 +1004,6 @@ if (_selectedPetImage != null) {
                         controller: _phoneController,
                         prefixIcon: Icons.phone,
                         validator: _validatePhone),
-                    CustomTextField(
-                        hintText: 'Location',
-                        controller: _locationController,
-                        prefixIcon: Icons.location_on,
-                        validator: _validateLocation),
                   ],
                 ),
               ),

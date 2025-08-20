@@ -238,31 +238,34 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
   const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
 
   try {
-    final bytes = await imageFile.readAsBytes();
-    final base64Image = base64Encode(bytes);
-
     final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
-    final response = await http.post(url, body: {
-      'image': base64Image,
-    });
+    var request = http.MultipartRequest('POST', url);
+    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
 
-    print("📤 Response: ${response.body}");
+    var response = await request.send();
+    var responseData = await http.Response.fromStream(response);
+
+    print("📤 Status: ${response.statusCode}");
+    print("📤 Response: ${responseData.body}");
 
     if (response.statusCode == 200) {
-  final data = json.decode(response.body);
-  print("✅ Upload success: ${data['data']['url']}");
-  return data['data']['url'];
-} else {
-  print('❌ Upload failed: code=${response.statusCode}, body=${response.body}');
-  return null;
-}
-
+      final data = json.decode(responseData.body);
+      final imageUrl = data['data']['display_url'] ?? data['data']['url'];
+      if (imageUrl != null) {
+        print("✅ Upload success: $imageUrl");
+        return imageUrl;
+      }
+    } else {
+      print('❌ Upload failed: code=${response.statusCode}, body=${responseData.body}');
+      return null;
+    }
   } catch (e) {
     print('❌ Error uploading image: $e');
     return null;
   }
 }
+
 
 
 
@@ -293,31 +296,31 @@ Future<String?> uploadImageToImgbb(File? imageFile) async {
       // Convert profile image or use avatar
       
      // ✅ Convert profile image or use avatar
-String? profileImageBase64;
+String? profileImageUrl;
+
 if (_selectedAvatar != null) {
-  profileImageBase64 = _selectedAvatar; // Store avatar path
+  // Store avatar identifier (مش لينك انترنت)
+  profileImageUrl = "avatar:$_selectedAvatar";
 } else if (_selectedProfileImage != null) {
-  profileImageBase64 = await uploadImageToImgbb(_selectedProfileImage!);
+  profileImageUrl = await uploadImageToImgbb(_selectedProfileImage!);
 
   // 🟢 Retry مرة تانية لو أول مرة فشلت
-  if (profileImageBase64 == null) {
+  if (profileImageUrl == null) {
     print("⚠️ First upload failed, retrying...");
-    profileImageBase64 = await uploadImageToImgbb(_selectedProfileImage!);
+    profileImageUrl = await uploadImageToImgbb(_selectedProfileImage!);
   }
 }
 
-
-
-      // Save user profile
-      await _firestore.collection('users').doc(user.uid).set({
-        'fullName': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'profileImage': profileImageBase64,
-        'role': 'customer',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-        'gender': _selectedGender,
-      }, SetOptions(merge: true));
+// Save user profile
+await _firestore.collection('users').doc(user.uid).set({
+  'fullName': _nameController.text.trim(),
+  'phone': _phoneController.text.trim(),
+  'profileImage': profileImageUrl,
+  'role': 'customer',
+  'createdAt': FieldValue.serverTimestamp(),
+  'updatedAt': FieldValue.serverTimestamp(),
+  'gender': _selectedGender,
+}, SetOptions(merge: true));
 
       // Save pet if exists
       if (_hasPet) {
