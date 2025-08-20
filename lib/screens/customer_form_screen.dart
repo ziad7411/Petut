@@ -72,14 +72,6 @@ class _CustomerFormScreenState extends State<CustomerFormScreen> {
     return null;
   }
 
-  String? _validateLocation(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Location is required';
-    if (value.trim().length < 3)
-      return 'Location must be at least 3 characters';
-    if (value.trim().length > 100)
-      return 'Location must be less than 100 characters';
-    return null;
-  }
 
   String? _validatePetName(String? value) {
     if (!_hasPet) return null;
