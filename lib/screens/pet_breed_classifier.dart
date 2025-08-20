@@ -49,6 +49,7 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
       final bytes = await imageFile.readAsBytes();
       final base64Image = base64Encode(bytes);
 
+
       final apiKey = '2929b00fa2ded7b1a8c258df46705a60';
       final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
@@ -56,7 +57,9 @@ class _PetBreedClassifierState extends State<PetBreedClassifier> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
         return data['data']['url'];
+
       } else {
         debugPrint('Failed to upload image: ${response.statusCode}');
         return null;

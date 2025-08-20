@@ -42,8 +42,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
   void _generateAvailableDays() {
     final now = DateTime.now();
     final endDate = now.add(const Duration(days: 30));
-    
-    for (DateTime date = now; date.isBefore(endDate); date = date.add(const Duration(days: 1))) {
+
+    for (DateTime date = now;
+        date.isBefore(endDate);
+        date = date.add(const Duration(days: 1))) {
       final dayName = getDayName(date);
       if (widget.clinic.workingDays.contains(dayName)) {
         _availableDays.add(DateTime(date.year, date.month, date.day));
@@ -51,12 +53,19 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
     }
   }
 
-  ImageProvider? _getImageProvider(String? imageBase64) {
-    if (imageBase64 == null || imageBase64.isEmpty) {
-      return null;
+  ImageProvider? _getImageProvider(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return null; // مفيش صورة
     }
+
+    // ✅ لو اللينك من imgbb أو أي لينك HTTP/HTTPS
+    if (imageUrl.startsWith('http')) {
+      return NetworkImage(imageUrl);
+    }
+
+    // 🟡 fallback: لو لسه في بيانات قديمة Base64
     try {
-      final bytes = base64Decode(imageBase64);
+      final bytes = base64Decode(imageUrl);
       return MemoryImage(bytes);
     } catch (e) {
       print("Error decoding image: $e");
@@ -72,7 +81,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       return Uint8List(0);
     }
   }
-  
+
   Future<void> _fetchAvailableTimes() async {
     if (selectedDate == null) return;
 
@@ -85,7 +94,7 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
 
     try {
       final selectedDayName = getDayName(selectedDate!);
-      
+
       // ================== هذا هو الإصلاح الرئيسي ==================
       // نبحث عن اليوم المطابق داخل القائمة بدلاً من التعامل معها كخريطة
       final daySchedule = widget.clinic.workingHours.firstWhere(
@@ -94,7 +103,9 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       );
       // =========================================================
 
-      if (daySchedule == null || daySchedule['openTime'] == null || daySchedule['closeTime'] == null) {
+      if (daySchedule == null ||
+          daySchedule['openTime'] == null ||
+          daySchedule['closeTime'] == null) {
         throw Exception("Doctor is not available on $selectedDayName.");
       }
 
@@ -105,10 +116,12 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       final startParts = startTimeStr.split(':').map(int.parse).toList();
       final endParts = endTimeStr.split(':').map(int.parse).toList();
 
-      DateTime slotTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day, startParts[0], startParts[1]);
-      final endTime = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day, endParts[0], endParts[1]);
+      DateTime slotTime = DateTime(selectedDate!.year, selectedDate!.month,
+          selectedDate!.day, startParts[0], startParts[1]);
+      final endTime = DateTime(selectedDate!.year, selectedDate!.month,
+          selectedDate!.day, endParts[0], endParts[1]);
 
-      while(slotTime.isBefore(endTime)) {
+      while (slotTime.isBefore(endTime)) {
         allTimeSlots.add(DateFormat.jm().format(slotTime));
         slotTime = slotTime.add(const Duration(minutes: 30));
       }
@@ -120,8 +133,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           .where('date', isEqualTo: formattedDate)
           .get();
 
-      final List<String> bookedTimes = bookingSnapshot.docs.map((doc) => doc['time'] as String).toList();
-      final available = allTimeSlots.where((slot) => !bookedTimes.contains(slot)).toList();
+      final List<String> bookedTimes =
+          bookingSnapshot.docs.map((doc) => doc['time'] as String).toList();
+      final available =
+          allTimeSlots.where((slot) => !bookedTimes.contains(slot)).toList();
 
       if (mounted) {
         setState(() {
@@ -142,8 +157,6 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
       }
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -167,45 +180,58 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               Row(
                 children: [
                   Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.colorScheme.primary.withOpacity(0.1),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: clinic.image.isNotEmpty
-                          ? Image.memory(
-                              _decodeBase64Image(clinic.image),
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.local_hospital,
-                                  size: 40,
-                                  color: theme.colorScheme.primary,
-                                );
-                              },
-                            )
-                          : Icon(
-                              Icons.local_hospital,
-                              size: 40,
-                              color: theme.colorScheme.primary,
-                            ),
-                    ),
-                  ),
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: clinic.image.isNotEmpty
+                            ? (clinic.image.startsWith('http')
+                                ? Image.network(
+                                    clinic.image,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.local_hospital,
+                                        size: 40,
+                                        color: theme.colorScheme.primary,
+                                      );
+                                    },
+                                  )
+                                : Image.memory(
+                                    _decodeBase64Image(clinic.image),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Icon(
+                                        Icons.local_hospital,
+                                        size: 40,
+                                        color: theme.colorScheme.primary,
+                                      );
+                                    },
+                                  ))
+                            : Icon(
+                                Icons.local_hospital,
+                                size: 40,
+                                color: theme.colorScheme.primary,
+                              ),
+                      )),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(clinic.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        Text(clinic.name,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         Text("Specialty: ${clinic.specialty ?? 'Unknown'}"),
                         Text("${clinic.rating} ★ | ${clinic.phoneNumber}"),
@@ -222,7 +248,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
               _infoRow(Icons.attach_money, "${clinic.price} EGP"),
               _infoRow(Icons.timer, "Check available times"),
               const SizedBox(height: 24),
-              const Text("Choose Appointment Day", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Choose Appointment Day",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
@@ -245,10 +272,12 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                     return isSameDay(selectedDate, day);
                   },
                   enabledDayPredicate: (day) {
-                    return _availableDays.contains(DateTime(day.year, day.month, day.day));
+                    return _availableDays
+                        .contains(DateTime(day.year, day.month, day.day));
                   },
                   onDaySelected: (selectedDay, focusedDay) {
-                    if (_availableDays.contains(DateTime(selectedDay.year, selectedDay.month, selectedDay.day))) {
+                    if (_availableDays.contains(DateTime(selectedDay.year,
+                        selectedDay.month, selectedDay.day))) {
                       setState(() {
                         selectedDate = selectedDay;
                         _focusedDay = focusedDay;
@@ -266,8 +295,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                   },
                   calendarStyle: CalendarStyle(
                     outsideDaysVisible: false,
-                    weekendTextStyle: TextStyle(color: theme.colorScheme.primary),
-                    holidayTextStyle: TextStyle(color: theme.colorScheme.primary),
+                    weekendTextStyle:
+                        TextStyle(color: theme.colorScheme.primary),
+                    holidayTextStyle:
+                        TextStyle(color: theme.colorScheme.primary),
                     selectedDecoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       shape: BoxShape.circle,
@@ -299,7 +330,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text("Available Times", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Available Times",
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               _buildAvailableTimesWidget(),
               const SizedBox(height: 24),
@@ -313,7 +345,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                               if (user == null) {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                  MaterialPageRoute(
+                                      builder: (_) => const LoginScreen()),
                                 );
                               } else {
                                 Navigator.push(
@@ -321,7 +354,8 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
                                   MaterialPageRoute(
                                     builder: (_) => BookingConfirmationScreen(
                                       clinic: clinic,
-                                      selectedDay: DateFormat('EEEE, MMM d').format(selectedDate!),
+                                      selectedDay: DateFormat('EEEE, MMM d')
+                                          .format(selectedDate!),
                                       selectedTime: selectedTime!,
                                       selectedDate: selectedDate!,
                                     ),
@@ -353,23 +387,31 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
         padding: const EdgeInsets.all(12),
         width: double.infinity,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
-        child: Text('Please pick a date to see available times.', style: TextStyle(color: theme.hintColor)),
+        decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8)),
+        child: Text('Please pick a date to see available times.',
+            style: TextStyle(color: theme.hintColor)),
       );
     }
     if (_isLoadingTimes) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_errorLoadingTimes != null) {
-      return Center(child: Text(_errorLoadingTimes!, style: TextStyle(color: theme.colorScheme.error)));
+      return Center(
+          child: Text(_errorLoadingTimes!,
+              style: TextStyle(color: theme.colorScheme.error)));
     }
     if (_availableTimes.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(12),
         width: double.infinity,
         alignment: Alignment.center,
-        decoration: BoxDecoration(color: theme.colorScheme.surface, borderRadius: BorderRadius.circular(8)),
-        child: Text('No available appointments for this day.', style: TextStyle(color: theme.hintColor)),
+        decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(8)),
+        child: Text('No available appointments for this day.',
+            style: TextStyle(color: theme.hintColor)),
       );
     }
 
@@ -386,7 +428,10 @@ class _ClinicDetailsScreenState extends State<ClinicDetailsScreen> {
           },
           selectedColor: theme.colorScheme.primary,
           backgroundColor: theme.colorScheme.surface,
-          labelStyle: TextStyle(color: isSelected ? theme.colorScheme.onPrimary : theme.textTheme.bodyLarge?.color),
+          labelStyle: TextStyle(
+              color: isSelected
+                  ? theme.colorScheme.onPrimary
+                  : theme.textTheme.bodyLarge?.color),
         );
       }).toList(),
     );

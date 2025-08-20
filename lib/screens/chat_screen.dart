@@ -35,7 +35,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final ImagePicker _picker = ImagePicker();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _isLoading = false;
-  bool _showEmojiPicker = false;
 
   @override
   void initState() {

@@ -5,13 +5,13 @@ import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:petut/screens/appoinment_user_screen.dart';
 import 'package:petut/screens/avatar_selection_screen.dart';
 import 'package:petut/screens/select_location_screen.dart';
 import 'package:petut/utils/avatar_helper.dart';
 import 'package:intl/intl.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
-import '../screens/goToDoctorDashboard.dart';
 
 class DoctorFormScreen extends StatefulWidget {
   const DoctorFormScreen({super.key});
@@ -264,30 +264,32 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     }
   }
 
- Future<String?> uploadImageToImgbb(File? imageFile) async {
+Future<String?> uploadImageToImgbb(File? imageFile) async {
   if (imageFile == null) return null;
 
   const String apiKey = '2929b00fa2ded7b1a8c258df46705a60';
 
   try {
-    final bytes = await imageFile.readAsBytes();
-    final base64Image = base64Encode(bytes);
-
     final url = Uri.parse('https://api.imgbb.com/1/upload?key=$apiKey');
 
-    final response = await http.post(url, body: {
-      'image': base64Image,
-    });
+    var request = http.MultipartRequest('POST', url);
+    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
 
-    print("📤 Response: ${response.body}");
+    var response = await request.send();
+    var responseData = await http.Response.fromStream(response);
+
+    print("📤 Status: ${response.statusCode}");
+    print("📤 Response: ${responseData.body}");
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-
-      // ✅ جرب display_url بدل url
-      return data['data']['display_url'] ?? data['data']['url'];
+      final data = json.decode(responseData.body);
+      final imageUrl = data['data']['display_url'] ?? data['data']['url'];
+      if (imageUrl != null) {
+        print("✅ Upload success: $imageUrl");
+        return imageUrl;
+      }
     } else {
-      print('❌ Upload failed: ${response.body}');
+      print('❌ Upload failed: code=${response.statusCode}, body=${responseData.body}');
       return null;
     }
   } catch (e) {
@@ -295,6 +297,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
     return null;
   }
 }
+
 
 
   Future<void> _submit() async {
@@ -350,7 +353,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
         'phone': _phoneController.text.trim(),
         'gender': _selectedGender,
         'role': 'doctor',
-        'status': 'active',
+        'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
         'profileImage': profileBase64,
         'experience': _experienceController.text.trim(),
@@ -423,7 +426,7 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const GoToWebPage()),
+        MaterialPageRoute(builder: (context) => const UserBookingsScreen()),
       );
     } catch (e) {
       ScaffoldMessenger.of(
@@ -801,12 +804,12 @@ class _DoctorFormScreenState extends State<DoctorFormScreen> {
                 const SizedBox(height: 16),
                 _buildImagePicker(
                   'cardFront',
-                  'Upload Medical License (Front)',
+                  'Upload Medical License ',
                 ),
                 const SizedBox(height: 16),
-                _buildImagePicker('cardBack', 'Upload Medical License (Back)'),
+                _buildImagePicker('cardBack', 'Upload ID Card (Front)'),
                 const SizedBox(height: 16),
-                _buildImagePicker('id', 'Upload ID Card'),
+                _buildImagePicker('id', 'Upload ID Card (Back)'),
                 const SizedBox(height: 24),
 
                 _isLoading
