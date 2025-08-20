@@ -36,7 +36,8 @@ dependencies:
   fluttermoji: ^1.0.2
   tflite_flutter: ^0.11.0
   image: ^4.5.4
-
+  firebase_database: 11.3.10
+  
 dependency_overrides:
   firebase_auth_web: ^5.15.2
 
