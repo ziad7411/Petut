@@ -45,25 +45,45 @@ class _SideDrawState extends State<SideDraw> {
     }
   }
 
-  Widget _buildProfileImage(ThemeData theme) {
-    if (imageData != null && imageData!.isNotEmpty) {
-      if (imageData == 'fluttermoji_avatar') {
-        return AvatarHelper.buildAvatar(imageData, size: 60);
-      }
-      try {
-        final imageBytes = base64Decode(imageData!);
-        return Image.memory(
-          imageBytes,
+Widget _buildProfileImage(ThemeData theme) {
+  if (imageData != null && imageData!.isNotEmpty) {
+    if (imageData == 'fluttermoji_avatar') {
+      // ✅ لو Avatar
+      return AvatarHelper.buildAvatar(imageData, size: 60);
+    } else if (imageData!.startsWith('http')) {
+      // ✅ لو لينك (من imgbb)
+      return ClipOval(
+        child: Image.network(
+          imageData!,
           fit: BoxFit.cover,
           width: 60,
           height: 60,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildTextAvatar(name ?? 'User', 60, theme);
+          },
+        ),
+      );
+    } else {
+      // ✅ لو Base64
+      try {
+        final imageBytes = base64Decode(imageData!);
+        return ClipOval(
+          child: Image.memory(
+            imageBytes,
+            fit: BoxFit.cover,
+            width: 60,
+            height: 60,
+          ),
         );
       } catch (e) {
         return _buildTextAvatar(name ?? 'User', 60, theme);
       }
     }
-    return _buildTextAvatar(name ?? 'User', 60, theme);
   }
+  // ✅ الافتراضي
+  return _buildTextAvatar(name ?? 'User', 60, theme);
+}
+
 
   Widget _buildTextAvatar(String userName, double size, ThemeData theme) {
     final initials = userName.isNotEmpty
